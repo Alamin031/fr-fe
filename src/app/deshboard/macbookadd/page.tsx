@@ -1,6 +1,7 @@
 'use client'
 import axios from 'axios';
-import React, { useState, ChangeEvent, useEffect } from 'react';
+import React, { useState, ChangeEvent } from 'react';
+import Image from 'next/image'; // Import Next.js Image component
 
 // Loading Spinner Component
 const LoadingSpinner: React.FC<{ size?: 'sm' | 'md' | 'lg' }> = ({ size = 'md' }) => {
@@ -41,12 +42,12 @@ type Product = {
 };
 
 const DynamicProductForm: React.FC = () => {
-  const [products, setProducts] = useState<Product[]>([]);
   const [productName, setProductName] = useState('');
   const [productPrice, setProductPrice] = useState('');
   const [productColor, setProductColor] = useState('#4a6cf7');
 
   const [coreConfigs, setCoreConfigs] = useState<Config[]>([
+    { id: 1, label: '10-core CPU', price: '' },
     { id: 2, label: '8-core GPU', price: '' },
     { id: 3, label: '10-core GPU', price: '' },
   ]);
@@ -80,7 +81,7 @@ const DynamicProductForm: React.FC = () => {
 
   const [colorImageConfigs, setColorImageConfigs] = useState<ColorImageConfig[]>([]);
   const [newColor, setNewColor] = useState('#4a6cf7');
-  const [newImageFile, setNewImageFile] = useState<File | null>(null);
+  // Removed unused newImageFile state
   const [newImagePreview, setNewImagePreview] = useState<string | null>(null);
   const [newPrice, setNewPrice] = useState('');
   const [uploading, setUploading] = useState(false);
@@ -88,6 +89,7 @@ const DynamicProductForm: React.FC = () => {
   const [dynamicProducts, setDynamicProducts] = useState<RegionConfig[]>([]);
   const [details, setDetails] = useState<DetailConfig[]>([]);
   const [secondDetails, setSecondDetails] = useState<SecondConfig[]>([]);
+  const [products, setProducts] = useState<Product[]>([]); // Added missing products state
 
   // ==================== CONSOLE LOGGING ====================
 
@@ -123,7 +125,6 @@ const DynamicProductForm: React.FC = () => {
 
   // Remove RAM configuration
   const handleRemoveRam = (id: number) => {
-    console.log('💾 Removing RAM Config:', id);
     setRamConfigs(prev => {
       const updated = prev.filter(config => config.id !== id);
       return updated;
@@ -179,8 +180,6 @@ const DynamicProductForm: React.FC = () => {
       price: parseFloat(newDisplayPrice).toFixed(2)
     };
     
-    // console.log('🖥️ New Display Config Created:', newDisplayConfig);
-    
     setDisplayConfigs(prev => {
       const updated = [...prev, newDisplayConfig];
       return updated;
@@ -205,7 +204,7 @@ const DynamicProductForm: React.FC = () => {
     
     if (!file) return;
 
-    setNewImageFile(file);
+    // Removed unused newImageFile state assignment
     setUploading(true);
     
     const reader = new FileReader();
@@ -256,7 +255,7 @@ const DynamicProductForm: React.FC = () => {
     
     // Reset form
     setNewColor('#4a6cf7'); 
-    setNewImageFile(null); 
+    // Removed unused newImageFile state reset
     setNewImagePreview(null); 
     setNewPrice('');
   };
@@ -266,8 +265,6 @@ const DynamicProductForm: React.FC = () => {
     id: number, 
     value: string
   ) => {
-    
-    
     setter(prev => {
       const updated = prev.map(cfg => cfg.id === id ? { ...cfg, price: value } : cfg);
       return updated;
@@ -275,18 +272,16 @@ const DynamicProductForm: React.FC = () => {
   };
 
   const handleAddProduct = async() => {
- 
-    
     if (!productName || !productPrice) { 
       alert('Enter name and price'); 
       return; 
-      
     }
     
-    
     const newProduct = { 
+      id: Date.now(),
       name: productName, 
-      basePrice: parseFloat(productPrice).toFixed(2), 
+      price: parseFloat(productPrice).toFixed(2),
+      color: productColor,
       coreConfigs, 
       storageConfigs, 
       ramConfigs, 
@@ -296,86 +291,75 @@ const DynamicProductForm: React.FC = () => {
       details,
       secondDetails
     };
-//  await fetch("/api/getproduct/macbookcreate", {
-//   method: "POST",
-//   headers: { "Content-Type": "application/json" },
-//   body: JSON.stringify(newProduct),
-// });
 
-
-const  res = await axios.post('/api/macbook', newProduct ).then(res => console.log(res.data)).catch(err =>  console.log(err))
-
-
-
-    
-    // console.log('📦 New Product Created:', newProduct);
-    
-   
-    
-    // resetForm();
+    try {
+      const res = await axios.post('/api/macbook', newProduct);
+      console.log(res.data);
+      
+      // Add to local products state
+      setProducts(prev => [...prev, newProduct]);
+      
+      // Reset form
+      resetForm();
+    } catch (err) {
+      console.log(err);
+    }
   };
 
-  // const resetForm = () => {
-  //   console.log('🔄 Resetting Form...');
-    
-  //   setProductName(''); 
-  //   setProductPrice(''); 
-  //   setProductColor('#4a6cf7');
-  //   setCoreConfigs([
-  //     { id: 1, label: '10-core CPU', price: '' }, 
-  //     { id: 2, label: '8-core GPU', price: '' }, 
-  //     { id: 3, label: '10-core GPU', price: '' }
-  //   ]);
-  //   setStorageConfigs([
-  //     { id: 1, label: '256GB Storage', price: '' }, 
-  //     { id: 2, label: '512GB Storage', price: '' }, 
-  //     { id: 3, label: '1TB Storage', price: '' }, 
-  //     { id: 4, label: '2TB Storage', price: '' }
-  //   ]);
-  //   setRamConfigs([
-  //     { id: 1, label: '16GB RAM', price: '' }, 
-  //     { id: 2, label: '24GB RAM', price: '' }, 
-  //     { id: 3, label: '32GB RAM', price: '' }
-  //   ]);
-  //   setDisplayConfigs([
-  //     { id: 1, label: '13.6" Display', price: '' }, 
-  //     { id: 2, label: '15.3" Display', price: '' }
-  //   ]);
-  //   setColorImageConfigs([]); 
-  //   setDynamicProducts([]); 
-  //   setDetails([]);
-  //   setSecondDetails([]);
-  //   setNewColor('#4a6cf7'); 
-  //   setNewImageFile(null); 
-  //   setNewImagePreview(null); 
-  //   setNewPrice('');
-  //   setNewRamLabel('');
-  //   setNewRamPrice('');
-  //   setNewStorageLabel('');
-  //   setNewStoragePrice('');
-  //   setNewDisplayLabel('');
-  //   setNewDisplayPrice('');
-    
-  // };
+  const resetForm = () => {
+    setProductName(''); 
+    setProductPrice(''); 
+    setProductColor('#4a6cf7');
+    setCoreConfigs([
+      { id: 1, label: '10-core CPU', price: '' }, 
+      { id: 2, label: '8-core GPU', price: '' }, 
+      { id: 3, label: '10-core GPU', price: '' }
+    ]);
+    setStorageConfigs([
+      { id: 1, label: '256GB Storage', price: '' }, 
+      { id: 2, label: '512GB Storage', price: '' }, 
+      { id: 3, label: '1TB Storage', price: '' }, 
+      { id: 4, label: '2TB Storage', price: '' }
+    ]);
+    setRamConfigs([
+      { id: 1, label: '16GB RAM', price: '' }, 
+      { id: 2, label: '24GB RAM', price: '' }, 
+      { id: 3, label: '32GB RAM', price: '' }
+    ]);
+    setDisplayConfigs([
+      { id: 1, label: '13.6" Display', price: '' }, 
+      { id: 2, label: '15.3" Display', price: '' }
+    ]);
+    setColorImageConfigs([]); 
+    setDynamicProducts([]); 
+    setDetails([]);
+    setSecondDetails([]);
+    setNewColor('#4a6cf7'); 
+    // Removed unused newImageFile state reset
+    setNewImagePreview(null); 
+    setNewPrice('');
+    setNewRamLabel('');
+    setNewRamPrice('');
+    setNewStorageLabel('');
+    setNewStoragePrice('');
+    setNewDisplayLabel('');
+    setNewDisplayPrice('');
+  };
 
   const addRegion = () => {
-    
     setDynamicProducts(prev => {
       const updated = [...prev, { name: '', price: '' }];
-      // console.log('🌍 Updated Regions:', updated);
       return updated;
     });
   };
   
   const handleRegionChange = (index: number, field: 'name'|'price', value: string) => {
-    
     const updated = [...dynamicProducts]; 
     updated[index][field] = value; 
     setDynamicProducts(updated);
   };
   
   const addDetail = () => {
-    
     const newDetail = { id: Date.now(), label: '', value: '' };
     setDetails(prev => {
       const updated = [...prev, newDetail];
@@ -384,7 +368,6 @@ const  res = await axios.post('/api/macbook', newProduct ).then(res => console.l
   };
   
   const handleDetailChange = (id: number, field: 'label'|'value', value: string) => {
-    
     setDetails(prev => {
       const updated = prev.map(d => d.id === id ? {...d, [field]: value} : d);
       return updated;
@@ -392,30 +375,13 @@ const  res = await axios.post('/api/macbook', newProduct ).then(res => console.l
   };
   
   const removeDetail = (id: number) => {
-    
     setDetails(prev => {
       const updated = prev.filter(d => d.id !== id);
       return updated;
     });
   };
 
-  const handleSecondButtonClick = () => {
-    // console.log('📋 Adding Sample Second Detail');
-    
-    const newDetail = { 
-      id: Date.now(), 
-      seconddetails: 'Sample Detail',
-      value: 'Sample Value' 
-    };
-    
-    setSecondDetails(prev => {
-      const updated = [...prev, newDetail];
-      return updated;
-    });
-  };
-
   const addSecondDetail = () => {
-    
     const newDetail = { id: Date.now(), seconddetails: '', value: '' };
     setSecondDetails(prev => {
       const updated = [...prev, newDetail];
@@ -424,8 +390,6 @@ const  res = await axios.post('/api/macbook', newProduct ).then(res => console.l
   };
 
   const handleSecondDetailChange = (id: number, field: 'seconddetails'|'value', value: string) => {
-    // console.log('📋 Second Detail Change:', { id, field, value });
-    
     setSecondDetails(prev => {
       const updated = prev.map(d => d.id === id ? {...d, [field]: value} : d);
       return updated;
@@ -433,7 +397,6 @@ const  res = await axios.post('/api/macbook', newProduct ).then(res => console.l
   };
 
   const removeSecondDetail = (id: number) => {
-    
     setSecondDetails(prev => {
       const updated = prev.filter(d => d.id !== id);
       return updated;
@@ -451,10 +414,7 @@ const  res = await axios.post('/api/macbook', newProduct ).then(res => console.l
     setProductPrice(value);
   };
 
-  const handleProductColorChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setProductColor(value);
-  };
+  // Removed unused handleProductColorChange function
 
   return (
     <div className="min-h-screen flex items-center justify-center p-5 font-sans w-full">
@@ -486,10 +446,7 @@ const  res = await axios.post('/api/macbook', newProduct ).then(res => console.l
                 <input 
                   type="color" 
                   value={newColor} 
-                  onChange={(e) => {
-                    console.log('🎨 New Color Changed:', e.target.value);
-                    setNewColor(e.target.value);
-                  }} 
+                  onChange={(e) => setNewColor(e.target.value)} 
                   className="w-16 h-10" 
                 />
                 <div 
@@ -503,7 +460,13 @@ const  res = await axios.post('/api/macbook', newProduct ).then(res => console.l
                     </div>
                   ) : (
                     newImagePreview ? 
-                      <img src={newImagePreview} alt="preview" className="w-16 h-16 object-cover rounded" /> : 
+                      <Image 
+                        src={newImagePreview} 
+                        alt="preview" 
+                        width={64} 
+                        height={64} 
+                        className="object-cover rounded" 
+                      /> : 
                       <span className="text-gray-500 text-sm text-center">Click to Upload</span>
                   )}
                   <input 
@@ -518,10 +481,7 @@ const  res = await axios.post('/api/macbook', newProduct ).then(res => console.l
                   type="number" 
                   placeholder="Price" 
                   value={newPrice} 
-                  onChange={(e) => {
-                    // console.log('💰 New Price Changed:', e.target.value);
-                    setNewPrice(e.target.value);
-                  }} 
+                  onChange={(e) => setNewPrice(e.target.value)} 
                   className="border-2 border-gray-300 p-2 rounded flex-1" 
                 />
                 <button 
@@ -543,13 +503,16 @@ const  res = await axios.post('/api/macbook', newProduct ).then(res => console.l
                           className="w-6 h-6 rounded border-2 border-gray-300" 
                           style={{ backgroundColor: config.color }}
                         ></div>
-                        <img src={config.image} alt="product" className="w-8 h-8 object-cover rounded" />
+                        <Image 
+                          src={config.image} 
+                          alt="product" 
+                          width={32} 
+                          height={32} 
+                          className="object-cover rounded" 
+                        />
                         <span className="text-sm font-medium">{config.price}</span>
                         <button 
-                          onClick={() => {
-                            console.log('🎨 Removing Color Config:', config.id);
-                            setColorImageConfigs(prev => prev.filter(c => c.id !== config.id));
-                          }}
+                          onClick={() => setColorImageConfigs(prev => prev.filter(c => c.id !== config.id))}
                           className="text-red-500 hover:text-red-700 text-sm"
                         >
                           ×
@@ -590,18 +553,14 @@ const  res = await axios.post('/api/macbook', newProduct ).then(res => console.l
                     placeholder="Storage Label (e.g., 4TB SSD)"
                     value={newStorageLabel}
                     required
-                    onChange={(e) => {
-                      setNewStorageLabel(e.target.value);
-                    }}
+                    onChange={(e) => setNewStorageLabel(e.target.value)}
                     className="border border-gray-300 p-1 rounded text-sm w-40"
                   />
                   <input
                     type="number"
                     placeholder="Price"
                     value={newStoragePrice}
-                    onChange={(e) => {
-                      setNewStoragePrice(e.target.value);
-                    }}
+                    onChange={(e) => setNewStoragePrice(e.target.value)}
                     className="border border-gray-300 p-1 rounded text-sm w-20"
                   />
                   <button 
@@ -643,20 +602,14 @@ const  res = await axios.post('/api/macbook', newProduct ).then(res => console.l
                     type="text"
                     placeholder="RAM Label (e.g., 64GB RAM)"
                     value={newRamLabel}
-                    onChange={(e) => {
-                      // console.log('💾 New RAM Label Changed:', e.target.value);
-                      setNewRamLabel(e.target.value);
-                    }}
+                    onChange={(e) => setNewRamLabel(e.target.value)}
                     className="border border-gray-300 p-1 rounded text-sm w-40"
                   />
                   <input
                     type="number"
                     placeholder="Price"
                     value={newRamPrice}
-                    onChange={(e) => {
-                      console.log('💾 New RAM Price Changed:', e.target.value);
-                      setNewRamPrice(e.target.value);
-                    }}
+                    onChange={(e) => setNewRamPrice(e.target.value)}
                     className="border border-gray-300 p-1 rounded text-sm w-20"
                   />
                   <button 
@@ -699,20 +652,14 @@ const  res = await axios.post('/api/macbook', newProduct ).then(res => console.l
                     type="text"
                     placeholder="Display Label (e.g., 17 Inch Display)"
                     value={newDisplayLabel}
-                    onChange={(e) => {
-                      // console.log('🖥️ New Display Label Changed:', e.target.value);
-                      setNewDisplayLabel(e.target.value);
-                    }}
+                    onChange={(e) => setNewDisplayLabel(e.target.value)}
                     className="border border-gray-300 p-1 rounded text-sm w-40"
                   />
                   <input
                     type="number"
                     placeholder="Price"
                     value={newDisplayPrice}
-                    onChange={(e) => {
-                      console.log('🖥️ New Display Price Changed:', e.target.value);
-                      setNewDisplayPrice(e.target.value);
-                    }}
+                    onChange={(e) => setNewDisplayPrice(e.target.value)}
                     className="border border-gray-300 p-1 rounded text-sm w-20"
                   />
                   <button 
@@ -774,10 +721,7 @@ const  res = await axios.post('/api/macbook', newProduct ).then(res => console.l
                     className="border border-gray-300 p-2 rounded w-24"
                   />
                   <button 
-                    onClick={() => {
-                      console.log('🌍 Removing Region at index:', index);
-                      setDynamicProducts(prev => prev.filter((_, i) => i !== index));
-                    }}
+                    onClick={() => setDynamicProducts(prev => prev.filter((_, i) => i !== index))}
                     className="text-red-500 hover:text-red-700"
                   >
                     ×
@@ -817,6 +761,7 @@ const  res = await axios.post('/api/macbook', newProduct ).then(res => console.l
                   <button 
                     onClick={() => removeDetail(detail.id)}
                     className="text-red-500 hover:text-red-700"
+                    type="button"
                   >
                     ×
                   </button>
@@ -835,7 +780,6 @@ const  res = await axios.post('/api/macbook', newProduct ).then(res => console.l
                   >
                     + Add Second Detail
                   </button>
-                 
                 </div>
               </div>
         
@@ -858,6 +802,7 @@ const  res = await axios.post('/api/macbook', newProduct ).then(res => console.l
                   <button 
                     onClick={() => removeSecondDetail(detail.id)}
                     className="text-red-500 hover:text-red-700"
+                    type="button"
                   >
                     ×
                   </button>
@@ -896,11 +841,13 @@ const  res = await axios.post('/api/macbook', newProduct ).then(res => console.l
                       </div>
                       <div className="flex gap-2">
                         {product.colorImageConfigs.slice(0, 3).map((config) => (
-                          <img 
+                          <Image 
                             key={config.id} 
                             src={config.image} 
                             alt="product" 
-                            className="w-10 h-10 object-cover rounded border" 
+                            width={40} 
+                            height={40} 
+                            className="object-cover rounded border" 
                           />
                         ))}
                         {product.colorImageConfigs.length > 3 && (

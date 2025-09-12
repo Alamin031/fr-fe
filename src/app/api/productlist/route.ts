@@ -14,17 +14,9 @@ export async function POST(request: NextRequest) {
     await newProduct.save();
 
     return NextResponse.json({ message: "Product added successfully" }, { status: 201 });
-  } catch (error: any) {
+  } catch (error ) { 
     console.error("❌ Error adding product:", error);
 
-    if (error.code === 11000) {
-      return NextResponse.json({ message: "Duplicate SKU" }, { status: 409 });
-    }
-
-    if (error.name === "ValidationError") {
-      return NextResponse.json({ message: "Validation failed", errors: error.errors }, { status: 400 });
-    }
-
-    return NextResponse.json({ message: error.message || "Error adding product" }, { status: 500 });
+    
   }
 }

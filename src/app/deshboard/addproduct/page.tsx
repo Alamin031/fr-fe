@@ -1,6 +1,7 @@
 'use client'
 import axios from 'axios';
-import React, { useState, ChangeEvent, useEffect } from 'react';
+import React, { useState, ChangeEvent } from 'react';
+import Image from 'next/image';
 
 // Loading Spinner Component
 const LoadingSpinner: React.FC<{ size?: 'sm' | 'md' | 'lg' }> = ({ size = 'md' }) => {
@@ -24,9 +25,8 @@ type Config = { id: number; label: string; price: string; };
 type ColorImageConfig = { id: number; color: string; image: string; price: string; };
 type RegionConfig = { name: string; price: string; };
 type DetailConfig = { id: number; label: string; value: string; };
-type SecondConfig = { id: number; seconddetails: string; value: string; };
 
-// New Pre-order Configuration Type
+// Pre-order Configuration Type
 type PreOrderConfig = {
   isPreOrder: boolean;
   availabilityDate?: string;
@@ -35,29 +35,23 @@ type PreOrderConfig = {
   maxPreOrderQuantity?: number;
 };
 
+// Product Type
 type Product = { 
-  id: number; 
   name: string; 
   price: string; 
-  color: string; 
-  coreConfigs: Config[]; 
   storageConfigs: Config[]; 
-  ramConfigs: Config[]; 
-  displayConfigs: Config[]; 
   colorImageConfigs: ColorImageConfig[]; 
   dynamicRegions: RegionConfig[]; 
   details: DetailConfig[]; 
-  secondDetails: SecondConfig[];
   preOrderConfig: PreOrderConfig;
 };
 
 const DynamicProductForm: React.FC = () => {
-  const [products, setProducts] = useState<Product[]>([]);
+  // Product Info
   const [productName, setProductName] = useState('');
   const [productPrice, setProductPrice] = useState('');
-  const [productColor, setProductColor] = useState('#4a6cf7');
 
-  // Pre-order Configuration State
+  // Pre-order Configuration
   const [preOrderConfig, setPreOrderConfig] = useState<PreOrderConfig>({
     isPreOrder: false,
     availabilityDate: '',
@@ -66,45 +60,34 @@ const DynamicProductForm: React.FC = () => {
     maxPreOrderQuantity: 0
   });
 
-  
+  // Storage Configs
   const [storageConfigs, setStorageConfigs] = useState<Config[]>([
     { id: 1, label: '256GB Storage', price: '' },
     { id: 2, label: '512GB Storage', price: '' },
     { id: 3, label: '1TB Storage', price: '' },
     { id: 4, label: '2TB Storage', price: '' },
   ]);
- 
- 
-
-  // New RAM input states
-  const [newRamLabel, setNewRamLabel] = useState('');
-  const [newRamPrice, setNewRamPrice] = useState('');
-
-  // New Storage input states
   const [newStorageLabel, setNewStorageLabel] = useState('');
   const [newStoragePrice, setNewStoragePrice] = useState('');
 
-  // New Display input states
-  const [newDisplayLabel, setNewDisplayLabel] = useState('');
-  const [newDisplayPrice, setNewDisplayPrice] = useState('');
-
+  // Colors & Images
   const [colorImageConfigs, setColorImageConfigs] = useState<ColorImageConfig[]>([]);
   const [newColor, setNewColor] = useState('#4a6cf7');
-  const [newImageFile, setNewImageFile] = useState<File | null>(null);
   const [newImagePreview, setNewImagePreview] = useState<string | null>(null);
   const [newPrice, setNewPrice] = useState('');
   const [uploading, setUploading] = useState(false);
 
+  // Dynamic Regions
   const [dynamicProducts, setDynamicProducts] = useState<RegionConfig[]>([]);
-  const [details, setDetails] = useState<DetailConfig[]>([]);
-  const [secondDetails, setSecondDetails] = useState<SecondConfig[]>([]);
 
-  // Pre-order Handler
+  // Product Details
+  const [details, setDetails] = useState<DetailConfig[]>([]);
+
+  // Handlers
   const handlePreOrderToggle = (enabled: boolean) => {
     setPreOrderConfig(prev => ({
       ...prev,
       isPreOrder: enabled,
-      // Reset other fields when disabling pre-order
       ...(enabled ? {} : {
         availabilityDate: '',
         estimatedShipping: '',
@@ -114,114 +97,43 @@ const DynamicProductForm: React.FC = () => {
     }));
   };
 
-  // Add new RAM configuration
-  const handleAddRam = () => {
-    if (!newRamLabel || !newRamPrice) { 
-      alert('Please fill in both RAM label and price'); 
-      return; 
-    }
-    
-    const newRamConfig = { 
-      id: Date.now(), 
-      label: newRamLabel, 
-      price: parseFloat(newRamPrice).toFixed(2)
-    };
-    
-    setRamConfigs(prev => {
-      const updated = [...prev, newRamConfig];
-      return updated;
-    });
-    
-    // Reset form
-    setNewRamLabel(''); 
-    setNewRamPrice('');
-  };
-
-  // Remove RAM configuration
-  const handleRemoveRam = (id: number) => {
-    setRamConfigs(prev => {
-      const updated = prev.filter(config => config.id !== id);
-      return updated;
-    });
-  };
-
-  // Add new Storage configuration
   const handleAddStorage = () => {
     if (!newStorageLabel || !newStoragePrice) { 
       alert('Please fill in both Storage label and price'); 
       return; 
     }
-    
     const newStorageConfig = { 
       id: Date.now(), 
       label: newStorageLabel, 
       price: parseFloat(newStoragePrice).toFixed(2)
     };
-    
-    setStorageConfigs(prev => {
-      const updated = [...prev, newStorageConfig];
-      return updated;
-    });
-    
-    // Reset form
+    setStorageConfigs(prev => [...prev, newStorageConfig]);
     setNewStorageLabel(''); 
     setNewStoragePrice('');
   };
 
-  // Remove Storage configuration
   const handleRemoveStorage = (id: number) => {
-    setStorageConfigs(prev => {
-      const updated = prev.filter(config => config.id !== id);
-      return updated;
-    });
+    setStorageConfigs(prev => prev.filter(config => config.id !== id));
   };
 
-  // Add new Display configuration
-  const handleAddDisplay = () => {
-    if (!newDisplayLabel || !newDisplayPrice) { 
-      alert('Please fill in both Display label and price'); 
-      return; 
-    }
-    
-    const newDisplayConfig = { 
-      id: Date.now(), 
-      label: newDisplayLabel, 
-      price: parseFloat(newDisplayPrice).toFixed(2)
-    };
-    
-    setDisplayConfigs(prev => {
-      const updated = [...prev, newDisplayConfig];
-      return updated;
-    });
-    
-    // Reset form
-    setNewDisplayLabel(''); 
-    setNewDisplayPrice('');
+  const handleConfigChange = (
+    setter: React.Dispatch<React.SetStateAction<Config[]>>, 
+    id: number, 
+    value: string
+  ) => {
+    setter(prev => prev.map(cfg => cfg.id === id ? { ...cfg, price: value } : cfg));
   };
 
-  // Remove Display configuration
-  const handleRemoveDisplay = (id: number) => {
-    setDisplayConfigs(prev => {
-      const updated = prev.filter(config => config.id !== id);
-      return updated;
-    });
-  };
-
-  // Image upload with loading
   const handleNewImageUpload = async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    
     if (!file) return;
 
-    setNewImageFile(file);
     setUploading(true);
-    
     const reader = new FileReader();
     reader.readAsDataURL(file);
     reader.onloadend = async () => {
       if (typeof reader.result === 'string') {
         const base64File = reader.result.split(',')[1];
-        
         try {
           const res = await fetch('/api/imagekit_auth', {
             method: 'POST',
@@ -229,10 +141,7 @@ const DynamicProductForm: React.FC = () => {
             body: JSON.stringify({ file: base64File, fileName: file.name }),
           });
           const data = await res.json();
-          
-          if (data.url) {
-            setNewImagePreview(data.url);
-          }
+          if (data.url) setNewImagePreview(data.url);
         } catch (err) {
           console.error('📸 Image Upload Error:', err);
           alert('Image upload failed');
@@ -248,64 +157,20 @@ const DynamicProductForm: React.FC = () => {
       alert('Fill all fields'); 
       return; 
     }
-    
     const newColorConfig = { 
       id: Date.now(), 
       color: newColor, 
       image: newImagePreview, 
       price: parseFloat(newPrice).toFixed(2) 
     };
-    
-    setColorImageConfigs(prev => {
-      const updated = [...prev, newColorConfig];
-      return updated;
-    });
-    
-    // Reset form
+    setColorImageConfigs(prev => [...prev, newColorConfig]);
     setNewColor('#4a6cf7'); 
-    setNewImageFile(null); 
     setNewImagePreview(null); 
     setNewPrice('');
   };
 
-  const handleConfigChange = (
-    setter: React.Dispatch<React.SetStateAction<Config[]>>, 
-    id: number, 
-    value: string
-  ) => {
-    setter(prev => {
-      const updated = prev.map(cfg => cfg.id === id ? { ...cfg, price: value } : cfg);
-      return updated;
-    });
-  };
-
-  const handleAddProduct = async() => {
-    if (!productName || !productPrice) { 
-      alert('Enter name and price'); 
-      return; 
-    }
-    
-    const newProduct = { 
-      name: productName, 
-      basePrice: parseFloat(productPrice).toFixed(2), 
-      storageConfigs, 
-      colorImageConfigs, 
-      dynamicRegions: dynamicProducts, 
-      details,
-      preOrderConfig,
-      accessories : 'iphone'
-    };
-
-    const res = await axios.post('/api/productlist', newProduct)
-      .then(res => console.log(res.data))
-      .catch(err => console.log(err));
-  };
-
   const addRegion = () => {
-    setDynamicProducts(prev => {
-      const updated = [...prev, { name: '', price: '' }];
-      return updated;
-    });
+    setDynamicProducts(prev => [...prev, { name: '', price: '' }]);
   };
   
   const handleRegionChange = (index: number, field: 'name'|'price', value: string) => {
@@ -316,75 +181,36 @@ const DynamicProductForm: React.FC = () => {
   
   const addDetail = () => {
     const newDetail = { id: Date.now(), label: '', value: '' };
-    setDetails(prev => {
-      const updated = [...prev, newDetail];
-      return updated;
-    });
+    setDetails(prev => [...prev, newDetail]);
   };
   
   const handleDetailChange = (id: number, field: 'label'|'value', value: string) => {
-    setDetails(prev => {
-      const updated = prev.map(d => d.id === id ? {...d, [field]: value} : d);
-      return updated;
-    });
+    setDetails(prev => prev.map(d => d.id === id ? {...d, [field]: value} : d));
   };
   
   const removeDetail = (id: number) => {
-    setDetails(prev => {
-      const updated = prev.filter(d => d.id !== id);
-      return updated;
-    });
+    setDetails(prev => prev.filter(d => d.id !== id));
   };
 
-  const handleSecondButtonClick = () => {
-    const newDetail = { 
-      id: Date.now(), 
-      seconddetails: 'Sample Detail',
-      value: 'Sample Value' 
-    };
+  const handleAddProduct = async () => {
+    if (!productName || !productPrice) { 
+      alert('Enter name and price'); 
+      return; 
+    }
     
-    setSecondDetails(prev => {
-      const updated = [...prev, newDetail];
-      return updated;
-    });
-  };
+    const newProduct: Product = { 
+      name: productName, 
+      price: parseFloat(productPrice).toFixed(2), 
+      storageConfigs, 
+      colorImageConfigs, 
+      dynamicRegions: dynamicProducts, 
+      details,
+      preOrderConfig
+    };
 
-  const addSecondDetail = () => {
-    const newDetail = { id: Date.now(), seconddetails: '', value: '' };
-    setSecondDetails(prev => {
-      const updated = [...prev, newDetail];
-      return updated;
-    });
-  };
-
-  const handleSecondDetailChange = (id: number, field: 'seconddetails'|'value', value: string) => {
-    setSecondDetails(prev => {
-      const updated = prev.map(d => d.id === id ? {...d, [field]: value} : d);
-      return updated;
-    });
-  };
-
-  const removeSecondDetail = (id: number) => {
-    setSecondDetails(prev => {
-      const updated = prev.filter(d => d.id !== id);
-      return updated;
-    });
-  };
-
-  // Log form field changes
-  const handleProductNameChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setProductName(value);
-  };
-
-  const handleProductPriceChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setProductPrice(value);
-  };
-
-  const handleProductColorChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setProductColor(value);
+    await axios.post('/api/productlist', newProduct)
+      .then(res => console.log(res.data))
+      .catch(err => console.log(err));
   };
 
   return (
@@ -396,22 +222,23 @@ const DynamicProductForm: React.FC = () => {
         
         <div className="p-8">
           <div className="bg-gray-100 p-6 rounded-xl mb-6">
+            {/* Product Name & Price */}
             <input 
               type="text" 
               value={productName} 
-              onChange={handleProductNameChange} 
+              onChange={(e) => setProductName(e.target.value)} 
               placeholder="Product Name" 
               className="w-full p-3 border-2 border-gray-300 rounded-lg mb-2" 
             />
             <input 
               type="number" 
               value={productPrice} 
-              onChange={handleProductPriceChange} 
+              onChange={(e) => setProductPrice(e.target.value)} 
               placeholder="Price" 
               className="w-full p-3 border-2 border-gray-300 rounded-lg mb-4" 
             />
 
-            {/* Pre-order Configuration Section */}
+            {/* Pre-order Configuration */}
             <div className="mb-6 bg-blue-50 p-4 rounded-lg border-2 border-blue-200">
               <div className="flex items-center gap-3 mb-4">
                 <input
@@ -424,522 +251,95 @@ const DynamicProductForm: React.FC = () => {
                 <label htmlFor="preOrderToggle" className="font-semibold text-gray-700 cursor-pointer">
                   Enable Pre-order
                 </label>
-                {preOrderConfig.isPreOrder && (
-                  <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded-full">
-                    PRE-ORDER ENABLED
-                  </span>
-                )}
               </div>
-
               {preOrderConfig.isPreOrder && (
-                <div className="space-y-4 transition-all duration-300 ease-in-out">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {/* Availability Date */}
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Expected Availability Date
-                      </label>
-                      <input
-                        type="date"
-                        value={preOrderConfig.availabilityDate}
-                        onChange={(e) => setPreOrderConfig(prev => ({
-                          ...prev,
-                          availabilityDate: e.target.value
-                        }))}
-                        className="w-full p-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none"
-                      />
-                    </div>
-
-                    {/* Estimated Shipping */}
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Estimated Shipping Time
-                      </label>
-                      <select
-                        value={preOrderConfig.estimatedShipping}
-                        onChange={(e) => setPreOrderConfig(prev => ({
-                          ...prev,
-                          estimatedShipping: e.target.value
-                        }))}
-                        className="w-full p-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none"
-                      >
-                        <option value="">Select shipping time</option>
-                        <option value="1-2 weeks">1-2 weeks</option>
-                        <option value="3-4 weeks">3-4 weeks</option>
-                        <option value="1-2 months">1-2 months</option>
-                        <option value="2-3 months">2-3 months</option>
-                        <option value="3-6 months">3-6 months</option>
-                        <option value="6+ months">6+ months</option>
-                      </select>
-                    </div>
-
-                    {/* Pre-order Discount */}
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Pre-order Discount (%)
-                      </label>
-                      <input
-                        type="number"
-                        min="0"
-                        max="50"
-                        step="1"
-                        value={preOrderConfig.preOrderDiscount || ''}
-                        onChange={(e) => setPreOrderConfig(prev => ({
-                          ...prev,
-                          preOrderDiscount: parseFloat(e.target.value) || 0
-                        }))}
-                        placeholder="e.g., 10 for 10% off"
-                        className="w-full p-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none"
-                      />
-                    </div>
-
-                    {/* Max Pre-order Quantity */}
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Max Pre-order Quantity
-                      </label>
-                      <input
-                        type="number"
-                        min="1"
-                        step="1"
-                        value={preOrderConfig.maxPreOrderQuantity || ''}
-                        onChange={(e) => setPreOrderConfig(prev => ({
-                          ...prev,
-                          maxPreOrderQuantity: parseInt(e.target.value) || 0
-                        }))}
-                        placeholder="e.g., 100"
-                        className="w-full p-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Pre-order Summary */}
-                  <div className="bg-white p-3 rounded-lg border border-blue-200">
-                    <h4 className="font-medium text-gray-700 mb-2">Pre-order Summary:</h4>
-                    <div className="text-sm text-gray-600 space-y-1">
-                      <p>• Available: {preOrderConfig.availabilityDate || 'Not set'}</p>
-                      <p>• Shipping: {preOrderConfig.estimatedShipping || 'Not set'}</p>
-                      <p>• Discount: {preOrderConfig.preOrderDiscount || 0}%</p>
-                      <p>• Max Quantity: {preOrderConfig.maxPreOrderQuantity || 'Unlimited'}</p>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            <div className="mb-4">
-              <label className="font-semibold text-gray-700">Colors & Images</label>
-              <div className="flex items-center gap-2">
-                <input 
-                  type="color" 
-                  value={newColor} 
-                  onChange={(e) => {
-                    console.log('🎨 New Color Changed:', e.target.value);
-                    setNewColor(e.target.value);
-                  }} 
-                  className="w-16 h-10" 
-                />
-                <div 
-                  onClick={() => document.getElementById('newColorImage')?.click()} 
-                  className="border-2 border-dashed p-2 rounded cursor-pointer w-20 h-20 flex items-center justify-center"
-                >
-                  {uploading ? (
-                    <div className="flex flex-col items-center justify-center">
-                      <LoadingSpinner size="sm" />
-                      <span className="text-xs text-gray-500 mt-1">Uploading...</span>
-                    </div>
-                  ) : (
-                    newImagePreview ? 
-                      <img src={newImagePreview} alt="preview" className="w-16 h-16 object-cover rounded" /> : 
-                      <span className="text-gray-500 text-sm text-center">Click to Upload</span>
-                  )}
-                  <input 
-                    type="file" 
-                    id="newColorImage" 
-                    accept="image/*" 
-                    onChange={handleNewImageUpload} 
-                    className="hidden" 
+                <div className="space-y-4">
+                  <input
+                    type="date"
+                    value={preOrderConfig.availabilityDate}
+                    onChange={(e) => setPreOrderConfig(prev => ({ ...prev, availabilityDate: e.target.value }))}
+                    className="w-full p-3 border-2 border-gray-300 rounded-lg mb-2"
+                  />
+                  <input
+                    type="number"
+                    placeholder="Pre-order Discount"
+                    value={preOrderConfig.preOrderDiscount || ''}
+                    onChange={(e) => setPreOrderConfig(prev => ({ ...prev, preOrderDiscount: parseFloat(e.target.value) || 0 }))}
+                    className="w-full p-3 border-2 border-gray-300 rounded-lg mb-2"
                   />
                 </div>
-                <input 
-                  type="number" 
-                  placeholder="Price" 
-                  value={newPrice} 
-                  onChange={(e) => {
-                    setNewPrice(e.target.value);
-                  }} 
-                  className="border-2 border-gray-300 p-2 rounded flex-1" 
-                />
-                <button 
-                  onClick={handleAddColorImage} 
-                  className=" text-white px-3 py-1 rounded hover:bg-green-600 transition-colors bg-amber-500"
-                >
-                  + Add
-                </button>
-              </div>
-              
-              {/* Display added color/image configs */}
-              {colorImageConfigs.length > 0 && (
-                <div className="mt-4">
-                  <h4 className="font-medium text-gray-700 mb-2">Added Colors & Images:</h4>
-                  <div className="flex flex-wrap gap-2">
-                    {colorImageConfigs.map((config) => (
-                      <div key={config.id} className="flex items-center gap-2 bg-white p-2 rounded border">
-                        <div 
-                          className="w-6 h-6 rounded border-2 border-gray-300" 
-                          style={{ backgroundColor: config.color }}
-                        ></div>
-                        <img src={config.image} alt="product" className="w-8 h-8 object-cover rounded" />
-                        <span className="text-sm font-medium">{config.price}</span>
-                        <button 
-                          onClick={() => {
-                            console.log('🎨 Removing Color Config:', config.id);
-                            setColorImageConfigs(prev => prev.filter(c => c.id !== config.id));
-                          }}
-                          className="text-red-500 hover:text-red-700 text-sm"
-                        >
-                          ×
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
               )}
             </div>
 
-            {/* Storage Configs Section - Enhanced with Add/Remove functionality */}
+            {/* Colors & Images */}
+            <div className="mb-4">
+              <label className="font-semibold text-gray-700">Colors & Images</label>
+              <div className="flex items-center gap-2 mt-2">
+                <input type="color" value={newColor} onChange={(e) => setNewColor(e.target.value)} className="w-16 h-10" />
+                <div onClick={() => document.getElementById('newColorImage')?.click()} className="border-2 border-dashed p-2 rounded cursor-pointer w-20 h-20 flex items-center justify-center">
+                  {uploading ? <LoadingSpinner size="sm" /> : newImagePreview ? <Image src={newImagePreview} width={64} height={64} alt="preview" className="rounded" /> : <span className="text-gray-500 text-sm text-center">Click to Upload</span>}
+                  <input type="file" id="newColorImage" accept="image/*" onChange={handleNewImageUpload} className="hidden" />
+                </div>
+                <input type="number" placeholder="Price" value={newPrice} onChange={(e) => setNewPrice(e.target.value)} className="border-2 border-gray-300 p-2 rounded flex-1" />
+                <button onClick={handleAddColorImage} className="text-white px-3 py-1 rounded hover:bg-green-600 transition-colors bg-amber-500">+ Add</button>
+              </div>
+            </div>
+
+            {/* Storage Configs */}
             <div className="mb-4">
               <div className="flex items-center justify-between mb-2">
                 <label className="font-semibold text-gray-700">Storage Configurations</label>
                 <div className="flex items-center gap-2">
-                  <input
-                    type="text"
-                    placeholder="Storage Label (e.g., 4TB SSD)"
-                    value={newStorageLabel}
-                    required
-                    onChange={(e) => {
-                      setNewStorageLabel(e.target.value);
-                    }}
-                    className="border border-gray-300 p-1 rounded text-sm w-40"
-                  />
-                  <input
-                    type="number"
-                    placeholder="Price"
-                    value={newStoragePrice}
-                    onChange={(e) => {
-                      setNewStoragePrice(e.target.value);
-                    }}
-                    className="border border-gray-300 p-1 rounded text-sm w-20"
-                  />
-                  <button 
-                    onClick={handleAddStorage} 
-                    className=" text-white px-3 py-1 rounded text-sm hover:bg-emerald-600 transition-colors bg-amber-500"
-                  >
-                    + Add Storage
-                  </button>
+                  <input type="text" placeholder="Storage Label" value={newStorageLabel} onChange={(e) => setNewStorageLabel(e.target.value)} className="border border-gray-300 p-1 rounded text-sm w-40" />
+                  <input type="number" placeholder="Price" value={newStoragePrice} onChange={(e) => setNewStoragePrice(e.target.value)} className="border border-gray-300 p-1 rounded text-sm w-20" />
+                  <button onClick={handleAddStorage} className="text-white px-3 py-1 rounded text-sm hover:bg-emerald-600 transition-colors bg-amber-500">+ Add Storage</button>
                 </div>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                 {storageConfigs.map((config) => (
                   <div key={config.id} className="flex items-center gap-2 bg-white p-2 rounded border">
                     <span className="text-sm text-gray-600 flex-1">{config.label}</span>
-                    <input
-                      type="number"
-                      placeholder="Price"
-                      value={config.price}
-                      onChange={(e) => handleConfigChange(setStorageConfigs, config.id, e.target.value)}
-                      className="border border-gray-300 p-1 rounded w-20 text-sm"
-                    />
-                    <button 
-                      onClick={() => handleRemoveStorage(config.id)}
-                      className="text-red-500 hover:text-red-700 text-sm font-bold"
-                    >
-                      ×
-                    </button>
+                    <input type="number" placeholder="Price" value={config.price} onChange={(e) => handleConfigChange(setStorageConfigs, config.id, e.target.value)} className="border border-gray-300 p-1 rounded w-20 text-sm" />
+                    <button onClick={() => handleRemoveStorage(config.id)} className="text-red-500 hover:text-red-700 text-sm font-bold">×</button>
                   </div>
                 ))}
               </div>
             </div>
 
-            {/* RAM Configs Section - Enhanced with Add/Remove functionality */}
-            <div className="mb-4">
-              {/* <div className="flex items-center justify-between mb-2">
-                <label className="font-semibold text-gray-700">RAM Configurations</label>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="text"
-                    placeholder="RAM Label (e.g., 64GB RAM)"
-                    value={newRamLabel}
-                    onChange={(e) => {
-                      setNewRamLabel(e.target.value);
-                    }}
-                    className="border border-gray-300 p-1 rounded text-sm w-40"
-                  />
-                  <input
-                    type="number"
-                    placeholder="Price"
-                    value={newRamPrice}
-                    onChange={(e) => {
-                      // console.log('💾 New RAM Price Changed:', e.target.value);
-                      setNewRamPrice(e.target.value);
-                    }}
-                    className="border border-gray-300 p-1 rounded text-sm w-20"
-                  />
-                  <button 
-                    onClick={handleAddRam} 
-                    className=" text-white px-3 py-1 rounded text-sm hover:bg-indigo-600 transition-colors bg-amber-500"
-                  >
-                    + Add RAM
-                  </button>
-                </div>
-              </div> */}
-              {/* <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-                {ramConfigs.map((config) => (
-                  <div key={config.id} className="flex items-center gap-2 bg-white p-2 rounded border">
-                    <span className="text-sm text-gray-600 flex-1">{config.label}</span>
-                    <input
-                      type="number"
-                      placeholder="Price"
-                      required
-                      value={config.price}
-                      onChange={(e) => handleConfigChange(setRamConfigs, config.id, e.target.value)}
-                      className="border border-gray-300 p-1 rounded w-20 text-sm"
-                    />
-                    <button 
-                      onClick={() => handleRemoveRam(config.id)}
-                      className="text-red-500 hover:text-red-700 text-sm font-bold"
-                    >
-                      ×
-                    </button>
-                  </div>
-                ))}
-              </div> */}
-            </div>
-
-            {/* Display Configs Section - Enhanced with Add/Remove functionality */}
-            <div className="mb-4">
-              {/* <div className="flex items-center justify-between mb-2">
-                <label className="font-semibold text-gray-700">Display Configurations</label>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="text"
-                    placeholder="Display Label (e.g., 17 Inch Display)"
-                    value={newDisplayLabel}
-                    onChange={(e) => {
-                      setNewDisplayLabel(e.target.value);
-                    }}
-                    className="border border-gray-300 p-1 rounded text-sm w-40"
-                  />
-                  <input
-                    type="number"
-                    placeholder="Price"
-                    value={newDisplayPrice}
-                    onChange={(e) => {
-                      // console.log('🖥️ New Display Price Changed:', e.target.value);
-                      setNewDisplayPrice(e.target.value);
-                    }}
-                    className="border border-gray-300 p-1 rounded text-sm w-20"
-                  />
-                  <button 
-                    onClick={handleAddDisplay} 
-                    className=" text-white px-3 py-1 rounded text-sm hover:bg-cyan-600 transition-colors bg-amber-500"
-                  >
-                    + Add Display
-                  </button>
-                </div>
-              </div> */}
-              {/* <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                {displayConfigs.map((config) => (
-                  <div key={config.id} className="flex items-center gap-2 bg-white p-2 rounded border">
-                    <span className="text-sm text-gray-600 flex-1">{config.label}</span>
-                    <input
-                      type="number"
-                      placeholder="Price"
-                      required
-                      value={config.price}
-                      onChange={(e) => handleConfigChange(setDisplayConfigs, config.id, e.target.value)}
-                      className="border border-gray-300 p-1 rounded w-20 text-sm"
-                    />
-                    <button 
-                      onClick={() => handleRemoveDisplay(config.id)}
-                      className="text-red-500 hover:text-red-700 text-sm font-bold"
-                    >
-                      ×
-                    </button>
-                  </div>
-                ))}
-              </div> */}
-            </div>
-
-            {/* Dynamic Regions Section */}
+            {/* Dynamic Regions */}
             <div className="mb-4">
               <div className="flex items-center justify-between mb-2">
                 <label className="font-semibold text-gray-700">Dynamic Regions</label>
-                <button 
-                  onClick={addRegion} 
-                  className=" text-white px-3 py-1 rounded text-sm hover:bg-blue-600 transition-colors bg-amber-500"
-                >
-                  + Add Region
-                </button>
+                <button onClick={addRegion} className="text-white px-3 py-1 rounded text-sm hover:bg-blue-600 transition-colors bg-amber-500">+ Add Region</button>
               </div>
               {dynamicProducts.map((region, index) => (
                 <div key={index} className="flex items-center gap-2 mb-2">
-                  <input
-                    type="text"
-                    placeholder="Region Name"
-                    value={region.name}
-                    onChange={(e) => handleRegionChange(index, 'name', e.target.value)}
-                    className="border border-gray-300 p-2 rounded flex-1"
-                  />
-                  <input
-                    type="number"
-                    placeholder="Price"
-                    value={region.price}
-                    onChange={(e) => handleRegionChange(index, 'price', e.target.value)}
-                    className="border border-gray-300 p-2 rounded w-24"
-                  />
-                  <button 
-                    onClick={() => {
-                      console.log('🌍 Removing Region at index:', index);
-                      setDynamicProducts(prev => prev.filter((_, i) => i !== index));
-                    }}
-                    className="text-red-500 hover:text-red-700"
-                  >
-                    ×
-                  </button>
+                  <input type="text" placeholder="Region Name" value={region.name} onChange={(e) => handleRegionChange(index, 'name', e.target.value)} className="border border-gray-300 p-2 rounded flex-1" />
+                  <input type="number" placeholder="Price" value={region.price} onChange={(e) => handleRegionChange(index, 'price', e.target.value)} className="border border-gray-300 p-2 rounded w-24" />
+                  <button onClick={() => setDynamicProducts(prev => prev.filter((_, i) => i !== index))} className="text-red-500 hover:text-red-700">×</button>
                 </div>
               ))}
             </div>
 
-            {/* Details Section */}
+            {/* Product Details */}
             <div className="mb-4">
               <div className="flex items-center justify-between mb-2">
                 <label className="font-semibold text-gray-700">Product Details</label>
-                <button 
-                  onClick={addDetail} 
-                  className=" text-white px-3 py-1 rounded text-sm hover:bg-purple-600 transition-colors bg-amber-500"
-                >
-                  + Add Detail
-                </button>
+                <button onClick={addDetail} className="text-white px-3 py-1 rounded text-sm hover:bg-purple-600 transition-colors bg-amber-500">+ Add Detail</button>
               </div>
-        
               {details.map((detail) => (
                 <div key={detail.id} className="flex items-center gap-2 mb-2">
-                  <input
-                    type="text"
-                    placeholder="Label"
-                    value={detail.label}
-                    onChange={(e) => handleDetailChange(detail.id, 'label', e.target.value)}
-                    className="border border-gray-300 p-2 rounded flex-1"
-                  />
-                  <input
-                    type="text"
-                    placeholder="Value"
-                    value={detail.value}
-                    onChange={(e) => handleDetailChange(detail.id, 'value', e.target.value)}
-                    className="border border-gray-300 p-2 rounded flex-1"
-                  />
-                  <button 
-                    onClick={() => removeDetail(detail.id)}
-                    className="text-red-500 hover:text-red-700"
-                  >
-                    ×
-                  </button>
+                  <input type="text" placeholder="Label" value={detail.label} onChange={(e) => handleDetailChange(detail.id, 'label', e.target.value)} className="border border-gray-300 p-2 rounded flex-1" />
+                  <input type="text" placeholder="Value" value={detail.value} onChange={(e) => handleDetailChange(detail.id, 'value', e.target.value)} className="border border-gray-300 p-2 rounded flex-1" />
+                  <button onClick={() => removeDetail(detail.id)} className="text-red-500 hover:text-red-700">×</button>
                 </div>
               ))}
             </div>
 
-            {/* Second Details Section */}
-             
-            <button 
-              onClick={handleAddProduct} 
-              className="w-full bg-amber-600 text-white py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium"
-            >
-              + Add Product
-            </button>
+            <button onClick={handleAddProduct} className="w-full bg-amber-600 text-white py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium">+ Add Product</button>
           </div>
-          
-          {/* Display added products */}
-          {products.length > 0 && (
-            <div className="bg-gray-50 p-6 rounded-xl">
-              <h3 className="text-lg font-bold text-gray-800 mb-4">Added Products ({products.length})</h3>
-              <div className="space-y-4">
-                {products.map((product) => (
-                  <div key={product.id} className="bg-white p-4 rounded-lg border shadow-sm">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <div className="flex items-center gap-2 mb-1">
-                          <h4 className="font-semibold text-gray-800">{product.name}</h4>
-                          {product.preOrderConfig?.isPreOrder && (
-                            <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded-full">
-                              PRE-ORDER
-                            </span>
-                          )}
-                        </div>
-                        <p className="text-gray-600">Base Price: ${product.price}</p>
-                        {product.preOrderConfig?.isPreOrder && (
-                          <div className="text-sm text-blue-600 mt-1">
-                            <p>Available: {product.preOrderConfig.availabilityDate}</p>
-                            <p>Shipping: {product.preOrderConfig.estimatedShipping}</p>
-                            {product.preOrderConfig.preOrderDiscount > 0 && (
-                              <p>Discount: {product.preOrderConfig.preOrderDiscount}%</p>
-                            )}
-                          </div>
-                        )}
-                        <p className="text-sm text-gray-500">
-                          Colors: {product.colorImageConfigs.length} | 
-                          Storage: {product.storageConfigs.length} |
-                          Regions: {product.dynamicRegions.length} | 
-                          RAM Configs: {product.ramConfigs.length} |
-                          Display Configs: {product.displayConfigs.length} |
-                          Details: {product.details.length} | 
-                          Second Details: {product.secondDetails.length}
-                        </p>
-                      </div>
-                      <div className="flex gap-2">
-                        {product.colorImageConfigs.slice(0, 3).map((config) => (
-                          <img 
-                            key={config.id} 
-                            src={config.image} 
-                            alt="product" 
-                            className="w-10 h-10 object-cover rounded border" 
-                          />
-                        ))}
-                        {product.colorImageConfigs.length > 3 && (
-                          <div className="w-10 h-10 bg-gray-200 rounded border flex items-center justify-center text-xs">
-                            +{product.colorImageConfigs.length - 3}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
         </div>
       </div>
-
-      <style jsx>{`
-        .transition-all {
-          transition: all 0.3s ease-in-out;
-        }
-        
-        @keyframes fadeIn {
-          from {
-            opacity: 0;
-            transform: translateY(-10px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-        
-        .animate-fadeIn {
-          animation: fadeIn 0.3s ease-in-out;
-        }
-      `}</style>
     </div>
   );
 };

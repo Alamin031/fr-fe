@@ -31,10 +31,10 @@ const AppleNavbar = () => {
     setIsMobileSearchOpen(false);
   };
 
-  const handleSearchSubmit = (e) => {
-    e.preventDefault();
-    handleSearch(searchQuery);
-  };
+  // const handleSearchSubmit = (e) => {
+  //   e.preventDefault();
+  //   handleSearch(searchQuery);
+  // };
 
   const navigationLinks = [
     { name: 'iPhone', href: '/category/iphone' },
