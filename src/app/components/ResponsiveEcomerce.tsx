@@ -24,7 +24,7 @@ const AppleNavbar = () => {
   }, [searchParams]);
 
   // Handle search functionality
-  const handleSearch = (query) => {
+  const handleSearch = (query: string): void => {
     if (query.trim()) {
       router.push(`/search?q=${encodeURIComponent(query.trim())}`);
     }
