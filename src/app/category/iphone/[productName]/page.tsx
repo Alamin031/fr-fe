@@ -17,9 +17,9 @@ import AppleLogo from "@/components/ui/AppleLogo";
 import WhatsappLogo from "@/components/ui/WhatsappLogo";
 
 interface PageProps {
-  params: {
+  params: Promise<{
     productName: string;
-  };
+  }>;
 }
 
 interface ColorImageConfig {
@@ -60,7 +60,10 @@ interface Product {
   updatedAt: string;
 }
 
-export default function Page({ params: { productName } }: PageProps) {
+export default function Page({ params }: PageProps) {
+  // Unwrap the params Promise using React.use()
+const { productName } = React.use(params);
+     
   const urlEndpoint = process.env.NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT;
 
   const [product, setProduct] = useState<Product | null>(null);
@@ -70,7 +73,7 @@ export default function Page({ params: { productName } }: PageProps) {
   const [selectedStorageIndex, setSelectedStorageIndex] = useState(0);
   const [selectedRegionIndex, setSelectedRegionIndex] = useState(0);
   const [quantity, setQuantity] = useState(1);
-  const [imageError, setImageError] = useState<Record<number, boolean>>({});
+  // const [imageError, setImageError] = useState<Record<number, boolean>>({});
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -545,5 +548,4 @@ export default function Page({ params: { productName } }: PageProps) {
         </div>
       </div>
     </ImageKitProvider>
-  );
-}
+  )};

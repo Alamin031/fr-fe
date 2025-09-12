@@ -18,7 +18,12 @@ export async function POST(req: Request) {
     const response = await imagekit.upload({ file, fileName });
 
     return NextResponse.json(response);
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  } catch (error: unknown) {
+    // Safely handle unknown error
+    let message = "Unknown error occurred";
+    if (error instanceof Error) {
+      message = error.message;
+    }
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
