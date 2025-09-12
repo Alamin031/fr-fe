@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { connect } from "@/dbconfig/dbconfig";
-import Product from "@/models/ProductModels";
+import Product from "@/models/productmacbookModels";
 
 export async function POST(request: NextRequest) {
   try {

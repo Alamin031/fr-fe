@@ -10,22 +10,23 @@ import {
   Settings, 
   FileText, 
   Mail, 
-  Calendar,
-  PlusSquare,   // ✅ added for Add Product
+  PlusSquare,   
 } from 'lucide-react';
 
 const NavSidebar = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const pathname = usePathname();
 
-  const menuItems = [
-    { name: 'Dashboard', icon: Home, href: '/' },
-    { name: 'Users', icon: Users, href: '/users' },
-    { name: 'Analytics', icon: BarChart3, href: '/analytics' },
-    { name: 'Reports', icon: FileText, href: '/reports' },
-    { name: 'Messages', icon: Mail, href: '/messages' },
-    { name: 'Add Product', icon: PlusSquare, href: '/deshboard/addproduct' }, // ✅ new nav item
-  ];
+const menuItems = [
+  { name: 'Dashboard', icon: Home, href: '/' },
+  { name: 'Users', icon: Users, href: '/users' },
+  { name: 'Analytics', icon: BarChart3, href: '/analytics' },
+  { name: 'Reports', icon: FileText, href: '/reports' },
+  { name: 'Messages', icon: Mail, href: '/messages' },
+  { name: 'Add Product', icon: PlusSquare, href: '/deshboard/addproduct' }, // ✅ new nav item
+  { name: 'Macbook', icon: Settings, href: '/deshboard/macbookadd' }, // ✅ added Macbook nav item
+];
+
 
   const isActive = (href: string) => pathname === href;
 

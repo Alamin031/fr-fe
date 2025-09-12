@@ -25,16 +25,6 @@ type ColorImageConfig = { id: number; color: string; image: string; price: strin
 type RegionConfig = { name: string; price: string; };
 type DetailConfig = { id: number; label: string; value: string; };
 type SecondConfig = { id: number; seconddetails: string; value: string; };
-
-// New Pre-order Configuration Type
-type PreOrderConfig = {
-  isPreOrder: boolean;
-  availabilityDate?: string;
-  estimatedShipping?: string;
-  preOrderDiscount?: number;
-  maxPreOrderQuantity?: number;
-};
-
 type Product = { 
   id: number; 
   name: string; 
@@ -48,7 +38,6 @@ type Product = {
   dynamicRegions: RegionConfig[]; 
   details: DetailConfig[]; 
   secondDetails: SecondConfig[];
-  preOrderConfig: PreOrderConfig;
 };
 
 const DynamicProductForm: React.FC = () => {
@@ -57,24 +46,25 @@ const DynamicProductForm: React.FC = () => {
   const [productPrice, setProductPrice] = useState('');
   const [productColor, setProductColor] = useState('#4a6cf7');
 
-  // Pre-order Configuration State
-  const [preOrderConfig, setPreOrderConfig] = useState<PreOrderConfig>({
-    isPreOrder: false,
-    availabilityDate: '',
-    estimatedShipping: '',
-    preOrderDiscount: 0,
-    maxPreOrderQuantity: 0
-  });
-
-  
+  const [coreConfigs, setCoreConfigs] = useState<Config[]>([
+    { id: 2, label: '8-core GPU', price: '' },
+    { id: 3, label: '10-core GPU', price: '' },
+  ]);
   const [storageConfigs, setStorageConfigs] = useState<Config[]>([
     { id: 1, label: '256GB Storage', price: '' },
     { id: 2, label: '512GB Storage', price: '' },
     { id: 3, label: '1TB Storage', price: '' },
     { id: 4, label: '2TB Storage', price: '' },
   ]);
- 
- 
+  const [ramConfigs, setRamConfigs] = useState<Config[]>([
+    { id: 1, label: '16GB RAM', price: '' },
+    { id: 2, label: '24GB RAM', price: '' },
+    { id: 3, label: '32GB RAM', price: '' },
+  ]);
+  const [displayConfigs, setDisplayConfigs] = useState<Config[]>([
+    { id: 1, label: '13.6" Display', price: '' },
+    { id: 2, label: '15.3" Display', price: '' },
+  ]);
 
   // New RAM input states
   const [newRamLabel, setNewRamLabel] = useState('');
@@ -99,23 +89,16 @@ const DynamicProductForm: React.FC = () => {
   const [details, setDetails] = useState<DetailConfig[]>([]);
   const [secondDetails, setSecondDetails] = useState<SecondConfig[]>([]);
 
-  // Pre-order Handler
-  const handlePreOrderToggle = (enabled: boolean) => {
-    setPreOrderConfig(prev => ({
-      ...prev,
-      isPreOrder: enabled,
-      // Reset other fields when disabling pre-order
-      ...(enabled ? {} : {
-        availabilityDate: '',
-        estimatedShipping: '',
-        preOrderDiscount: 0,
-        maxPreOrderQuantity: 0
-      })
-    }));
-  };
+  // ==================== CONSOLE LOGGING ====================
 
+  // Log all data whenever component mounts or key state changes
+  
+  // Log specific data changes
+ 
   // Add new RAM configuration
   const handleAddRam = () => {
+  
+    
     if (!newRamLabel || !newRamPrice) { 
       alert('Please fill in both RAM label and price'); 
       return; 
@@ -126,6 +109,7 @@ const DynamicProductForm: React.FC = () => {
       label: newRamLabel, 
       price: parseFloat(newRamPrice).toFixed(2)
     };
+    
     
     setRamConfigs(prev => {
       const updated = [...prev, newRamConfig];
@@ -139,6 +123,7 @@ const DynamicProductForm: React.FC = () => {
 
   // Remove RAM configuration
   const handleRemoveRam = (id: number) => {
+    console.log('💾 Removing RAM Config:', id);
     setRamConfigs(prev => {
       const updated = prev.filter(config => config.id !== id);
       return updated;
@@ -147,6 +132,8 @@ const DynamicProductForm: React.FC = () => {
 
   // Add new Storage configuration
   const handleAddStorage = () => {
+    
+    
     if (!newStorageLabel || !newStoragePrice) { 
       alert('Please fill in both Storage label and price'); 
       return; 
@@ -157,6 +144,7 @@ const DynamicProductForm: React.FC = () => {
       label: newStorageLabel, 
       price: parseFloat(newStoragePrice).toFixed(2)
     };
+    
     
     setStorageConfigs(prev => {
       const updated = [...prev, newStorageConfig];
@@ -178,6 +166,8 @@ const DynamicProductForm: React.FC = () => {
 
   // Add new Display configuration
   const handleAddDisplay = () => {
+  
+    
     if (!newDisplayLabel || !newDisplayPrice) { 
       alert('Please fill in both Display label and price'); 
       return; 
@@ -188,6 +178,8 @@ const DynamicProductForm: React.FC = () => {
       label: newDisplayLabel, 
       price: parseFloat(newDisplayPrice).toFixed(2)
     };
+    
+    // console.log('🖥️ New Display Config Created:', newDisplayConfig);
     
     setDisplayConfigs(prev => {
       const updated = [...prev, newDisplayConfig];
@@ -244,6 +236,7 @@ const DynamicProductForm: React.FC = () => {
   };
 
   const handleAddColorImage = () => {
+    
     if (!newColor || !newImagePreview || !newPrice) { 
       alert('Fill all fields'); 
       return; 
@@ -273,6 +266,8 @@ const DynamicProductForm: React.FC = () => {
     id: number, 
     value: string
   ) => {
+    
+    
     setter(prev => {
       const updated = prev.map(cfg => cfg.id === id ? { ...cfg, price: value } : cfg);
       return updated;
@@ -280,41 +275,107 @@ const DynamicProductForm: React.FC = () => {
   };
 
   const handleAddProduct = async() => {
+ 
+    
     if (!productName || !productPrice) { 
       alert('Enter name and price'); 
       return; 
+      
     }
+    
     
     const newProduct = { 
       name: productName, 
       basePrice: parseFloat(productPrice).toFixed(2), 
+      coreConfigs, 
       storageConfigs, 
+      ramConfigs, 
+      displayConfigs, 
       colorImageConfigs, 
       dynamicRegions: dynamicProducts, 
       details,
-      preOrderConfig,
-      accessories : 'iphone'
+      secondDetails
     };
+//  await fetch("/api/getproduct/macbookcreate", {
+//   method: "POST",
+//   headers: { "Content-Type": "application/json" },
+//   body: JSON.stringify(newProduct),
+// });
 
-    const res = await axios.post('/api/productlist', newProduct)
-      .then(res => console.log(res.data))
-      .catch(err => console.log(err));
+
+const  res = await axios.post('/api/macbook', newProduct ).then(res => console.log(res.data)).catch(err =>  console.log(err))
+
+
+
+    
+    // console.log('📦 New Product Created:', newProduct);
+    
+   
+    
+    // resetForm();
   };
 
+  // const resetForm = () => {
+  //   console.log('🔄 Resetting Form...');
+    
+  //   setProductName(''); 
+  //   setProductPrice(''); 
+  //   setProductColor('#4a6cf7');
+  //   setCoreConfigs([
+  //     { id: 1, label: '10-core CPU', price: '' }, 
+  //     { id: 2, label: '8-core GPU', price: '' }, 
+  //     { id: 3, label: '10-core GPU', price: '' }
+  //   ]);
+  //   setStorageConfigs([
+  //     { id: 1, label: '256GB Storage', price: '' }, 
+  //     { id: 2, label: '512GB Storage', price: '' }, 
+  //     { id: 3, label: '1TB Storage', price: '' }, 
+  //     { id: 4, label: '2TB Storage', price: '' }
+  //   ]);
+  //   setRamConfigs([
+  //     { id: 1, label: '16GB RAM', price: '' }, 
+  //     { id: 2, label: '24GB RAM', price: '' }, 
+  //     { id: 3, label: '32GB RAM', price: '' }
+  //   ]);
+  //   setDisplayConfigs([
+  //     { id: 1, label: '13.6" Display', price: '' }, 
+  //     { id: 2, label: '15.3" Display', price: '' }
+  //   ]);
+  //   setColorImageConfigs([]); 
+  //   setDynamicProducts([]); 
+  //   setDetails([]);
+  //   setSecondDetails([]);
+  //   setNewColor('#4a6cf7'); 
+  //   setNewImageFile(null); 
+  //   setNewImagePreview(null); 
+  //   setNewPrice('');
+  //   setNewRamLabel('');
+  //   setNewRamPrice('');
+  //   setNewStorageLabel('');
+  //   setNewStoragePrice('');
+  //   setNewDisplayLabel('');
+  //   setNewDisplayPrice('');
+    
+  // };
+
   const addRegion = () => {
+    
     setDynamicProducts(prev => {
       const updated = [...prev, { name: '', price: '' }];
+      // console.log('🌍 Updated Regions:', updated);
       return updated;
     });
   };
   
   const handleRegionChange = (index: number, field: 'name'|'price', value: string) => {
+    
     const updated = [...dynamicProducts]; 
     updated[index][field] = value; 
     setDynamicProducts(updated);
   };
   
   const addDetail = () => {
+    
     const newDetail = { id: Date.now(), label: '', value: '' };
     setDetails(prev => {
       const updated = [...prev, newDetail];
@@ -323,6 +384,7 @@ const DynamicProductForm: React.FC = () => {
   };
   
   const handleDetailChange = (id: number, field: 'label'|'value', value: string) => {
+    
     setDetails(prev => {
       const updated = prev.map(d => d.id === id ? {...d, [field]: value} : d);
       return updated;
@@ -330,6 +392,7 @@ const DynamicProductForm: React.FC = () => {
   };
   
   const removeDetail = (id: number) => {
+    
     setDetails(prev => {
       const updated = prev.filter(d => d.id !== id);
       return updated;
@@ -337,6 +400,8 @@ const DynamicProductForm: React.FC = () => {
   };
 
   const handleSecondButtonClick = () => {
+    // console.log('📋 Adding Sample Second Detail');
+    
     const newDetail = { 
       id: Date.now(), 
       seconddetails: 'Sample Detail',
@@ -350,6 +415,7 @@ const DynamicProductForm: React.FC = () => {
   };
 
   const addSecondDetail = () => {
+    
     const newDetail = { id: Date.now(), seconddetails: '', value: '' };
     setSecondDetails(prev => {
       const updated = [...prev, newDetail];
@@ -358,6 +424,8 @@ const DynamicProductForm: React.FC = () => {
   };
 
   const handleSecondDetailChange = (id: number, field: 'seconddetails'|'value', value: string) => {
+    // console.log('📋 Second Detail Change:', { id, field, value });
+    
     setSecondDetails(prev => {
       const updated = prev.map(d => d.id === id ? {...d, [field]: value} : d);
       return updated;
@@ -365,6 +433,7 @@ const DynamicProductForm: React.FC = () => {
   };
 
   const removeSecondDetail = (id: number) => {
+    
     setSecondDetails(prev => {
       const updated = prev.filter(d => d.id !== id);
       return updated;
@@ -391,7 +460,7 @@ const DynamicProductForm: React.FC = () => {
     <div className="min-h-screen flex items-center justify-center p-5 font-sans w-full">
       <div className="w-full max-w-4xl bg-white rounded-2xl shadow-2xl overflow-hidden">
         <div className=" text-white text-center p-6 bg-orange-400">
-          <h1 className="text-2xl font-bold mb-1">Iphone Product Manager</h1>
+          <h1 className="text-2xl font-bold mb-1">macbook</h1>
         </div>
         
         <div className="p-8">
@@ -410,122 +479,6 @@ const DynamicProductForm: React.FC = () => {
               placeholder="Price" 
               className="w-full p-3 border-2 border-gray-300 rounded-lg mb-4" 
             />
-
-            {/* Pre-order Configuration Section */}
-            <div className="mb-6 bg-blue-50 p-4 rounded-lg border-2 border-blue-200">
-              <div className="flex items-center gap-3 mb-4">
-                <input
-                  type="checkbox"
-                  id="preOrderToggle"
-                  checked={preOrderConfig.isPreOrder}
-                  onChange={(e) => handlePreOrderToggle(e.target.checked)}
-                  className="w-5 h-5 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
-                />
-                <label htmlFor="preOrderToggle" className="font-semibold text-gray-700 cursor-pointer">
-                  Enable Pre-order
-                </label>
-                {preOrderConfig.isPreOrder && (
-                  <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded-full">
-                    PRE-ORDER ENABLED
-                  </span>
-                )}
-              </div>
-
-              {preOrderConfig.isPreOrder && (
-                <div className="space-y-4 transition-all duration-300 ease-in-out">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {/* Availability Date */}
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Expected Availability Date
-                      </label>
-                      <input
-                        type="date"
-                        value={preOrderConfig.availabilityDate}
-                        onChange={(e) => setPreOrderConfig(prev => ({
-                          ...prev,
-                          availabilityDate: e.target.value
-                        }))}
-                        className="w-full p-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none"
-                      />
-                    </div>
-
-                    {/* Estimated Shipping */}
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Estimated Shipping Time
-                      </label>
-                      <select
-                        value={preOrderConfig.estimatedShipping}
-                        onChange={(e) => setPreOrderConfig(prev => ({
-                          ...prev,
-                          estimatedShipping: e.target.value
-                        }))}
-                        className="w-full p-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none"
-                      >
-                        <option value="">Select shipping time</option>
-                        <option value="1-2 weeks">1-2 weeks</option>
-                        <option value="3-4 weeks">3-4 weeks</option>
-                        <option value="1-2 months">1-2 months</option>
-                        <option value="2-3 months">2-3 months</option>
-                        <option value="3-6 months">3-6 months</option>
-                        <option value="6+ months">6+ months</option>
-                      </select>
-                    </div>
-
-                    {/* Pre-order Discount */}
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Pre-order Discount (%)
-                      </label>
-                      <input
-                        type="number"
-                        min="0"
-                        max="50"
-                        step="1"
-                        value={preOrderConfig.preOrderDiscount || ''}
-                        onChange={(e) => setPreOrderConfig(prev => ({
-                          ...prev,
-                          preOrderDiscount: parseFloat(e.target.value) || 0
-                        }))}
-                        placeholder="e.g., 10 for 10% off"
-                        className="w-full p-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none"
-                      />
-                    </div>
-
-                    {/* Max Pre-order Quantity */}
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Max Pre-order Quantity
-                      </label>
-                      <input
-                        type="number"
-                        min="1"
-                        step="1"
-                        value={preOrderConfig.maxPreOrderQuantity || ''}
-                        onChange={(e) => setPreOrderConfig(prev => ({
-                          ...prev,
-                          maxPreOrderQuantity: parseInt(e.target.value) || 0
-                        }))}
-                        placeholder="e.g., 100"
-                        className="w-full p-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Pre-order Summary */}
-                  <div className="bg-white p-3 rounded-lg border border-blue-200">
-                    <h4 className="font-medium text-gray-700 mb-2">Pre-order Summary:</h4>
-                    <div className="text-sm text-gray-600 space-y-1">
-                      <p>• Available: {preOrderConfig.availabilityDate || 'Not set'}</p>
-                      <p>• Shipping: {preOrderConfig.estimatedShipping || 'Not set'}</p>
-                      <p>• Discount: {preOrderConfig.preOrderDiscount || 0}%</p>
-                      <p>• Max Quantity: {preOrderConfig.maxPreOrderQuantity || 'Unlimited'}</p>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
 
             <div className="mb-4">
               <label className="font-semibold text-gray-700">Colors & Images</label>
@@ -566,6 +519,7 @@ const DynamicProductForm: React.FC = () => {
                   placeholder="Price" 
                   value={newPrice} 
                   onChange={(e) => {
+                    // console.log('💰 New Price Changed:', e.target.value);
                     setNewPrice(e.target.value);
                   }} 
                   className="border-2 border-gray-300 p-2 rounded flex-1" 
@@ -605,6 +559,25 @@ const DynamicProductForm: React.FC = () => {
                   </div>
                 </div>
               )}
+            </div>
+
+            {/* Core Configs Section */}
+            <div className="mb-4">
+              <label className="font-semibold text-gray-700 mb-2 block">Core Configurations</label>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                {coreConfigs.map((config) => (
+                  <div key={config.id} className="flex items-center gap-2">
+                    <span className="text-sm text-gray-600 flex-1">{config.label}</span>
+                    <input
+                      type="number"
+                      placeholder="Price"
+                      value={config.price}
+                      onChange={(e) => handleConfigChange(setCoreConfigs, config.id, e.target.value)}
+                      className="border border-gray-300 p-1 rounded w-20 text-sm"
+                    />
+                  </div>
+                ))}
+              </div>
             </div>
 
             {/* Storage Configs Section - Enhanced with Add/Remove functionality */}
@@ -663,7 +636,7 @@ const DynamicProductForm: React.FC = () => {
 
             {/* RAM Configs Section - Enhanced with Add/Remove functionality */}
             <div className="mb-4">
-              {/* <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center justify-between mb-2">
                 <label className="font-semibold text-gray-700">RAM Configurations</label>
                 <div className="flex items-center gap-2">
                   <input
@@ -671,6 +644,7 @@ const DynamicProductForm: React.FC = () => {
                     placeholder="RAM Label (e.g., 64GB RAM)"
                     value={newRamLabel}
                     onChange={(e) => {
+                      // console.log('💾 New RAM Label Changed:', e.target.value);
                       setNewRamLabel(e.target.value);
                     }}
                     className="border border-gray-300 p-1 rounded text-sm w-40"
@@ -680,7 +654,7 @@ const DynamicProductForm: React.FC = () => {
                     placeholder="Price"
                     value={newRamPrice}
                     onChange={(e) => {
-                      // console.log('💾 New RAM Price Changed:', e.target.value);
+                      console.log('💾 New RAM Price Changed:', e.target.value);
                       setNewRamPrice(e.target.value);
                     }}
                     className="border border-gray-300 p-1 rounded text-sm w-20"
@@ -692,8 +666,8 @@ const DynamicProductForm: React.FC = () => {
                     + Add RAM
                   </button>
                 </div>
-              </div> */}
-              {/* <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
                 {ramConfigs.map((config) => (
                   <div key={config.id} className="flex items-center gap-2 bg-white p-2 rounded border">
                     <span className="text-sm text-gray-600 flex-1">{config.label}</span>
@@ -713,12 +687,12 @@ const DynamicProductForm: React.FC = () => {
                     </button>
                   </div>
                 ))}
-              </div> */}
+              </div>
             </div>
 
             {/* Display Configs Section - Enhanced with Add/Remove functionality */}
             <div className="mb-4">
-              {/* <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center justify-between mb-2">
                 <label className="font-semibold text-gray-700">Display Configurations</label>
                 <div className="flex items-center gap-2">
                   <input
@@ -726,6 +700,7 @@ const DynamicProductForm: React.FC = () => {
                     placeholder="Display Label (e.g., 17 Inch Display)"
                     value={newDisplayLabel}
                     onChange={(e) => {
+                      // console.log('🖥️ New Display Label Changed:', e.target.value);
                       setNewDisplayLabel(e.target.value);
                     }}
                     className="border border-gray-300 p-1 rounded text-sm w-40"
@@ -735,7 +710,7 @@ const DynamicProductForm: React.FC = () => {
                     placeholder="Price"
                     value={newDisplayPrice}
                     onChange={(e) => {
-                      // console.log('🖥️ New Display Price Changed:', e.target.value);
+                      console.log('🖥️ New Display Price Changed:', e.target.value);
                       setNewDisplayPrice(e.target.value);
                     }}
                     className="border border-gray-300 p-1 rounded text-sm w-20"
@@ -747,8 +722,8 @@ const DynamicProductForm: React.FC = () => {
                     + Add Display
                   </button>
                 </div>
-              </div> */}
-              {/* <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                 {displayConfigs.map((config) => (
                   <div key={config.id} className="flex items-center gap-2 bg-white p-2 rounded border">
                     <span className="text-sm text-gray-600 flex-1">{config.label}</span>
@@ -768,7 +743,7 @@ const DynamicProductForm: React.FC = () => {
                     </button>
                   </div>
                 ))}
-              </div> */}
+              </div>
             </div>
 
             {/* Dynamic Regions Section */}
@@ -850,7 +825,46 @@ const DynamicProductForm: React.FC = () => {
             </div>
 
             {/* Second Details Section */}
-             
+            <div className="mb-6">
+              <div className="flex items-center justify-between mb-2">
+                <label className="font-semibold text-gray-700">Second Details</label>
+                <div className="flex gap-2">
+                  <button 
+                    onClick={addSecondDetail} 
+                    className=" text-white px-3 py-1 rounded text-sm hover:bg-orange-600 transition-colors bg-amber-500"
+                  >
+                    + Add Second Detail
+                  </button>
+                 
+                </div>
+              </div>
+        
+              {secondDetails.map((detail) => (
+                <div key={detail.id} className="flex items-center gap-2 mb-2">
+                  <input
+                    type="text"
+                    placeholder="Second Details"
+                    value={detail.seconddetails}
+                    onChange={(e) => handleSecondDetailChange(detail.id, 'seconddetails', e.target.value)}
+                    className="border border-gray-300 p-2 rounded flex-1"
+                  />
+                  <input
+                    type="text"
+                    placeholder="Value"
+                    value={detail.value}
+                    onChange={(e) => handleSecondDetailChange(detail.id, 'value', e.target.value)}
+                    className="border border-gray-300 p-2 rounded flex-1"
+                  />
+                  <button 
+                    onClick={() => removeSecondDetail(detail.id)}
+                    className="text-red-500 hover:text-red-700"
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+            </div>
+
             <button 
               onClick={handleAddProduct} 
               className="w-full bg-amber-600 text-white py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium"
@@ -868,24 +882,8 @@ const DynamicProductForm: React.FC = () => {
                   <div key={product.id} className="bg-white p-4 rounded-lg border shadow-sm">
                     <div className="flex items-center justify-between">
                       <div>
-                        <div className="flex items-center gap-2 mb-1">
-                          <h4 className="font-semibold text-gray-800">{product.name}</h4>
-                          {product.preOrderConfig?.isPreOrder && (
-                            <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded-full">
-                              PRE-ORDER
-                            </span>
-                          )}
-                        </div>
+                        <h4 className="font-semibold text-gray-800">{product.name}</h4>
                         <p className="text-gray-600">Base Price: ${product.price}</p>
-                        {product.preOrderConfig?.isPreOrder && (
-                          <div className="text-sm text-blue-600 mt-1">
-                            <p>Available: {product.preOrderConfig.availabilityDate}</p>
-                            <p>Shipping: {product.preOrderConfig.estimatedShipping}</p>
-                            {product.preOrderConfig.preOrderDiscount > 0 && (
-                              <p>Discount: {product.preOrderConfig.preOrderDiscount}%</p>
-                            )}
-                          </div>
-                        )}
                         <p className="text-sm text-gray-500">
                           Colors: {product.colorImageConfigs.length} | 
                           Storage: {product.storageConfigs.length} |
@@ -919,27 +917,6 @@ const DynamicProductForm: React.FC = () => {
           )}
         </div>
       </div>
-
-      <style jsx>{`
-        .transition-all {
-          transition: all 0.3s ease-in-out;
-        }
-        
-        @keyframes fadeIn {
-          from {
-            opacity: 0;
-            transform: translateY(-10px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-        
-        .animate-fadeIn {
-          animation: fadeIn 0.3s ease-in-out;
-        }
-      `}</style>
     </div>
   );
 };

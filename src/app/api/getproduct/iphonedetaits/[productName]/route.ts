@@ -36,7 +36,7 @@ export async function GET(
 
   await connect();
 
-  const product = await Product.findOne({ productName: readableName });
+  const product = await Product.findOne({ name: readableName });
 
   if (!product) {
     return NextResponse.json(
