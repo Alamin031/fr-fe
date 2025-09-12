@@ -10,6 +10,7 @@ import {
   CreditCard,
   Plus,
   Minus,
+  ShoppingCart,
 } from "lucide-react";
 import { Image, ImageKitProvider } from "@imagekit/next";
 import AppleLogo from "@/components/ui/AppleLogo";
@@ -116,6 +117,66 @@ export default function Page({ params: { productName } }: PageProps) {
       style: "currency",
       currency: "BDT",
     }).format(price);
+
+  const handleShopNow = () => {
+    if (!product) return;
+
+    const selectedColor =
+      product.colorImageConfigs[selectedColorIndex]?.color || "Default";
+    const selectedStorage =
+      product.storageConfigs[selectedStorageIndex]?.label || "Default";
+    const selectedRegion =
+      product.dynamicRegions?.[selectedRegionIndex]?.name || "Default";
+    const totalPrice = calculateTotalPrice() * quantity;
+
+    // Log the selection for debugging
+    console.log('Shop Now clicked:', {
+      product: product.name,
+      color: selectedColor,
+      storage: selectedStorage,
+      region: selectedRegion,
+      quantity,
+      totalPrice: formatPrice(totalPrice)
+    });
+
+    // You can customize this based on your needs:
+    // Option 1: Redirect to checkout page
+    // window.location.href = '/checkout';
+    
+    // Option 2: Open checkout in new tab
+    // window.open('/checkout', '_blank');
+    
+    // Option 3: Navigate using Next.js router
+    // router.push('/checkout');
+    
+    // For now, showing an alert - replace with your actual logic
+    alert(`Proceeding to checkout!\n\nProduct: ${product.name}\nTotal: ${formatPrice(totalPrice)}`);
+  };
+
+  const handleAddToCart = () => {
+    if (!product) return;
+
+    const selectedColor =
+      product.colorImageConfigs[selectedColorIndex]?.color || "Default";
+    const selectedStorage =
+      product.storageConfigs[selectedStorageIndex]?.label || "Default";
+    const selectedRegion =
+      product.dynamicRegions?.[selectedRegionIndex]?.name || "Default";
+    const totalPrice = calculateTotalPrice() * quantity;
+
+    // Add to cart logic
+    console.log('Added to cart:', {
+      product: product.name,
+      color: selectedColor,
+      storage: selectedStorage,
+      region: selectedRegion,
+      quantity,
+      totalPrice: formatPrice(totalPrice)
+    });
+
+    // Replace with your actual add to cart logic
+    alert(`Added to cart!\n\nProduct: ${product.name}\nQuantity: ${quantity}`);
+  };
 
   const handleWhatsAppContact = () => {
     if (!product) return;
@@ -264,14 +325,18 @@ export default function Page({ params: { productName } }: PageProps) {
             {/* Product Info */}
             <div className="space-y-6">
               <div>
-                <div className="flex items-center">
-                  <AppleLogo />
-                  <span className="font-bold text-sm sm:text-base">Apple</span>
-                </div>
+                <div className="flex justify-between items-center">
+
+                  
 
                 <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2 mt-[-15px]">
                   {product.name}
                 </h1>
+                <div className="flex items-center mt-[-30px] ml-4">
+                  <AppleLogo />
+                  <span className="font-bold text-sm sm:text-base">Apple</span>
+                </div>
+                </div>
                 <div className="text-xl sm:text-2xl font-medium text-black">
                   {formatPrice(calculateTotalPrice())}
                 </div>
@@ -348,7 +413,7 @@ export default function Page({ params: { productName } }: PageProps) {
               {/* Quantity & Actions */}
               <div>
                 <h3 className="text-lg font-semibold mb-3">Quantity</h3>
-                <div className="flex items-center space-x-3 mb-4">
+                <div className="flex items-center space-x-3 mb-6">
                   <button
                     onClick={() => handleQuantityChange(-1)}
                     className="w-8 h-8 sm:w-10 sm:h-10 rounded-full border border-gray-300 flex items-center justify-center hover:bg-gray-100 transition-colors disabled:opacity-50"
@@ -367,17 +432,33 @@ export default function Page({ params: { productName } }: PageProps) {
                   </button>
                 </div>
 
-                <div className="flex flex-col sm:flex-row items-center gap-3">
-                  <button className="w-full bg-amber-600 hover:bg-blue-700 text-white font-semibold py-3 sm:py-4 px-6 rounded-lg transition-colors text-sm sm:text-base">
-                    Add to Cart - {formatPrice(calculateTotalPrice() * quantity)}
+                {/* Action Buttons */}
+                <div className="space-y-3">
+                  {/* Primary Shop Now Button */}
+                  <button
+                    onClick={handleShopNow}
+                    className="w-full bg-amber-600 hover:bg-amber-700 text-white font-bold py-4 sm:py-5 px-8 rounded-xl transition-all text-base sm:text-lg shadow-xl transform hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-3"
+                  >
+                    <ShoppingCart className="w-5 h-5 sm:w-6 sm:h-6" />
+                    Shop Now - {formatPrice(calculateTotalPrice() * quantity)}
                   </button>
 
-                  <button
-                    onClick={handleWhatsAppContact}
-                    className="w-full sm:w-auto flex-shrink-0 rounded-lg transition-colors flex items-center justify-center py-2 sm:py-[7px] px-4 bg-green-500 hover:bg-green-600"
-                  >
-                    <WhatsappLogo />
-                  </button>
+                  {/* Secondary Actions */}
+                  <div className="flex flex-col sm:flex-row items-center gap-3">
+                    <button 
+                      onClick={handleAddToCart}
+                      className="w-full bg-amber-600 hover:bg-amber-700 text-white font-semibold py-3 sm:py-4 px-6 rounded-lg transition-colors text-sm sm:text-base"
+                    >
+                      Add to Cart
+                    </button>
+
+                    <button
+                      onClick={handleWhatsAppContact}
+                      className="w-full sm:w-auto flex-shrink-0 rounded-lg transition-colors flex items-center justify-center py-2 sm:py-[7px] px-4 bg-green-500 hover:bg-green-600"
+                    >
+                      <WhatsappLogo />
+                    </button>
+                  </div>
                 </div>
               </div>
 
