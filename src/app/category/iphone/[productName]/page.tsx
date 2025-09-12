@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import { useParams } from "next/navigation";
 import axios from "axios";
 import {
   ChevronLeft,
@@ -16,11 +17,7 @@ import { Image, ImageKitProvider } from "@imagekit/next";
 import AppleLogo from "@/components/ui/AppleLogo";
 import WhatsappLogo from "@/components/ui/WhatsappLogo";
 
-interface PageProps {
-  params: Promise<{
-    productName: string;
-  }>;
-}
+// No props are passed to this client component
 
 interface ColorImageConfig {
   id: number;
@@ -60,9 +57,9 @@ interface Product {
   updatedAt: string;
 }
 
-export default function Page({ params }: PageProps) {
-  // Unwrap the params Promise using React.use()
-const { productName } = React.use(params);
+export default function Page() {
+  const routeParams = useParams<{ productName: string }>();
+  const productName = routeParams?.productName;
      
   const urlEndpoint = process.env.NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT;
 
@@ -73,7 +70,7 @@ const { productName } = React.use(params);
   const [selectedStorageIndex, setSelectedStorageIndex] = useState(0);
   const [selectedRegionIndex, setSelectedRegionIndex] = useState(0);
   const [quantity, setQuantity] = useState(1);
-  // const [imageError, setImageError] = useState<Record<number, boolean>>({});
+  const [, setImageError] = useState<Record<number, boolean>>({});
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -266,6 +263,7 @@ const { productName } = React.use(params);
     );
 
   const currentImage = product.colorImageConfigs[selectedImageIndex];
+  const regions = product.dynamicRegions ?? [];
 
   return (
     <ImageKitProvider urlEndpoint={urlEndpoint}>
@@ -391,11 +389,11 @@ const { productName } = React.use(params);
                   </div>
                 )}
 
-                {product.dynamicRegions?.length > 0 && (
+                {regions.length > 0 && (
                   <div>
                     <h3 className="text-lg font-semibold mb-3">Region</h3>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      {product.dynamicRegions.map((region, index) => (
+                      {regions.map((region, index) => (
                         <button
                           key={index}
                           onClick={() => setSelectedRegionIndex(index)}

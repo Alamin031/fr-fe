@@ -2,10 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { connect } from "@/dbconfig/dbconfig";
 import Product from "@/models/productmacbookModels";
 
-// Type for Mongoose duplicate key or validation error
-interface MongooseError extends Error {
+// Define a more specific error type
+interface MongoError extends Error {
   code?: number;
-  name?: string;
+  keyValue?: Record<string, unknown>;
+}
+
+interface ValidationError extends Error {
   errors?: Record<string, { message: string }>;
 }
 
@@ -14,35 +17,46 @@ export async function POST(request: NextRequest) {
     await connect();
     const body = await request.json();
 
-    // Ensure SKU is a string if provided
+    // If SKU is provided, ensure it's a string
     if (body.sku) body.sku = String(body.sku);
 
     const newProduct = new Product(body);
     await newProduct.save();
 
     return NextResponse.json({ message: "Product added successfully" }, { status: 201 });
-  } catch (err: unknown) {
-    console.error("❌ Error adding product:", err);
+  } catch (error: unknown) {
+    console.error("❌ Error adding product:", error);
 
-    const error = err as MongooseError;
+    // Type guard for MongoError
+    const isMongoError = (err: unknown): err is MongoError => {
+      return err instanceof Error && 'code' in err;
+    };
 
-    // Handle Mongoose duplicate key error
-    if (error.code === 11000) {
+    // Type guard for ValidationError
+    const isValidationError = (err: unknown): err is ValidationError => {
+      return err instanceof Error && 'name' in err && err.name === "ValidationError";
+    };
+
+    if (isMongoError(error) && error.code === 11000) {
       return NextResponse.json({ message: "Duplicate SKU" }, { status: 409 });
     }
 
-    // Handle Mongoose validation errors
-    if (error.name === "ValidationError") {
-      return NextResponse.json(
-        { message: "Validation failed", errors: error.errors },
-        { status: 400 }
-      );
+    if (isValidationError(error)) {
+      return NextResponse.json({ 
+        message: "Validation failed", 
+        errors: error.errors 
+      }, { status: 400 });
     }
 
-    // Default error
-    return NextResponse.json(
-      { message: error.message || "Unknown error occurred" },
-      { status: 500 }
-    );
+    // Handle other errors
+    if (error instanceof Error) {
+      return NextResponse.json({ 
+        message: error.message || "Error adding product" 
+      }, { status: 500 });
+    }
+
+    return NextResponse.json({ 
+      message: "Unknown error occurred" 
+    }, { status: 500 });
   }
 }
