@@ -1,7 +1,8 @@
 'use client'
 import axios from 'axios';
+import Image from 'next/image';
 import React, { useState, ChangeEvent } from 'react';
-import Image from 'next/image'; // Import Next.js Image component
+ // Import Next.js Image component
 
 // Loading Spinner Component
 const LoadingSpinner: React.FC<{ size?: 'sm' | 'md' | 'lg' }> = ({ size = 'md' }) => {
@@ -460,7 +461,7 @@ const DynamicProductForm: React.FC = () => {
                     </div>
                   ) : (
                     newImagePreview ? 
-                      <Image 
+                      <Image
                         src={newImagePreview} 
                         alt="preview" 
                         width={64} 
@@ -503,7 +504,7 @@ const DynamicProductForm: React.FC = () => {
                           className="w-6 h-6 rounded border-2 border-gray-300" 
                           style={{ backgroundColor: config.color }}
                         ></div>
-                        <Image 
+                        <Image
                           src={config.image} 
                           alt="product" 
                           width={32} 

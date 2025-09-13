@@ -38,7 +38,7 @@ const AppleNavbar = () => {
 
   const navigationLinks = [
     { name: 'iPhone', href: '/category/iphone' },
-    { name: 'Mac', href: '/category/mac' },
+    { name: 'Mac', href: '/category/macbook' },
     { name: 'iPad', href: '/category/ipad' },
     { name: 'Apple Watch', href: '/category/apple-watch' },
     { name: 'AirPods', href: '/category/airpods' },
