@@ -279,6 +279,8 @@ export default function Page() {
                     alt={product.name}
                     fill
                     className="object-contain"
+                    transformation={[{ aiRemoveBackground: true }]}
+
                     onError={() => handleImageError(selectedImageIndex)}
                   />
                   {product.colorImageConfigs.length > 1 && (
@@ -308,7 +310,7 @@ export default function Page() {
                     onClick={() => handleColorChange(index)}
                     className={`flex-shrink-0 w-12 h-12 sm:w-16 sm:h-16 rounded-lg overflow-hidden border-2 transition-all relative ${
                       selectedColorIndex === index
-                        ? "border-blue-500 shadow-lg"
+                        ? "border-black shadow-lg"
                         : "border-gray-200 hover:border-gray-300"
                     }`}
                   >
@@ -346,13 +348,13 @@ export default function Page() {
               {/* Color Selection */}
               {product.colorImageConfigs.length > 0 && (
                 <div>
-                  <h3 className="text-lg font-semibold mb-3">Color</h3>
-                  <div className="flex flex-wrap gap-3">
+                  {/* <h3 className="text-lg font-semibold mb-3">Color</h3> */}
+                  <div className="flex flex-wrap gap-2 max-sm:gap-0 items-center"> <span>Color</span>
                     {product.colorImageConfigs.map((config, index) => (
                       <button
                         key={config.id}
                         onClick={() => handleColorChange(index)}
-                        className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full border-2 transition-all ${
+                        className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full border-2 transition-all max-sm:w-5 max-sm:h-5 max-sm:ml-5 ${
                           selectedColorIndex === index
                             ? "border-gray-800 scale-110"
                             : "border-gray-300 hover:border-gray-500"
@@ -367,7 +369,7 @@ export default function Page() {
               )}
 
               {/* Storage & Region */}
-              <div className="grid grid-cols-1 gap-6">
+              <div className="flex gap-6 max-sm:flex  max-sm:justify-around ">
                 {product.storageConfigs.length > 0 && (
                   <div>
                     <h3 className="text-lg font-semibold mb-3">Storage</h3>
@@ -376,13 +378,13 @@ export default function Page() {
                         <button
                           key={config.id}
                           onClick={() => setSelectedStorageIndex(index)}
-                          className={`p-2 sm:p-3 rounded-lg border-2 transition-all text-center text-sm sm:text-base ${
+                          className={`p-2 sm:p-3 rounded-lg border transition-all text-center text-sm sm:text-base ${
                             selectedStorageIndex === index
-                              ? "border-amber-500 bg-amber-50 text-black"
+                              ? "border-gray-500  text-black"
                               : "border-gray-300 hover:border-gray-400 bg-white"
                           }`}
                         >
-                          <div className="font-semibold">{config.label}</div>
+                          <div className="font-medium">{config.label}</div>
                         </button>
                       ))}
                     </div>
@@ -392,18 +394,18 @@ export default function Page() {
                 {regions.length > 0 && (
                   <div>
                     <h3 className="text-lg font-semibold mb-3">Region</h3>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                       {regions.map((region, index) => (
                         <button
                           key={index}
                           onClick={() => setSelectedRegionIndex(index)}
-                          className={`p-2 sm:p-3 rounded-lg border-2 transition-all text-center text-sm sm:text-base ${
+                          className={`p-2 sm:p-3 rounded-lg border transition-all text-center text-sm sm:text-base ${
                             selectedRegionIndex === index
-                              ? "border-amber-500 bg-amber-50 text-black"
+                              ? "border-gray-500  text-black"
                               : "border-gray-300 hover:border-gray-400 bg-white"
                           }`}
                         >
-                          <div className="font-semibold">{region.name}</div>
+                          <div className="font-medium">{region.name}</div>
                         </button>
                       ))}
                     </div>
@@ -436,30 +438,40 @@ export default function Page() {
                 {/* Action Buttons */}
                 <div className="space-y-3">
                   {/* Primary Shop Now Button */}
-                  <button
+                  <div className="flex justify-center items-center gap-2">
+<button
                     onClick={handleShopNow}
-                    className="w-full bg-amber-600 hover:bg-amber-700 text-white font-bold py-4 sm:py-5 px-8 rounded-xl transition-all text-base sm:text-lg shadow-xl transform hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-3"
+                    className="w-full bg-white hover:border-black border-2 border-gray-400 text-black   font-medium py-3 sm:py-4 px-6 rounded-lg transition-colors text-sm sm:text-base flex justify-center gap-2"
                   >
                     <ShoppingCart className="w-5 h-5 sm:w-6 sm:h-6" />
-                    Shop Now - {formatPrice(calculateTotalPrice() * quantity)}
+                    Shop Now 
                   </button>
 
-                  {/* Secondary Actions */}
-                  <div className="flex flex-col sm:flex-row items-center gap-3">
+
+
                     <button 
                       onClick={handleAddToCart}
-                      className="w-full bg-amber-600 hover:bg-amber-700 text-white font-semibold py-3 sm:py-4 px-6 rounded-lg transition-colors text-sm sm:text-base"
+                      className="w-full bg-white hover:border-black border-gray-400 text-black border font-medium py-3 sm:py-4 px-6 rounded-lg transition-colors text-sm sm:text-base"
                     >
                       Add to Cart
                     </button>
 
-                    <button
-                      onClick={handleWhatsAppContact}
-                      className="w-full sm:w-auto flex-shrink-0 rounded-lg transition-colors flex items-center justify-center py-2 sm:py-[7px] px-4 bg-green-500 hover:bg-green-600"
-                    >
-                      <WhatsappLogo />
-                    </button>
                   </div>
+                  
+                  {/* Secondary Actions */}
+                    
+{/* Secondary Actions */}
+<div className="flex w-full gap-3">
+  <button
+    onClick={handleWhatsAppContact}
+    className="w-full flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600 text-white font-medium py-2 sm:py-2 px-6 rounded-lg transition-colors text-sm sm:text-base"
+  >
+    <WhatsappLogo />
+    Contact via WhatsApp
+  </button>
+</div>
+
+                    
                 </div>
               </div>
 
@@ -519,7 +531,7 @@ export default function Page() {
                         key={detail.id || index}
                         className="hover:bg-gray-50 transition-colors duration-150 block sm:table-row border-b sm:border-b-0"
                       >
-                        <td className="py-2 sm:py-4 px-4 sm:px-6 font-medium text-gray-700 bg-gray-25 sm:border-r border-gray-200 block sm:table-cell">
+                        <td className="py-2 sm:py-4 px-4 sm:px-6 font-bold text-gray-700 bg-gray-25 sm:border-r border-gray-200 block sm:table-cell">
                           <span className="break-words text-sm sm:text-base">
                             {detail.label.replace(/\t/g, "")}
                           </span>

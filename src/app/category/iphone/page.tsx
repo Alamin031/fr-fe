@@ -53,7 +53,7 @@ export default function IphoneAll() {
   );
 
   const handleShowNow = (product: Product) => {
-    router.push(`/product/${product._id}`);
+    router.push(`/checkout/${product._id}`);
   };
 
   const handleAddToCart = (product: Product) => {
