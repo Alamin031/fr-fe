@@ -44,7 +44,8 @@ providers: [
 ],
 pages: {
     signIn: '/login',
-}
+},
+  debug: true,
 }
 
 const handler = NextAuth(authOptions)

@@ -38,7 +38,7 @@ type PreOrderConfig = {
 // Product Type
 type Product = { 
   name: string; 
-  price: string; 
+basePrice: string; 
   storageConfigs: Config[]; 
   colorImageConfigs: ColorImageConfig[]; 
   dynamicRegions: RegionConfig[]; 
@@ -200,13 +200,14 @@ const DynamicProductForm: React.FC = () => {
     
     const newProduct: Product = { 
       name: productName, 
-      price: parseFloat(productPrice).toFixed(2), 
+      basePrice: parseFloat(productPrice).toFixed(2), 
       storageConfigs, 
       colorImageConfigs, 
       dynamicRegions: dynamicProducts, 
       details,
       preOrderConfig
     };
+    console.log(newProduct)
 
     await axios.post('/api/productlist', newProduct)
       .then(res => console.log(res.data))

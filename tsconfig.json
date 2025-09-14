@@ -22,6 +22,6 @@
       "@/*": ["./src/*"]
     }
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", "**/*.d.ts", ".next/types/**/*.ts", "src/app/(Home)/(auth)/register"],
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", "**/*.d.ts", ".next/types/**/*.ts", "src/app/(Home)/(auth)/register", "src/models/productmacbookModels.js"],
   "exclude": ["node_modules"]
 }

@@ -2,14 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { connect } from "@/dbconfig/dbconfig";
 import Product from "@/models/productmacbookModels";
 
-// Define a more specific error type
-interface MongoError extends Error {
-  code?: number;
-  keyValue?: Record<string, unknown>;
-}
-
 interface ValidationError extends Error {
-  errors?: Record<string, { message: string }>;
+  errors: Record<string, { message: string }>;
 }
 
 export async function POST(request: NextRequest) {
@@ -17,7 +11,10 @@ export async function POST(request: NextRequest) {
     await connect();
     const body = await request.json();
 
-    // If SKU is provided, ensure it's a string
+    // Required fields check
+  
+
+    // Ensure SKU is string if provided
     if (body.sku) body.sku = String(body.sku);
 
     const newProduct = new Product(body);
@@ -27,36 +24,28 @@ export async function POST(request: NextRequest) {
   } catch (error: unknown) {
     console.error("❌ Error adding product:", error);
 
-    // Type guard for MongoError
-    const isMongoError = (err: unknown): err is MongoError => {
-      return err instanceof Error && 'code' in err;
-    };
-
-    // Type guard for ValidationError
-    const isValidationError = (err: unknown): err is ValidationError => {
-      return err instanceof Error && 'name' in err && err.name === "ValidationError";
-    };
-
-    if (isMongoError(error) && error.code === 11000) {
-      return NextResponse.json({ message: "Duplicate SKU" }, { status: 409 });
-    }
-
-    if (isValidationError(error)) {
-      return NextResponse.json({ 
-        message: "Validation failed", 
-        errors: error.errors 
-      }, { status: 400 });
-    }
-
-    // Handle other errors
+    // Type guard to check if error is an Error object
     if (error instanceof Error) {
-      return NextResponse.json({ 
-        message: error.message || "Error adding product" 
-      }, { status: 500 });
+      if ('code' in error && error.code === 11000) {
+        return NextResponse.json({ message: "Duplicate SKU" }, { status: 409 });
+      }
+
+      if (error.name === "ValidationError") {
+        return NextResponse.json(
+          { message: "Validation failed", errors: (error as ValidationError).errors },
+          { status: 400 }
+        );
+      }
+
+      return NextResponse.json(
+        { message: error.message || "Error adding product" },
+        { status: 500 }
+      );
     }
 
-    return NextResponse.json({ 
-      message: "Unknown error occurred" 
-    }, { status: 500 });
+    return NextResponse.json(
+      { message: "Error adding product" },
+      { status: 500 }
+    );
   }
 }
