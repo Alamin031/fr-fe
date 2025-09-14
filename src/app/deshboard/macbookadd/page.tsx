@@ -26,21 +26,6 @@ type ColorImageConfig = { id: number; color: string; image: string; price: strin
 type RegionConfig = { name: string; price: string; inStock: boolean };
 type DetailConfig = { id: number; label: string; value: string; };
 type SecondConfig = { id: number; seconddetails: string; value: string; };
-type Product = { 
-  id: number; 
-  name: string; 
-  price: string; 
-  color: string; 
-  cpuCoreConfigs: Config[]; 
-  gpuCoreConfigs: Config[];
-  storageConfigs: Config[]; 
-  ramConfigs: Config[]; 
-  displayConfigs: Config[]; 
-  colorImageConfigs: ColorImageConfig[]; 
-  dynamicRegions: RegionConfig[]; 
-  details: DetailConfig[]; 
-  secondDetails: SecondConfig[];
-};
 
 const DynamicProductForm: React.FC = () => {
   const [productName, setProductName] = useState('');
@@ -109,7 +94,6 @@ const DynamicProductForm: React.FC = () => {
   const [dynamicProducts, setDynamicProducts] = useState<RegionConfig[]>([]);
   const [details, setDetails] = useState<DetailConfig[]>([]);
   const [secondDetails, setSecondDetails] = useState<SecondConfig[]>([]);
-  const [products, setProducts] = useState<Product[]>([]);
 
   // Debug useEffect to track productPrice changes
   useEffect(() => {
@@ -535,7 +519,7 @@ const DynamicProductForm: React.FC = () => {
   
   const handleRegionChange = (index: number, field: 'name'|'price'|'inStock', value: string | boolean) => {
     const updated = [...dynamicProducts]; 
-    updated[index][field] = value; 
+    updated[index] = { ...updated[index], [field]: value }; 
     setDynamicProducts(updated);
   };
   
@@ -1222,50 +1206,6 @@ const DynamicProductForm: React.FC = () => {
             </button>
           </div>
           
-          {/* Display added products */}
-          {products.length > 0 && (
-            <div className="bg-gray-50 p-6 rounded-xl">
-              <h3 className="text-lg font-bold text-gray-800 mb-4">Added Products ({products.length})</h3>
-              <div className="space-y-4">
-                {products.map((product) => (
-                  <div key={product.id} className="bg-white p-4 rounded-lg border shadow-sm">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h4 className="font-semibold text-gray-800">{product.name}</h4>
-                        <p className="text-gray-600">Base Price: ${product.price}</p>
-                        <p className="text-sm text-gray-500">
-                          Colors: {product.colorImageConfigs.length} | 
-                          Storage: {product.storageConfigs.length} |
-                          Regions: {product.dynamicRegions.length} | 
-                          RAM Configs: {product.ramConfigs.length} |
-                          Display Configs: {product.displayConfigs.length} |
-                          Details: {product.details.length} | 
-                          Second Details: {product.secondDetails.length}
-                        </p>
-                      </div>
-                      <div className="flex gap-2">
-                        {product.colorImageConfigs.slice(0, 3).map((config) => (
-                          <Image 
-                            key={config.id} 
-                            src={config.image} 
-                            alt="product" 
-                            width={40} 
-                            height={40} 
-                            className="object-cover rounded border" 
-                          />
-                        ))}
-                        {product.colorImageConfigs.length > 3 && (
-                          <div className="w-10 h-10 bg-gray-200 rounded border flex items-center justify-center text-xs">
-                            +{product.colorImageConfigs.length - 3}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
         </div>
       </div>
     </div>
