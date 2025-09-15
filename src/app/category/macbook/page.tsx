@@ -2,6 +2,7 @@
 
 import axios from "axios";
 import React, { useEffect, useState } from "react";
+import { useQuery } from '@tanstack/react-query';
 import { ShoppingCart } from "lucide-react";
 import { Image, ImageKitProvider } from "@imagekit/next";
 import { useRouter } from "next/navigation";
@@ -46,8 +47,18 @@ export default function IphoneAll() {
     throw new Error("NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT is not defined");
   }
 
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: products, isLoading, error } = useQuery({
+    queryKey: ['macbook-list'],
+    queryFn: async () => {
+      const res = await axios.get<Product[]>(
+        `${process.env.NEXT_PUBLIC_BASE_URL}/api/getproduct/macbooklist`
+      );
+      return res.data;
+    },
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
+  });
+  
   const [selectedColors, setSelectedColors] = useState<Record<string, number>>(
     {}
   );
@@ -80,134 +91,144 @@ export default function IphoneAll() {
   };
 
   useEffect(() => {
-    if (products.length > 0) {
-      const initialColors: Record<string, number> = {};
-      products.forEach((product) => {
-        if (product.colorImageConfigs.length > 0) {
-          initialColors[product._id] = product.colorImageConfigs[0].id;
-        }
-      });
-      setSelectedColors(initialColors);
-    }
+    if (!products || products.length === 0) return;
+    const initialColors: Record<string, number> = {};
+    products.forEach((product) => {
+      if (product.colorImageConfigs.length > 0) {
+        initialColors[product._id] = product.colorImageConfigs[0].id;
+      }
+    });
+    setSelectedColors(initialColors);
   }, [products]);
 
-  useEffect(() => {
-    const fetchProducts = async () => {
-      try {
-        const res = await axios.get(
-          `${process.env.NEXT_PUBLIC_BASE_URL}/api/getproduct/macbooklist`
-        );
-        setProducts(res.data);
-      } catch (error) {
-        console.error("Error fetching products:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px] p-6 w-full">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading products...</p>
+        </div>
+      </div>
+    );
+  }
 
-    fetchProducts();
-  }, []);
-
-  if (loading) {
-    return <div className="p-6 text-center">Loading products...</div>;
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px] p-6">
+        <div className="text-center">
+          <p className="text-red-600 text-lg font-medium">Failed to load products</p>
+          <p className="text-gray-500 mt-2">Please try again later</p>
+        </div>
+      </div>
+    );
   }
 
   return (
     <ImageKitProvider urlEndpoint={urlEndpoint}>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-8 p-6 max-w-7xl mx-auto">
-        {products.map((product) => {
-          const currentImage = getCurrentImage(product);
-          const basePrice = parseFloat(product.basePrice);
-          const originalPrice = basePrice + 10000;
-          const discount = Math.round(
-            ((originalPrice - basePrice) / originalPrice) * 100
-          );
-          const productSlug = slugify(product.name);
+      <div className="w-full px-4 sm:px-6 lg:px-8 mt-4">
+        <div className="max-w-7xl mx-auto">
+          {/* Grid Layout: 1 column on mobile, 2 on tablet, 3 on desktop, 4 on large screens */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">
+            {(products || []).map((product) => {
+              const currentImage = getCurrentImage(product);
+              const basePrice = parseFloat(product.basePrice);
+              const originalPrice = basePrice + 10000;
+              const discount = Math.round(
+                ((originalPrice - basePrice) / originalPrice) * 100
+              );
+              const productSlug = slugify(product.name);
 
-          return (
-            <div
-              key={product._id}
-              className="bg-white rounded-2xl shadow-md p-6 flex flex-col items-center text-center w-full max-w-sm mx-auto border"
-            >
-              {/* Product Image */}
-              {currentImage && (
-                <Link href={`/category/macbook/${productSlug}`}>
-                  <div className="relative w-[250px] h-[250px]">
-                    <Image
-                      src={currentImage}
-                      alt={product.name}
-                      fill
-                      className="object-contain rounded-xl transition-all duration-300 ease-in-out"
-                    //   transformation={[{ aiRemoveBackground: true }]}
-                    />
-                  </div>
-                </Link>
-              )}
+              return (
+                <div
+                  key={product._id}
+                  className="bg-white rounded-2xl shadow-md hover:shadow-lg transition-shadow duration-300 p-4 sm:p-6 flex flex-col items-center text-center border border-gray-100 hover:border-gray-200"
+                >
+                  {/* Product Image */}
+                  {currentImage && (
+                    <Link href={`/category/macbook/${productSlug}`} className="block w-full">
+                      <div className="relative w-full aspect-square max-w-[200px] sm:max-w-[220px] lg:max-w-[250px] mx-auto mb-4">
+                        <Image
+                          src={currentImage}
+                          alt={product.name}
+                          fill
+                          className="object-contain rounded-xl transition-transform duration-300 ease-in-out hover:scale-105"
+                          sizes="(max-width: 640px) 200px, (max-width: 1024px) 220px, 250px"
+                        />
+                      </div>
+                    </Link>
+                  )}
 
-              {/* Product Name */}
-              <Link href={`/category/iphone/${productSlug}`}>
-                <h3 className="text-xl font-semibold mt-6">{product.name}</h3>
-              </Link>
+                  {/* Product Name */}
+                  <Link href={`/category/iphone/${productSlug}`} className="block w-full">
+                    <h3 className="text-lg sm:text-xl font-semibold mb-4 text-gray-900 hover:text-amber-600 transition-colors duration-200 line-clamp-2">
+                      {product.name}
+                    </h3>
+                  </Link>
 
-              {/* Color Selection */}
-              {product.colorImageConfigs &&
-                product.colorImageConfigs.length > 1 && (
-                  <div className="flex items-center gap-2 mt-4">
-                    <div className="flex gap-2">
-                      {product.colorImageConfigs.map((colorConfig) => (
-                        <button
-                          key={colorConfig.id}
-                          onClick={() =>
-                            handleColorSelect(product._id, colorConfig.id)
-                          }
-                          className={`w-8 h-8 rounded-full border-2 transition-all duration-200 ${
-                            selectedColors[product._id] === colorConfig.id
-                              ? "border-blue-500 scale-110 shadow-lg"
-                              : "border-gray-300 hover:border-gray-400"
-                          }`}
-                          style={{ backgroundColor: colorConfig.color }}
-                          title={`Color: ${colorConfig.color}`}
-                        >
-                          <div className="w-full h-full rounded-full border border-white/20"></div>
-                        </button>
-                      ))}
+                  {/* Color Selection */}
+                  {product.colorImageConfigs &&
+                    product.colorImageConfigs.length > 1 && (
+                      <div className="flex items-center justify-center gap-2 mb-4">
+                        <div className="flex gap-2 flex-wrap justify-center">
+                          {product.colorImageConfigs.map((colorConfig) => (
+                            <button
+                              key={colorConfig.id}
+                              onClick={() =>
+                                handleColorSelect(product._id, colorConfig.id)
+                              }
+                              className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full border-2 transition-all duration-200 ${
+                                selectedColors[product._id] === colorConfig.id
+                                  ? "border-blue-500 scale-110 shadow-lg ring-2 ring-blue-200"
+                                  : "border-gray-300 hover:border-gray-400 hover:scale-105"
+                              }`}
+                              style={{ backgroundColor: colorConfig.color }}
+                              title={`Color: ${colorConfig.color}`}
+                              aria-label={`Select ${colorConfig.color} color`}
+                            >
+                              <div className="w-full h-full rounded-full border border-white/20"></div>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                  {/* Price Section */}
+                  <div className="mb-4 sm:mb-6">
+                    <p className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">
+                      ৳ {basePrice.toLocaleString()}
+                    </p>
+                    <div className="flex items-center justify-center gap-2 flex-wrap">
+                      <span className="line-through text-gray-400 text-sm">
+                        ৳ {originalPrice.toLocaleString()}
+                      </span>
+                      <span className="bg-green-100 text-green-600 text-xs font-medium px-2 py-1 rounded-full">
+                        {discount}% OFF
+                      </span>
                     </div>
                   </div>
-                )}
 
-              {/* Price */}
-              <p className="text-2xl font-bold text-gray-900 mt-2">
-                ৳ {basePrice.toLocaleString()}
-              </p>
+                  {/* Action Buttons */}
+                  <div className="flex flex-col sm:flex-row gap-3 w-full mt-auto">
+                    <button
+                      onClick={() => handleShowNow(product)}
+                      className="flex-1 flex items-center justify-center gap-2 bg-amber-500 text-white rounded-lg px-4 py-3 hover:bg-amber-600 transition-colors duration-200 font-medium text-sm sm:text-base"
+                    >
+                      <span>Shop Now</span>
+                    </button>
 
-              <div className="flex items-center gap-2 mt-2">
-                <span className="line-through text-gray-400 text-sm">
-                  ৳ {originalPrice.toLocaleString()}
-                </span>
-                <span className="bg-green-100 text-green-600 text-xs font-medium px-2 py-1 rounded-full">
-                  {discount}% OFF
-                </span>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="flex gap-4 mt-6 w-full">
-                <button
-                  onClick={() => handleShowNow(product)}
-                  className="flex-1 flex items-center justify-center gap-2 bg-amber-500 text-white rounded-[10px] px-6 py-3 hover:bg-white hover:text-gray-500 transition duration-200 border font-medium"
-                >
-                  Shop Now
-                </button>
-
-                <button
-                  onClick={() => handleAddToCart(product)}
-                  className="flex items-center justify-center bg-white border hover:border-white hover:text-white border-gray-500 text-gray-500 rounded-[10px] px-6 py-3 hover:bg-amber-500 transition duration-200"
-                >
-                  <ShoppingCart size={18} />
-                </button>
-              </div>
-            </div>
-          );
-        })}
+                    <button
+                      onClick={() => handleAddToCart(product)}
+                      className="flex items-center justify-center bg-white border border-gray-300 text-gray-600 rounded-lg px-4 py-3 hover:bg-amber-500 hover:text-white hover:border-amber-500 transition-all duration-200 sm:w-auto min-w-[48px]"
+                      aria-label="Add to cart"
+                    >
+                      <ShoppingCart size={18} />
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
       </div>
     </ImageKitProvider>
   );
