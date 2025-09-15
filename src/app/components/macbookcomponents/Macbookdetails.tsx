@@ -249,7 +249,7 @@ Please let me know more details!`;
     <button
       type="button"
       onClick={() => handleOptionChange(category, "id" in option ? option.id : option.name)}
-      className={`w-full p-4 text-left border-2 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+      className={`w-full p-2 font text-left border-2 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
         isSelected
           ? "border-gray-600 bg-gray-50 shadow-md"
           : "border-gray-200 bg-white hover:border-blue-300 hover:shadow-sm"
@@ -266,8 +266,8 @@ Please let me know more details!`;
   return (
     <div className="min-h-screen bg-gray-50 w-full">
       <div className="container mx-auto px-4 py-8 max-w-7xl">
-        <div className="text-center mb-12">
-          <h1 className="text-4xl md:text-5xl font-bold mb-4 text-gray-900">{product.name}</h1>
+        <div className="text-center mb-12 max-sm:mb-6">
+          <h1 className="text-4xl md:text-5xl font-bold  mb-2 text-gray-900">{product.name}</h1>
         </div>
 
         <div className="grid lg:grid-cols-2 gap-12">
@@ -342,11 +342,11 @@ Please let me know more details!`;
           </div>
           {/* Product Configuration */}
           <div className="order-2 lg:order-2">
-          <div className="border-t border-gray-200 pt-8">
-                <div className="bg-gray-50 rounded-xl p-6 mb-6">
+          <div className="border-t border-gray-200 ">
+                <div className="bg-gray-50 rounded-xl p-4 mb-2">
                   <div className="flex justify-between items-center">
                     <span className="text-xl font-semibold text-gray-700">Total Price:</span>
-                    <span className="text-3xl font-bold text-gray-900">{totalPrice.toLocaleString()}</span>
+                    <span className="text-xl font-medium text-gray-900">{totalPrice.toLocaleString()}</span>
                   </div>
                   <div className="text-sm text-gray-500 mt-2">
                     Starting at {parseFloat(product.basePrice).toLocaleString()}
@@ -412,13 +412,13 @@ Please let me know more details!`;
               <div className="grid md:grid-cols-2 gap-6 mb-8">
                 {/* CPU */}
                 <div>
-                  <h3 className="text-xl font-semibold mb-4 text-gray-900 flex items-center">
+                  <h3 className=" font-medium mb-2 text-gray-900 flex items-center">
                     <svg className="w-5 h-5 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
                     </svg>
                     Processor
                   </h3>
-                  <div className="space-y-3">
+                  <div className="space-y-2">
                     {product.cpuCoreConfigs.map((cpu) => (
                       <OptionButton
                         key={cpu.id}
@@ -433,13 +433,13 @@ Please let me know more details!`;
 
                 {/* GPU */}
                 <div>
-                  <h3 className="text-xl font-semibold mb-4 text-gray-900 flex items-center">
+                  <h3 className=" font-medium mb-2 text-gray-900 flex items-center">
                     <svg className="w-5 h-5 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 4V2a1 1 0 011-1h8a1 1 0 011 1v2m0 0V3a1 1 0 011 1v8a1 1 0 01-1 1M7 4V3a1 1 0 00-1 1v8a1 1 0 001 1m0 0v2a1 1 0 001 1h8a1 1 0 001-1v-2M7 14h10" />
                     </svg>
                     Graphics
                   </h3>
-                  <div className="space-y-3">
+                  <div className="space-y-2">
                     {product.gpuCoreConfigs.map((gpu) => (
                       <OptionButton
                         key={gpu.id}
@@ -454,16 +454,16 @@ Please let me know more details!`;
               </div>
 
               {/* Storage & RAM Options */}
-              <div className="grid md:grid-cols-2 gap-6 mb-8">
+              <div className="grid md:grid-cols-2 gap-6 mb-4">
                 {/* Storage */}
                 <div>
-                  <h3 className="text-xl font-semibold mb-4 text-gray-900 flex items-center">
+                  <h3 className="text font-medium mb-4 text-gray-900 flex items-center">
                     <svg className="w-5 h-5 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4" />
                     </svg>
                     Storage
                   </h3>
-                  <div className="space-y-3">
+                  <div className="space-y-2">
                     {product.storageConfigs.map((storage) => (
                       <OptionButton
                         key={storage.id}
@@ -478,13 +478,13 @@ Please let me know more details!`;
 
                 {/* RAM */}
                 <div>
-                  <h3 className="text-xl font-semibold mb-4 text-gray-900 flex items-center">
+                  <h3 className="font-medium mb-4 text-gray-900 flex items-center">
                     <svg className="w-5 h-5 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2z" />
                     </svg>
                     Memory
                   </h3>
-                  <div className="space-y-3">
+                  <div className="space-y-2">
                     {product.ramConfigs.map((ram) => (
                       <OptionButton
                         key={ram.id}
@@ -502,13 +502,13 @@ Please let me know more details!`;
               <div className="grid md:grid-cols-2 gap-6 mb-8">
                 {/* Display */}
                 <div>
-                  <h3 className="text-xl font-semibold mb-4 text-gray-900 flex items-center">
+                  <h3 className=" font-medium mb-4 text-gray-900 flex items-center">
                     <svg className="w-5 h-5 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                     </svg>
                     Display
                   </h3>
-                  <div className="space-y-3">
+                  <div className="space-y-2">
                     {product.displayConfigs.map((display) => (
                       <OptionButton
                         key={display.id}
@@ -523,14 +523,14 @@ Please let me know more details!`;
 
                 {/* Region */}
                 <div>
-                  <h3 className="text-xl font-semibold mb-4 text-gray-900 flex items-center">
+                  <h3 className=" font-medium mb-4 text-gray-900 flex items-center">
                     <svg className="w-5 h-5 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                     </svg>
                     Region
                   </h3>
-                  <div className="space-y-3">
+                  <div className="space-y-2">
                     {product.dynamicRegions.map((region) => (
                       <OptionButton
                         key={region.name}
@@ -558,12 +558,12 @@ Please let me know more details!`;
         <div className="mt-20">
           <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
             <div className="px-8 pt-8">
-              <h2 className="text-3xl font-bold mb-6 text-gray-900">Technical Specifications</h2>
+              <h2 className="text-3xl max-sm:text font-bold max-sm:font-medium mb-6 text-gray-900">Technical Specifications</h2>
               <div className="flex border-b border-gray-200">
                 <button
                   className={`py-4 px-6 font-semibold border-b-2 transition-all duration-200 focus:outline-none ${
                     activeDetails === "default" 
-                      ? "border-blue-600 text-blue-600" 
+                      ? "border-black-600 text-black-600" 
                       : "border-transparent text-gray-600 hover:text-gray-900 hover:border-gray-300"
                   }`}
                   onClick={() => setActiveDetails("default")}
@@ -573,7 +573,7 @@ Please let me know more details!`;
                 <button
                   className={`py-4 px-6 font-semibold border-b-2 transition-all duration-200 focus:outline-none ${
                     activeDetails === "second" 
-                      ? "border-blue-600 text-blue-600" 
+                      ? "border-black text-black" 
                       : "border-transparent text-gray-600 hover:text-gray-900 hover:border-gray-300"
                   }`}
                   onClick={() => setActiveDetails("second")}
