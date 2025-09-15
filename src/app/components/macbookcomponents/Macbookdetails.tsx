@@ -7,6 +7,8 @@ import { ShoppingCart } from "lucide-react";
 import Image from "next/image";
 import { useParams } from "next/navigation";
 import React, { useEffect, useState } from "react";
+import { useQuery } from '@tanstack/react-query';
+
 
 // Type definitions (same as before)
 interface OptionConfig {
@@ -66,8 +68,6 @@ type SelectedOptions = {
 const Macbookdetails: React.FC = () => {
   const { productName } = useParams() as { productName: string };
   const [product, setProduct] = useState<Product | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [selectedOptions, setSelectedOptions] = useState<SelectedOptions>({
     cpu: null,
     gpu: null,
@@ -81,43 +81,35 @@ const Macbookdetails: React.FC = () => {
   const [activeDetails, setActiveDetails] = useState<"default" | "second">("default");
   const [addingToCart, setAddingToCart] = useState(false);
 
+  const { data, isLoading, error: queryError } = useQuery({
+    queryKey: ['macbook', productName],
+    enabled: !!productName,
+    queryFn: async () => {
+      const res = await axios.get<Product>("/api/getproduct/macbookdetails/product", { params: { name: productName } });
+      return res.data;
+    },
+    refetchOnWindowFocus: false,
+    staleTime: 5 * 60 * 1000,
+  });
+  
+  const errorMessage = (queryError as unknown) ? (queryError instanceof Error ? queryError.message : 'Failed to load product. Please try again.') : null;
+
   useEffect(() => {
-    if (!productName) return;
-
-    const fetchProduct = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        const res = await axios.get<Product>("/api/getproduct/macbookdetails/product", {
-          params: { name: productName },
-        });
-        setProduct(res.data);
-
-        if (res.data) {
-          const initialOptions: SelectedOptions = {
-            cpu: res.data.cpuCoreConfigs[0]?.id || null,
-            gpu: res.data.gpuCoreConfigs[0]?.id || null,
-            storage: res.data.storageConfigs[0]?.id || null,
-            ram: res.data.ramConfigs[0]?.id || null,
-            display: res.data.displayConfigs[0]?.id || null,
-            color: res.data.colorImageConfigs[0]?.id || null,
-            region: res.data.dynamicRegions[0]?.name || null,
-          };
-          setSelectedOptions(initialOptions);
-
-          if (res.data.displayConfigs[0]?.label === '13.6" Display') setActiveDetails("default");
-          else if (res.data.displayConfigs[0]?.label === '15.3" Display') setActiveDetails("second");
-        }
-      } catch (err) {
-        console.error("Error fetching product:", err);
-        setError("Failed to load product. Please try again.");
-      } finally {
-        setLoading(false);
-      }
+    if (!data) return;
+    setProduct(data);
+    const initialOptions: SelectedOptions = {
+      cpu: data.cpuCoreConfigs[0]?.id || null,
+      gpu: data.gpuCoreConfigs[0]?.id || null,
+      storage: data.storageConfigs[0]?.id || null,
+      ram: data.ramConfigs[0]?.id || null,
+      display: data.displayConfigs[0]?.id || null,
+      color: data.colorImageConfigs[0]?.id || null,
+      region: data.dynamicRegions[0]?.name || null,
     };
-
-    fetchProduct();
-  }, [productName]);
+    setSelectedOptions(initialOptions);
+    if (data.displayConfigs[0]?.label === '13.6" Display') setActiveDetails("default");
+    else if (data.displayConfigs[0]?.label === '15.3" Display') setActiveDetails("second");
+  }, [data]);
 
   useEffect(() => {
     if (!product) return;
@@ -167,7 +159,7 @@ const Macbookdetails: React.FC = () => {
         totalPrice,
       });
       alert("Product added to cart!");
-    } catch (error) {
+    } catch {
       alert("Failed to add to cart. Please try again.");
     } finally {
       setAddingToCart(false);
@@ -198,7 +190,7 @@ Please let me know more details!`;
     window.open(whatsappUrl, '_blank');
   };
 
-  if (loading)
+  if (isLoading)
     return (
       <div className="min-h-screen bg-gray-50 flex justify-center items-center w-full">
         <div className="text-center">
@@ -209,7 +201,7 @@ Please let me know more details!`;
       </div>
     );
 
-  if (error)
+  if (queryError)
     return (
       <div className="min-h-screen bg-gray-50 flex justify-center items-center">
         <div className="text-center max-w-md mx-auto px-4">
@@ -219,7 +211,7 @@ Please let me know more details!`;
             </svg>
           </div>
           <h2 className="text-xl font-semibold text-gray-800 mb-2">Oops! Something went wrong</h2>
-          <p className="text-gray-600 mb-6">{error}</p>
+          <p className="text-gray-600 mb-6">{errorMessage}</p>
           <button
             onClick={() => window.location.reload()}
             className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
@@ -249,10 +241,10 @@ Please let me know more details!`;
     <button
       type="button"
       onClick={() => handleOptionChange(category, "id" in option ? option.id : option.name)}
-      className={`w-full p-2 font text-left border-2 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+      className={`w-full p-2 font text-left border-1 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
         isSelected
           ? "border-gray-600 bg-gray-50 shadow-md"
-          : "border-gray-200 bg-white hover:border-blue-300 hover:shadow-sm"
+          : "border-gray-200 border-1 bg-white hover:border-blue-300 hover:shadow-sm"
       }`}
       aria-pressed={isSelected}
     >
@@ -412,7 +404,7 @@ Please let me know more details!`;
               <div className="grid md:grid-cols-2 gap-6 mb-8">
                 {/* CPU */}
                 <div>
-                  <h3 className=" font-medium mb-2 text-gray-900 flex items-center">
+                  <h3 className="text-base font-medium mb-2 text-gray-900 flex items-center">
                     <svg className="w-5 h-5 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
                     </svg>
@@ -433,13 +425,13 @@ Please let me know more details!`;
 
                 {/* GPU */}
                 <div>
-                  <h3 className=" font-medium mb-2 text-gray-900 flex items-center">
+                  <h3 className="text-base font-medium mb-2 text-gray-900 flex items-center">
                     <svg className="w-5 h-5 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 4V2a1 1 0 011-1h8a1 1 0 011 1v2m0 0V3a1 1 0 011 1v8a1 1 0 01-1 1M7 4V3a1 1 0 00-1 1v8a1 1 0 001 1m0 0v2a1 1 0 001 1h8a1 1 0 001-1v-2M7 14h10" />
                     </svg>
                     Graphics
                   </h3>
-                  <div className="space-y-2">
+                  <div className="grid grid-cols-2 gap-2">
                     {product.gpuCoreConfigs.map((gpu) => (
                       <OptionButton
                         key={gpu.id}
@@ -453,17 +445,17 @@ Please let me know more details!`;
                 </div>
               </div>
 
-              {/* Storage & RAM Options */}
-              <div className="grid md:grid-cols-2 gap-6 mb-4">
+              {/* Storage & RAM Options - FIXED */}
+              <div className="grid md:grid-cols-2 gap-6 mb-8">
                 {/* Storage */}
                 <div>
-                  <h3 className="text font-medium mb-4 text-gray-900 flex items-center">
+                  <h3 className="text-base font-medium mb-4 text-gray-900 flex items-center">
                     <svg className="w-5 h-5 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4" />
                     </svg>
                     Storage
                   </h3>
-                  <div className="space-y-2">
+                  <div className="grid grid-cols-2 gap-2">
                     {product.storageConfigs.map((storage) => (
                       <OptionButton
                         key={storage.id}
@@ -478,13 +470,13 @@ Please let me know more details!`;
 
                 {/* RAM */}
                 <div>
-                  <h3 className="font-medium mb-4 text-gray-900 flex items-center">
+                  <h3 className="text-base font-medium mb-4 text-gray-900 flex items-center">
                     <svg className="w-5 h-5 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2z" />
                     </svg>
                     Memory
                   </h3>
-                  <div className="space-y-2">
+                  <div className="grid grid-cols-2  gap-2">
                     {product.ramConfigs.map((ram) => (
                       <OptionButton
                         key={ram.id}
@@ -502,13 +494,13 @@ Please let me know more details!`;
               <div className="grid md:grid-cols-2 gap-6 mb-8">
                 {/* Display */}
                 <div>
-                  <h3 className=" font-medium mb-4 text-gray-900 flex items-center">
+                  <h3 className="text-base font-medium mb-4 text-gray-900 flex items-center">
                     <svg className="w-5 h-5 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                     </svg>
                     Display
                   </h3>
-                  <div className="space-y-2">
+                  <div className="grid grid-cols-2 gap-2">
                     {product.displayConfigs.map((display) => (
                       <OptionButton
                         key={display.id}
@@ -523,14 +515,14 @@ Please let me know more details!`;
 
                 {/* Region */}
                 <div>
-                  <h3 className=" font-medium mb-4 text-gray-900 flex items-center">
+                  <h3 className="text-base font-medium mb-4 text-gray-900 flex items-center">
                     <svg className="w-5 h-5 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                     </svg>
                     Region
                   </h3>
-                  <div className="space-y-2">
+                  <div className="grid grid-cols-2 gap-2">
                     {product.dynamicRegions.map((region) => (
                       <OptionButton
                         key={region.name}

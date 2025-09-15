@@ -38,7 +38,6 @@ const DynamicProductForm: React.FC = () => {
   ]);
   
   const [gpuCoreConfigs, setGpuCoreConfigs] = useState<Config[]>([
-    { id: 1, label: '7-core GPU', price: '', inStock: true },
     { id: 2, label: '8-core GPU', price: '', inStock: true },
     { id: 3, label: '10-core GPU', price: '', inStock: true },
   ]);
@@ -54,15 +53,15 @@ const DynamicProductForm: React.FC = () => {
   const [newGpuCoreInStock, setNewGpuCoreInStock] = useState(true);
   
   const [storageConfigs, setStorageConfigs] = useState<Config[]>([
-    { id: 1, label: '256GB Storage', price: '', inStock: true },
-    { id: 2, label: '512GB Storage', price: '', inStock: true },
-    { id: 3, label: '1TB Storage', price: '', inStock: true },
-    { id: 4, label: '2TB Storage', price: '', inStock: true },
+    { id: 1, label: '256GB ', price: '', inStock: true },
+    { id: 2, label: '512GB ', price: '', inStock: true },
+    { id: 3, label: '1TB ', price: '', inStock: true },
+    { id: 4, label: '2TB ', price: '', inStock: true },
   ]);
   const [ramConfigs, setRamConfigs] = useState<Config[]>([
-    { id: 1, label: '16GB RAM', price: '', inStock: true },
-    { id: 2, label: '24GB RAM', price: '', inStock: true },
-    { id: 3, label: '32GB RAM', price: '', inStock: true },
+    { id: 1, label: '16GB', price: '', inStock: true },
+    { id: 2, label: '24GB ', price: '', inStock: true },
+    { id: 3, label: '32GB ', price: '', inStock: true },
   ]);
   const [displayConfigs, setDisplayConfigs] = useState<Config[]>([
     { id: 1, label: '13.6" Display', price: '', inStock: true },
@@ -466,20 +465,19 @@ const DynamicProductForm: React.FC = () => {
       { id: 2, label: '10-core CPU', price: '', inStock: true },
     ]);
     setGpuCoreConfigs([
-      { id: 1, label: '7-core GPU', price: '', inStock: true },
       { id: 2, label: '8-core GPU', price: '', inStock: true },
       { id: 3, label: '10-core GPU', price: '', inStock: true },
     ]);
     setStorageConfigs([
-      { id: 1, label: '256GB Storage', price: '', inStock: true }, 
-      { id: 2, label: '512GB Storage', price: '', inStock: true }, 
-      { id: 3, label: '1TB Storage', price: '', inStock: true }, 
-      { id: 4, label: '2TB Storage', price: '', inStock: true }
+      { id: 1, label: '256GB ', price: '', inStock: true }, 
+      { id: 2, label: '512GB ', price: '', inStock: true }, 
+      { id: 3, label: '1TB ', price: '', inStock: true }, 
+      { id: 4, label: '2TB ', price: '', inStock: true }
     ]);
     setRamConfigs([
-      { id: 1, label: '16GB RAM', price: '', inStock: true }, 
-      { id: 2, label: '24GB RAM', price: '', inStock: true }, 
-      { id: 3, label: '32GB RAM', price: '', inStock: true }
+      { id: 1, label: '16GB', price: '', inStock: true }, 
+      { id: 2, label: '24GB', price: '', inStock: true }, 
+      { id: 3, label: '32GB ', price: '', inStock: true }
     ]);
     setDisplayConfigs([
       { id: 1, label: '13.6" Display', price: '', inStock: true }, 

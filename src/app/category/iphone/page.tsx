@@ -1,11 +1,12 @@
 "use client";
 
-import axios from "axios";
 import React, { useEffect, useState } from "react";
 import { ShoppingCart } from "lucide-react";
 import { Image, ImageKitProvider } from "@imagekit/next";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { useQuery } from "@tanstack/react-query";
+import axios from "axios";
 
 interface ColorImageConfig {
   id: number;
@@ -38,6 +39,23 @@ const slugify = (text: string) =>
     .replace(/\s+/g, "-")
     .toLowerCase();
 
+// Custom hook for fetching iPhone products
+const useIphoneProducts = () => {
+  return useQuery({
+    queryKey: ['iphone-products'],
+    queryFn: async (): Promise<Product[]> => {
+      const response = await axios.get(
+        `${process.env.NEXT_PUBLIC_BASE_URL}/api/getproduct/iphonelist`
+      );
+      return response.data;
+    },
+    staleTime: 5 * 60 * 1000, // Data stays fresh for 5 minutes
+    gcTime: 30 * 60 * 1000, // Cache for 30 minutes (previously cacheTime)
+    retry: 3,
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+  });
+};
+
 export default function IphoneAll() {
   const router = useRouter();
   const urlEndpoint = process.env.NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT;
@@ -46,11 +64,17 @@ export default function IphoneAll() {
     throw new Error("NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT is not defined");
   }
 
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [selectedColors, setSelectedColors] = useState<Record<string, number>>(
-    {}
-  );
+  // Use TanStack Query instead of manual state management
+  const {
+    data: products = [],
+    isLoading,
+    isError,
+    error,
+    refetch,
+    isFetching
+  } = useIphoneProducts();
+
+  const [selectedColors, setSelectedColors] = useState<Record<string, number>>({});
 
   const handleShowNow = (product: Product) => {
     router.push(`/checkout/${product._id}`);
@@ -79,6 +103,7 @@ export default function IphoneAll() {
     return product.colorImageConfigs[0]?.image;
   };
 
+  // Initialize selected colors when products are loaded
   useEffect(() => {
     if (products.length > 0) {
       const initialColors: Record<string, number> = {};
@@ -91,29 +116,57 @@ export default function IphoneAll() {
     }
   }, [products]);
 
-  useEffect(() => {
-    const fetchProducts = async () => {
-      try {
-        const res = await axios.get(
-          `${process.env.NEXT_PUBLIC_BASE_URL}/api/getproduct/iphonelist`
-        );
-        setProducts(res.data);
-      } catch (error) {
-        console.error("Error fetching products:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="p-6 text-center w-full flex justify-center items-center">
+        <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+        <p className="mt-2">Loading products...</p>
+      </div>
+    );
+  }
 
-    fetchProducts();
-  }, []);
+  // Error state
+  if (isError) {
+    return (
+      <div className="p-6 text-center">
+        <div className="text-red-500 mb-4">
+          <p>Error loading products: {error?.message}</p>
+        </div>
+        <button
+          onClick={() => refetch()}
+          className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition"
+        >
+          Try Again
+        </button>
+      </div>
+    );
+  }
 
-  if (loading) {
-    return <div className="p-6 text-center">Loading products...</div>;
+  // Empty state
+  if (products.length === 0) {
+    return (
+      <div className="p-6 text-center">
+        <p>No products found.</p>
+        <button
+          onClick={() => refetch()}
+          className="mt-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition"
+        >
+          Refresh
+        </button>
+      </div>
+    );
   }
 
   return (
     <ImageKitProvider urlEndpoint={urlEndpoint}>
+      {/* Show background refetch indicator */}
+      {isFetching && !isLoading && (
+        <div className="fixed top-4 right-4 bg-blue-500 text-white px-3 py-1 rounded-full text-sm z-50">
+          Updating...
+        </div>
+      )}
+      
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-8 p-6 max-w-7xl mx-auto">
         {products.map((product) => {
           const currentImage = getCurrentImage(product);

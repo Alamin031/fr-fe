@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import axios from "axios";
+import { useQuery } from '@tanstack/react-query';
 import {
   ChevronLeft,
   ChevronRight,
@@ -64,7 +65,6 @@ export default function IphoneDetails() {
   const urlEndpoint = process.env.NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT;
 
   const [product, setProduct] = useState<Product | null>(null);
-  const [loading, setLoading] = useState(true);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [selectedColorIndex, setSelectedColorIndex] = useState(0);
   const [selectedStorageIndex, setSelectedStorageIndex] = useState(0);
@@ -72,31 +72,28 @@ export default function IphoneDetails() {
   const [quantity, setQuantity] = useState(1);
   const [, setImageError] = useState<Record<number, boolean>>({});
 
+  const { data, isLoading, error } = useQuery({
+    queryKey: ['iphone', productName],
+    enabled: !!productName,
+    queryFn: async () => {
+      const res = await axios.get<Product>(
+        `/api/getproduct/iphonedetaits/product`,
+        { params: { name: productName } }
+      );
+      return res.data;
+    },
+    refetchOnWindowFocus: false,
+    staleTime: 5 * 60 * 1000,
+  });
+
   useEffect(() => {
-    const fetchProduct = async () => {
-      try {
-        const res = await axios.get(
-          `/api/getproduct/iphonedetaits/product`,
-          {
-            params: { name: productName },
-          }
-        );
-        const data: Product = res.data;
-        setProduct(data);
-
-        if (data.colorImageConfigs?.length) setSelectedColorIndex(0);
-        if (data.colorImageConfigs?.length) setSelectedImageIndex(0);
-        if (data.storageConfigs?.length) setSelectedStorageIndex(0);
-        if (data.dynamicRegions?.length) setSelectedRegionIndex(0);
-      } catch (err) {
-        console.error("Error fetching product:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (productName) fetchProduct();
-  }, [productName]);
+    if (!data) return;
+    setProduct(data);
+    if (data.colorImageConfigs?.length) setSelectedColorIndex(0);
+    if (data.colorImageConfigs?.length) setSelectedImageIndex(0);
+    if (data.storageConfigs?.length) setSelectedStorageIndex(0);
+    if (data.dynamicRegions?.length) setSelectedRegionIndex(0);
+  }, [data]);
 
   const calculateTotalPrice = (): number => {
     if (!product) return 0;
@@ -237,11 +234,23 @@ export default function IphoneDetails() {
   if (!urlEndpoint)
     return <div>Error: ImageKit URL endpoint is not configured.</div>;
 
-  if (loading)
+  if (isLoading)
     return (
       <ImageKitProvider urlEndpoint={urlEndpoint}>
         <div className="min-h-screen flex items-center justify-center bg-gray-50 w-full">
           <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+        </div>
+      </ImageKitProvider>
+    );
+
+  if (error)
+    return (
+      <ImageKitProvider urlEndpoint={urlEndpoint}>
+        <div className="min-h-screen flex items-center justify-center bg-gray-50 w-full">
+          <div className="text-center px-4">
+            <h2 className="text-xl font-semibold text-red-600 mb-2">Failed to load product</h2>
+            <p className="text-gray-600">Please try again later.</p>
+          </div>
         </div>
       </ImageKitProvider>
     );
