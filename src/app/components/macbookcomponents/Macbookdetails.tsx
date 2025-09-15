@@ -266,7 +266,7 @@ Please let me know more details!`;
           {/* Product Image */}
           <div className="order-1 lg:order-1">
             <div className="sticky top-8">
-              <div className="bg-white rounded-2xl shadow-xl p-8 aspect-square flex items-center justify-center overflow-hidden">
+              <div className="bg-white rounded-2xl shadow-xl p-8 aspect-square flex items-center justify-center overflow-hidden ">
                 {selectedColorConfig?.image ? (
                   <Image
                     src={selectedColorConfig.image}
@@ -293,7 +293,7 @@ Please let me know more details!`;
                   </div>
                 )}
               </div>
-              <div className="mb-8">
+              <div className="mb-2">
                 
                 <div className="flex flex-wrap gap-4 mt-4 justify-center">
                   {product.colorImageConfigs.map((color) => (
@@ -333,7 +333,7 @@ Please let me know more details!`;
             </div>
           </div>
           {/* Product Configuration */}
-          <div className="order-2 lg:order-2">
+          <div className="order-2 lg:order-2 max-sm:mt-[-15px]">
           <div className="border-t border-gray-200 ">
                 <div className="bg-gray-50 rounded-xl p-4 mb-2">
                   <div className="flex justify-between items-center">
@@ -401,7 +401,7 @@ Please let me know more details!`;
                 </div>
             <div className="bg-white rounded-2xl shadow-xl p-8">
               {/* Performance Options */}
-              <div className="grid md:grid-cols-2 gap-6 mb-4">
+              <div className="grid md:grid-cols-3 gap-6 mb-4">
                 {/* CPU */}
                 <div>
                   <h3 className="text-base font-medium mb-2 text-gray-900 flex items-center">
@@ -431,7 +431,7 @@ Please let me know more details!`;
                     </svg>
                     Graphics
                   </h3>
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-1 max-sm:grid-cols-2  gap-2 ">
                     {product.gpuCoreConfigs.map((gpu) => (
                       <OptionButton
                         key={gpu.id}
@@ -455,7 +455,7 @@ Please let me know more details!`;
                     </svg>
                     Storage
                   </h3>
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-3 gap-2">
                     {product.storageConfigs.map((storage) => (
                       <OptionButton
                         key={storage.id}
@@ -476,7 +476,7 @@ Please let me know more details!`;
                     </svg>
                     Memory
                   </h3>
-                  <div className="grid grid-cols-2  gap-2">
+                  <div className="grid grid-cols-3  gap-2">
                     {product.ramConfigs.map((ram) => (
                       <OptionButton
                         key={ram.id}
@@ -500,7 +500,7 @@ Please let me know more details!`;
                     </svg>
                     Display
                   </h3>
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-3 gap-2">
                     {product.displayConfigs.map((display) => (
                       <OptionButton
                         key={display.id}
@@ -522,7 +522,7 @@ Please let me know more details!`;
                     </svg>
                     Region
                   </h3>
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-3 gap-2">
                     {product.dynamicRegions.map((region) => (
                       <OptionButton
                         key={region.name}
@@ -536,10 +536,8 @@ Please let me know more details!`;
                 </div>
               </div>
 
-              {/* Color Options */}
              
 
-              {/* Price and Action Buttons */}
               
               </div>
             </div>
