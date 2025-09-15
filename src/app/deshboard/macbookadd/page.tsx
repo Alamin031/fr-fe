@@ -1,5 +1,5 @@
 'use client'
-import { Image } from '@imagekit/next';
+import Image from 'next/image'
 import axios from 'axios';
 import React, { useState, ChangeEvent, useEffect } from 'react';
 
