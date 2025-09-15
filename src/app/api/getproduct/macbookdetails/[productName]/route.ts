@@ -2,39 +2,60 @@ import { NextRequest, NextResponse } from "next/server";
 import { connect } from "@/dbconfig/dbconfig";
 import Product from "@/models/productmacbookModels";
 
-interface SpecialCases {
-  [key: string]: string;
+// Cache database connection
+let isConnected = false;
+
+async function ensureDbConnection() {
+  if (!isConnected) {
+    await connect();
+    isConnected = true;
+  }
 }
 
 export async function GET(
   req: NextRequest,
   context: { params: { productName: string } }
 ) {
-  const { productName } = context.params;
-  const nameParam = req.nextUrl.searchParams.get("name");
-
-  console.log("Dynamic param:", productName);
-  console.log("Query param:", nameParam);
-
-  // Function to format product name from slug to readable format
-  
-
-  // Use query param if available, otherwise use dynamic param
-  const inputSlug = nameParam || productName;
-  const finalSlug = inputSlug.toLowerCase(); // Ensure consistent slug format
-
-  console.log("Search slug:", finalSlug);
-
-  await connect();
-
-  // Try finding by slug first
-  let product = await Product.findOne({ slug: finalSlug });
-
-  if (!product) {
-    // fallback to readableName
-    product = await Product.findOne({ porductlinkname: nameParam });
+  try {
+    const { productName } = context.params;
+    const nameParam = req.nextUrl.searchParams.get("name");
+    
+    // Use query param if available, otherwise use dynamic param
+    const searchSlug = (nameParam || productName).toLowerCase();
+    
+    // Connect to database (reuses existing connection if available)
+    await ensureDbConnection();
+    
+    // Use lean() for faster queries and select only needed fields
+    const product = await Product.findOne({
+      $or: [
+        { slug: searchSlug },
+        { porductlinkname: nameParam }
+      ]
+    })
+    .select('-__v') // Exclude version key if not needed
+    .lean() // Returns plain JavaScript object instead of Mongoose document
+    .exec();
+    
+    if (!product) {
+      return NextResponse.json(
+        { error: "Product not found" },
+        { status: 404 }
+      );
+    }
+    
+    // Set cache headers for better performance
+    return NextResponse.json(product, {
+      headers: {
+        'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=86400',
+      },
+    });
+    
+  } catch (error) {
+    console.error("Error fetching product:", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
   }
-
-
-  return NextResponse.json(product);
 }
