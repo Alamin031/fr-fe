@@ -356,7 +356,7 @@ Please let me know more details!`;
                     {/* Shop Now Button */}
                     <button
                       onClick={handleShopNow}
-                      className="py-2 px-6 font-medium text-base rounded-full bg-white text-black  active:transform active:scale-[0.98] shadow-lg hover:shadow-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2"
+                      className="py-2 px-6 font-medium text-base rounded-full border border-gray-300 text-black  active:transform active:scale-[0.98] shadow-lg hover:shadow-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2"
                     >
                       <span className="flex items-center justify-center">
                         <ShopNowLogo />
@@ -366,10 +366,10 @@ Please let me know more details!`;
                     <button
                     onClick={handleAddToCart}
                     disabled={addingToCart}
-                    className={`w-full py-2  px-6 font-medium  rounded-full transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+                    className={`w-full py-2  px-6 font-medium border border-gray-300 rounded-full transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
                       addingToCart
                         ? "bg-gray-400 text-gray-600 cursor-not-allowed"
-                        : "bg-white text-black hover:bg-white active:transform active:scale-[0.98] shadow-lg hover:shadow-xl"
+                        : " text-black hover:bg-white active:transform active:scale-[0.98] shadow-lg hover:shadow-xl"
                     }`}
                   >
                     {addingToCart ? (
