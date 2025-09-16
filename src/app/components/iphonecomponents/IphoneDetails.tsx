@@ -281,13 +281,13 @@ export default function IphoneDetails() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
             {/* Image Gallery */}
             <div className="space-y-4">
-              <div className="relative bg-white rounded-lg shadow-lg overflow-hidden">
-                <div className="aspect-square relative">
+              <div className="relative rounded-lg  overflow-hidden max-sm:flex max-sm:justify-center max-sm:items-center ">
+                <div className="aspect-square relative max-sm:w-[300px] ">
                   <Image
                     src={currentImage?.image || ""}
                     alt={product.name}
                     fill
-                    className="object-contain"
+                    className="object-contain "
                     transformation={[{ aiRemoveBackground: true }]}
 
                     onError={() => handleImageError(selectedImageIndex)}
@@ -341,15 +341,15 @@ export default function IphoneDetails() {
 
                   
 
-                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2 mt-[-15px]">
+                <h1 className="text-2xl sm:text-3xl font-bold max-sm:font-semibold max-sm:2xl text-gray-900 mb-2 max-sm:mt-[-40px] max-sm:mb-0 mt-[-15px]">
                   {product.name}
                 </h1>
-                <div className="flex items-center mt-[-30px] ml-4">
+                <div className="flex items-center mt-[-40px] ml-4">
                   <AppleLogo />
                   <span className="font-bold text-sm sm:text-base">Apple</span>
                 </div>
                 </div>
-                <div className="text-xl sm:text-2xl font-medium text-black">
+                <div className="text-xl sm:text-2xl max-sm:mt-[-30px] font-medium text-black">
                   {formatPrice(calculateTotalPrice())}
                 </div>
               </div>
@@ -358,7 +358,7 @@ export default function IphoneDetails() {
               {product.colorImageConfigs.length > 0 && (
                 <div>
                   {/* <h3 className="text-lg font-semibold mb-3">Color</h3> */}
-                  <div className="flex flex-wrap gap-2 max-sm:gap-0 items-center"> <span>Color</span>
+                  <div className="flex flex-wrap gap-2 mt-[-15px] max-sm:gap-0 items-center text-center"> <span>Color</span>
                     {product.colorImageConfigs.map((config, index) => (
                       <button
                         key={config.id}
@@ -450,7 +450,7 @@ export default function IphoneDetails() {
                   <div className="flex justify-center items-center gap-2">
 <button
                     onClick={handleShopNow}
-                    className="w-full bg-white hover:border-black border-2 border-gray-400 text-black   font-medium py-3 sm:py-4 px-6 rounded-lg transition-colors text-sm sm:text-base flex justify-center gap-2"
+                    className="w-full bg-white hover:border-black border border-gray-400 text-black   font-medium py-2 sm:py-4 px-6 rounded-lg transition-colors text-sm sm:text-base flex justify-center gap-2"
                   >
                     <ShoppingCart className="w-5 h-5 sm:w-6 sm:h-6" />
                     Shop Now 
@@ -460,7 +460,7 @@ export default function IphoneDetails() {
 
                     <button 
                       onClick={handleAddToCart}
-                      className="w-full bg-white hover:border-black border-gray-400 text-black border font-medium py-3 sm:py-4 px-6 rounded-lg transition-colors text-sm sm:text-base"
+                      className="w-full bg-white hover:border-black border-gray-400 text-black border font-medium py-2 sm:py-4 px-6 rounded-lg transition-colors text-sm sm:text-base"
                     >
                       Add to Cart
                     </button>
