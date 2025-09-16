@@ -241,7 +241,7 @@ Please let me know more details!`;
     <button
       type="button"
       onClick={() => handleOptionChange(category, "id" in option ? option.id : option.name)}
-      className={`w-full p-2 font text-left border-1 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+      className={`w-full p-2 max-sm:text-[10px] font text-left border-1 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
         isSelected
           ? "border-gray-600 bg-gray-50 shadow-md"
           : "border-gray-200 border-1 bg-white hover:border-blue-300 hover:shadow-sm"
@@ -404,7 +404,7 @@ Please let me know more details!`;
               <div className="grid md:grid-cols-3 gap-6 mb-4">
                 {/* CPU */}
                 <div>
-                  <h3 className="text-base font-medium mb-2 text-gray-900 flex items-center">
+                  <h3 className="text-base font-medium max-sm:text-[12px] mb-2 text-gray-900 flex items-center">
                     <svg className="w-5 h-5 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
                     </svg>
@@ -425,7 +425,7 @@ Please let me know more details!`;
 
                 {/* GPU */}
                 <div>
-                  <h3 className="text-base font-medium  text-gray-900 flex mb-2 items-center">
+                  <h3 className="text-base font-medium max-sm:text-[12px] text-gray-900 flex mb-2 items-center">
                     <svg className="w-5 h-5 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 4V2a1 1 0 011-1h8a1 1 0 011 1v2m0 0V3a1 1 0 011 1v8a1 1 0 01-1 1M7 4V3a1 1 0 00-1 1v8a1 1 0 001 1m0 0v2a1 1 0 001 1h8a1 1 0 001-1v-2M7 14h10" />
                     </svg>
@@ -449,7 +449,7 @@ Please let me know more details!`;
               <div className="grid md:grid-cols-2 gap-6 ">
                 {/* Storage */}
                 <div>
-                  <h3 className="text-base font-medium mb-2 text-gray-900 flex items-center">
+                  <h3 className="text-base font-medium max-sm:text-[12px] mb-2 text-gray-900 flex items-center">
                     <svg className="w-5 h-5 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4" />
                     </svg>
@@ -470,8 +470,8 @@ Please let me know more details!`;
 
                 {/* RAM */}
                 <div>
-                  <h3 className="text-base font-medium mb-2 text-gray-900 flex items-center">
-                    <svg className="w-5 h-5 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <h3 className="text-base font-medium max-sm:text-[12px] mb-2 text-gray-900 flex items-center">
+                    <svg className="w-5 h-5 mr-2  text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2z" />
                     </svg>
                     Memory
@@ -494,8 +494,8 @@ Please let me know more details!`;
               <div className="grid md:grid-cols-2 gap-6 mb-2 mt-1">
                 {/* Display */}
                 <div>
-                  <h3 className="text-base font-medium mb-2 text-gray-900 flex items-center">
-                    <svg className="w-5 h-5 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <h3 className="text-base font-medium max-sm:text-[12px] mb-2 text-gray-900 flex items-center">
+                    <svg className="w-4 h-4 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                     </svg>
                     Display
@@ -515,8 +515,8 @@ Please let me know more details!`;
 
                 {/* Region */}
                 <div>
-                  <h3 className="text-base font-medium mb-2 text-gray-900 flex items-center">
-                    <svg className="w-5 h-5 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <h3 className="text-base font-medium max-sm:text-[12px] mb-2 text-gray-900 flex items-center">
+                    <svg className="w-4 h-4 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                     </svg>
@@ -551,7 +551,7 @@ Please let me know more details!`;
               <h2 className="text-3xl max-sm:text font-bold max-sm:font-medium mb-6 text-gray-900">Technical Specifications</h2>
               <div className="flex border-b border-gray-200">
                 <button
-                  className={`py-4 px-6 font-semibold border-b-2 transition-all duration-200 focus:outline-none ${
+                  className={`py-4 px-6 font-semibold max-sm:text-[13px] border-b-2 transition-all duration-200 focus:outline-none ${
                     activeDetails === "default" 
                       ? "border-black-600 text-black-600" 
                       : "border-transparent text-gray-600 hover:text-gray-900 hover:border-gray-300"
@@ -561,7 +561,7 @@ Please let me know more details!`;
                   Model Specifications
                 </button>
                 <button
-                  className={`py-4 px-6 font-semibold border-b-2 transition-all duration-200 focus:outline-none ${
+                  className={`py-4 px-6 font-semibold text-[13px] border-b-2 transition-all duration-200 focus:outline-none ${
                     activeDetails === "second" 
                       ? "border-black text-black" 
                       : "border-transparent text-gray-600 hover:text-gray-900 hover:border-gray-300"
@@ -582,8 +582,8 @@ Please let me know more details!`;
                         key={detail.id} 
                         className={`flex py-3 px-4 rounded-lg ${index % 2 === 0 ? 'bg-gray-50' : 'bg-white'}`}
                       >
-                        <span className="font-medium text-gray-600 w-48 flex-shrink-0">{detail.label}:</span>
-                        <span className="text-gray-900 font-medium">{detail.value}</span>
+                        <span className="font max-sm:text-[12px] text-gray-600 w-48 flex-shrink-0">{detail.label}:</span>
+                        <span className="text-gray-900 max-sm:text-[10px] text- ">{detail.value}</span>
                       </div>
                     ))}
                   </div>
@@ -594,8 +594,8 @@ Please let me know more details!`;
                         key={detail.id} 
                         className={`flex py-3 px-4 rounded-lg ${index % 2 === 0 ? 'bg-gray-50' : 'bg-white'}`}
                       >
-                        <span className="font-medium text-gray-600 w-48 flex-shrink-0">{detail.seconddetails}:</span>
-                        <span className="text-gray-900 font-medium">{detail.value}</span>
+                        <span className=" text-gray-600 w-48 max-sm:text-[12px] flex-shrink-0">{detail.seconddetails}:</span>
+                        <span className="text-gray-900 max-sm:text-[10px]">{detail.value}</span>
                       </div>
                     ))}
                   </div>

@@ -342,7 +342,7 @@ export default function IphoneDetails() {
 
                   
 
-                <h1 className="text-2xl sm:text-3xl font-bold max-sm:font-semibold max-sm:2xl text-gray-900 mb-2 max-sm:mt-[-40px] max-sm:mb-0 mt-[-15px]">
+                <h1 className="text sm:text-3xl font-bold max-sm:font-semibold max-sm:2xl text-gray-900 mb-2 max-sm:mt-[-40px] max-sm:mb-0 mt-[-15px]">
                   {product.name}
                 </h1>
                 <div className="flex items-center mt-[-40px] ml-4">
@@ -350,7 +350,7 @@ export default function IphoneDetails() {
                   <span className="font-bold text-sm sm:text-base">Apple</span>
                 </div>
                 </div>
-                <div className="text-xl sm:text-2xl max-sm:mt-[-30px] font-medium text-black">
+                <div className="text sm:text-2xl max-sm:mt-[-30px] font-medium text-black">
                   {formatPrice(calculateTotalPrice())}
                 </div>
               </div>
@@ -382,7 +382,7 @@ export default function IphoneDetails() {
               <div className="flex gap-6 max-sm:flex  max-sm:justify-around ">
                 {product.storageConfigs.length > 0 && (
                   <div>
-                    <h3 className="text-lg font-semibold mb-3">Storage</h3>
+                    <h3 className=" font-semibold mb-3">Storage</h3>
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                       {product.storageConfigs.map((config, index) => (
                         <button
@@ -403,7 +403,7 @@ export default function IphoneDetails() {
 
                 {regions.length > 0 && (
                   <div>
-                    <h3 className="text-lg font-semibold mb-3">Region</h3>
+                    <h3 className="font-semibold mb-3">Region</h3>
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                       {regions.map((region, index) => (
                         <button
