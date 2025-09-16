@@ -1,61 +1,28 @@
+// app/api/getproduct/route.ts  <-- URL: /api/getproduct?name=...
 import { NextRequest, NextResponse } from "next/server";
 import { connect } from "@/dbconfig/dbconfig";
 import Product from "@/models/productmacbookModels";
 
-// Cache database connection
 let isConnected = false;
 
-async function ensureDbConnection() {
-  if (!isConnected) {
-    await connect();
-    isConnected = true;
-  }
-}
-
-export async function GET(
-  req: NextRequest,
-  context: { params: { productName: string } }
-) {
+export async function GET(req: NextRequest) {
   try {
-    const { productName } = context.params;
-    const nameParam = req.nextUrl.searchParams.get("name");
-    
-    // Use query param if available, otherwise use dynamic param
-    const searchSlug = (nameParam || productName).toLowerCase();
-    
-    // Connect to database (reuses existing connection if available)
-    await ensureDbConnection();
-    
-    // Use lean() for faster queries and select only needed fields
-    const product = await Product.findOne({
-      $or: [
-        { slug: searchSlug },
-        { porductlinkname: nameParam }
-      ]
-    })
-    .select('-__v') // Exclude version key if not needed
-    .lean() // Returns plain JavaScript object instead of Mongoose document
-    .exec();
-    
-    if (!product) {
-      return NextResponse.json(
-        { error: "Product not found" },
-        { status: 404 }
-      );
+    if (!isConnected) {
+      await connect(); // your dbconfig should handle mongoose.connect
+      isConnected = true;
     }
     
-    // Set cache headers for better performance
-    return NextResponse.json(product, {
-      headers: {
-        'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=86400',
-      },
-    });
-    
-  } catch (error) {
-    console.error("Error fetching product:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+
+    const nameParam = req.nextUrl.searchParams.get("name");
+    if (!nameParam) {
+      return NextResponse.json({ error: "Missing name param" }, { status: 400 });
+    }
+
+    const product = await Product.findOne({ porductlinkname: nameParam });
+
+    return NextResponse.json(product, { status: 200 });
+  } catch (err) {
+    console.error("API error:", err);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
