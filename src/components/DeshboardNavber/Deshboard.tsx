@@ -23,7 +23,7 @@ const menuItems = [
   { name: 'Analytics', icon: BarChart3, href: '/analytics' },
   { name: 'Reports', icon: FileText, href: '/reports' },
   { name: 'Messages', icon: Mail, href: '/messages' },
-  { name: 'Add Product', icon: PlusSquare, href: '/deshboard/addproduct' }, // ✅ new nav item
+  { name: 'IPhone', icon: PlusSquare, href: '/deshboard/addproduct' }, // ✅ new nav item
   { name: 'Macbook', icon: Settings, href: '/deshboard/macbookadd' }, // ✅ added Macbook nav item
 ];
 

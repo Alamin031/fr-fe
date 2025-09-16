@@ -17,6 +17,7 @@ import {
 import { Image, ImageKitProvider } from "@imagekit/next";
 import AppleLogo from "@/components/ui/AppleLogo";
 import WhatsappLogo from "@/components/ui/WhatsappLogo";
+import ShopNowLogo from "@/components/ui/ShopNowLogo";
 
 // No props are passed to this client component
 
@@ -298,13 +299,13 @@ export default function IphoneDetails() {
                         onClick={prevImage}
                         className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white rounded-full p-2 shadow-lg transition-all z-10"
                       >
-                        <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5" />
+                        <ChevronLeft className="w- h-4 sm:w-4 sm:h-4" />
                       </button>
                       <button
                         onClick={nextImage}
                         className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white rounded-full p-2 shadow-lg transition-all z-10"
                       >
-                        <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" />
+                        <ChevronRight className="w-3 h-3 sm:w-3 sm:h-3" />
                       </button>
                     </>
                   )}
@@ -358,12 +359,12 @@ export default function IphoneDetails() {
               {product.colorImageConfigs.length > 0 && (
                 <div>
                   {/* <h3 className="text-lg font-semibold mb-3">Color</h3> */}
-                  <div className="flex flex-wrap gap-2 mt-[-15px] max-sm:gap-0 items-center text-center"> <span>Color</span>
+                  <div className="flex flex-wrap gap-2 mt-[-15px] max-sm:gap-0 items-center text-center"> <span className="font-semibold">Color</span>
                     {product.colorImageConfigs.map((config, index) => (
                       <button
                         key={config.id}
                         onClick={() => handleColorChange(index)}
-                        className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full border-2 transition-all max-sm:w-5 max-sm:h-5 max-sm:ml-5 ${
+                        className={`w-8 h-8 sm:w-5 sm:h-5 rounded-full border-2 transition-all max-sm:w-5 max-sm:h-5 max-sm:ml-5 ${
                           selectedColorIndex === index
                             ? "border-gray-800 scale-110"
                             : "border-gray-300 hover:border-gray-500"
@@ -450,9 +451,11 @@ export default function IphoneDetails() {
                   <div className="flex justify-center items-center gap-2">
 <button
                     onClick={handleShopNow}
-                    className="w-full bg-white hover:border-black border border-gray-400 text-black   font-medium py-2 sm:py-4 px-6 rounded-lg transition-colors text-sm sm:text-base flex justify-center gap-2"
+                    className="w-full items-center bg-white hover:border-black border border-gray-400 text-black   font-medium py-2 sm:py-2 px-6 rounded-lg transition-colors text-sm sm:text-base flex justify-center gap-2"
                   >
-                    <ShoppingCart className="w-5 h-5 sm:w-6 sm:h-6" />
+                    <ShopNowLogo/>
+
+
                     Shop Now 
                   </button>
 
@@ -460,7 +463,7 @@ export default function IphoneDetails() {
 
                     <button 
                       onClick={handleAddToCart}
-                      className="w-full bg-white hover:border-black border-gray-400 text-black border font-medium py-2 sm:py-4 px-6 rounded-lg transition-colors text-sm sm:text-base"
+                      className="w-full bg-white hover:border-black border-gray-400 text-black border font-medium py-2 sm:py-2 px-6 rounded-lg transition-colors text-sm sm:text-base"
                     >
                       Add to Cart
                     </button>
