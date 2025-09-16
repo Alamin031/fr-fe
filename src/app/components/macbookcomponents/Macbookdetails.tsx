@@ -266,7 +266,7 @@ Please let me know more details!`;
           {/* Product Image */}
           <div className="order-1 lg:order-1">
             <div className="sticky top-8">
-              <div className="bg-white rounded-2xl shadow-xl p-8 aspect-square flex items-center justify-center overflow-hidden">
+              <div className="bg-white rounded-2xl shadow-xl p-8 aspect-square flex items-center justify-center overflow-hidden  ">
                 {selectedColorConfig?.image ? (
                   <Image
                     src={selectedColorConfig.image}
@@ -293,7 +293,7 @@ Please let me know more details!`;
                   </div>
                 )}
               </div>
-              <div className="mb-8">
+              <div className="mb-2">
                 
                 <div className="flex flex-wrap gap-4 mt-4 justify-center">
                   {product.colorImageConfigs.map((color) => (
@@ -333,7 +333,7 @@ Please let me know more details!`;
             </div>
           </div>
           {/* Product Configuration */}
-          <div className="order-2 lg:order-2">
+          <div className="order-2 lg:order-2 max-sm:mt-[-15px]">
           <div className="border-t border-gray-200 ">
                 <div className="bg-gray-50 rounded-xl p-4 mb-2">
                   <div className="flex justify-between items-center">
@@ -401,7 +401,7 @@ Please let me know more details!`;
                 </div>
             <div className="bg-white rounded-2xl shadow-xl p-8">
               {/* Performance Options */}
-              <div className="grid md:grid-cols-2 gap-6 mb-8">
+              <div className="grid md:grid-cols-3 gap-6 mb-4">
                 {/* CPU */}
                 <div>
                   <h3 className="text-base font-medium mb-2 text-gray-900 flex items-center">
@@ -425,13 +425,13 @@ Please let me know more details!`;
 
                 {/* GPU */}
                 <div>
-                  <h3 className="text-base font-medium mb-2 text-gray-900 flex items-center">
+                  <h3 className="text-base font-medium  text-gray-900 flex mb-2 items-center">
                     <svg className="w-5 h-5 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 4V2a1 1 0 011-1h8a1 1 0 011 1v2m0 0V3a1 1 0 011 1v8a1 1 0 01-1 1M7 4V3a1 1 0 00-1 1v8a1 1 0 001 1m0 0v2a1 1 0 001 1h8a1 1 0 001-1v-2M7 14h10" />
                     </svg>
                     Graphics
                   </h3>
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-1 max-sm:grid-cols-2  gap-2 ">
                     {product.gpuCoreConfigs.map((gpu) => (
                       <OptionButton
                         key={gpu.id}
@@ -446,16 +446,16 @@ Please let me know more details!`;
               </div>
 
               {/* Storage & RAM Options - FIXED */}
-              <div className="grid md:grid-cols-2 gap-6 mb-8">
+              <div className="grid md:grid-cols-2 gap-6 ">
                 {/* Storage */}
                 <div>
-                  <h3 className="text-base font-medium mb-4 text-gray-900 flex items-center">
+                  <h3 className="text-base font-medium mb-2 text-gray-900 flex items-center">
                     <svg className="w-5 h-5 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4" />
                     </svg>
                     Storage
                   </h3>
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-3 max-sm:gird-cols-3 gap-2">
                     {product.storageConfigs.map((storage) => (
                       <OptionButton
                         key={storage.id}
@@ -470,13 +470,13 @@ Please let me know more details!`;
 
                 {/* RAM */}
                 <div>
-                  <h3 className="text-base font-medium mb-4 text-gray-900 flex items-center">
+                  <h3 className="text-base font-medium mb-2 text-gray-900 flex items-center">
                     <svg className="w-5 h-5 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2z" />
                     </svg>
                     Memory
                   </h3>
-                  <div className="grid grid-cols-2  gap-2">
+                  <div className="grid grid-cols-4  gap-2">
                     {product.ramConfigs.map((ram) => (
                       <OptionButton
                         key={ram.id}
@@ -491,10 +491,10 @@ Please let me know more details!`;
               </div>
 
               {/* Display & Region Options */}
-              <div className="grid md:grid-cols-2 gap-6 mb-8">
+              <div className="grid md:grid-cols-2 gap-6 mb-2 mt-1">
                 {/* Display */}
                 <div>
-                  <h3 className="text-base font-medium mb-4 text-gray-900 flex items-center">
+                  <h3 className="text-base font-medium mb-2 text-gray-900 flex items-center">
                     <svg className="w-5 h-5 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                     </svg>
@@ -515,14 +515,14 @@ Please let me know more details!`;
 
                 {/* Region */}
                 <div>
-                  <h3 className="text-base font-medium mb-4 text-gray-900 flex items-center">
+                  <h3 className="text-base font-medium mb-2 text-gray-900 flex items-center">
                     <svg className="w-5 h-5 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                     </svg>
                     Region
                   </h3>
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-3 gap-2">
                     {product.dynamicRegions.map((region) => (
                       <OptionButton
                         key={region.name}
@@ -536,10 +536,8 @@ Please let me know more details!`;
                 </div>
               </div>
 
-              {/* Color Options */}
              
 
-              {/* Price and Action Buttons */}
               
               </div>
             </div>

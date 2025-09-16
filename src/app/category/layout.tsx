@@ -35,8 +35,8 @@ export default function deshboardLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
 <ReactQueryProvider>
-<Suspense>
-               <ResponsiveEcomerce></ResponsiveEcomerce>
+<Suspense fallback={<div>Loading...</div>}>
+<ResponsiveEcomerce></ResponsiveEcomerce>
 
             <div className="flex  w-screen">
                  {children}
