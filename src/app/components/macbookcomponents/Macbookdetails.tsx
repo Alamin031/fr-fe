@@ -266,7 +266,7 @@ Please let me know more details!`;
           {/* Product Image */}
           <div className="order-1 lg:order-1">
             <div className="sticky top-8">
-              <div className="bg-white rounded-2xl shadow-xl p-8 aspect-square flex items-center justify-center overflow-hidden ">
+              <div className="bg-white rounded-2xl shadow-xl p-8 aspect-square flex items-center justify-center overflow-hidden  ">
                 {selectedColorConfig?.image ? (
                   <Image
                     src={selectedColorConfig.image}
@@ -455,7 +455,7 @@ Please let me know more details!`;
                     </svg>
                     Storage
                   </h3>
-                  <div className="grid grid-cols-3 gap-2">
+                  <div className="grid grid-cols-3 max-sm:gird-cols-3 gap-2">
                     {product.storageConfigs.map((storage) => (
                       <OptionButton
                         key={storage.id}
@@ -476,7 +476,7 @@ Please let me know more details!`;
                     </svg>
                     Memory
                   </h3>
-                  <div className="grid grid-cols-3  gap-2">
+                  <div className="grid grid-cols-4  gap-2">
                     {product.ramConfigs.map((ram) => (
                       <OptionButton
                         key={ram.id}
@@ -500,7 +500,7 @@ Please let me know more details!`;
                     </svg>
                     Display
                   </h3>
-                  <div className="grid grid-cols-3 gap-2">
+                  <div className="grid grid-cols-2 gap-2">
                     {product.displayConfigs.map((display) => (
                       <OptionButton
                         key={display.id}
