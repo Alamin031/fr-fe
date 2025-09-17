@@ -317,7 +317,7 @@ Please let me know more details!`;
                         />
                         {selectedOptions.color === color.id && (
                           <div className="absolute inset-0 flex items-center justify-center">
-                            <svg className="w-6 h-6 text-white drop-shadow-lg" fill="currentColor" viewBox="0 0 20 20">
+                            <svg className="w-4 h-4 text-white drop-shadow-lg" fill="currentColor" viewBox="0 0 20 20">
                               <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                             </svg>
                           </div>
@@ -404,6 +404,29 @@ Please let me know more details!`;
             <div className="bg-white rounded-2xl shadow-xl p-8">
               {/* Performance Options */}
               <div className="grid md:grid-cols-3 gap-6 mb-4">
+
+
+              <div className="grid md:grid-cols-2 gap-6 mb-2 mt-1">
+                {/* Display */}
+                <div>
+                  <h3 className="text-base font-medium max-sm:text-[12px] mb-2 text-gray-900 flex items-center">
+                    <svg className="w-4 h-4 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                    </svg>
+                    Display
+                  </h3>
+                  <div className="grid grid-cols-2 gap-2">
+                    {product.displayConfigs.map((display) => (
+                      <OptionButton
+                        key={display.id}
+                        option={display}
+                        category="display"
+                        isSelected={selectedOptions.display === display.id}
+                        showPrice={false}
+                      />
+                    ))}
+                  </div>
+                </div>
                 {/* CPU */}
                 <div>
                   <h3 className="text-base font-medium max-sm:text-[12px] mb-2 text-gray-900 flex items-center">
@@ -493,27 +516,7 @@ Please let me know more details!`;
               </div>
 
               {/* Display & Region Options */}
-              <div className="grid md:grid-cols-2 gap-6 mb-2 mt-1">
-                {/* Display */}
-                <div>
-                  <h3 className="text-base font-medium max-sm:text-[12px] mb-2 text-gray-900 flex items-center">
-                    <svg className="w-4 h-4 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                    </svg>
-                    Display
-                  </h3>
-                  <div className="grid grid-cols-2 gap-2">
-                    {product.displayConfigs.map((display) => (
-                      <OptionButton
-                        key={display.id}
-                        option={display}
-                        category="display"
-                        isSelected={selectedOptions.display === display.id}
-                        showPrice={false}
-                      />
-                    ))}
-                  </div>
-                </div>
+             
 
                 {/* Region */}
                 <div>

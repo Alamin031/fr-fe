@@ -248,7 +248,8 @@ export default function IphoneAll() {
                   onClick={() => handleShowNow(product)}
                   className="flex-1 flex items-center justify-center gap-2 bg-amber-500 text-white rounded-[10px] px-6 py-3 hover:bg-white hover:text-gray-500 transition duration-200 border font-medium"
                 >
-                  Shop Now
+                  Order Now
+                  
                 </button>
 
                 <button
