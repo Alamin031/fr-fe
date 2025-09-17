@@ -1,6 +1,7 @@
 import React from 'react';
 import macbook from '@/../public/mba13-m4-skyblue-gallery1-202503.png'
 import Image from 'next/image';
+import Link from 'next/link';
 
 const Macbook = () => {
     return (
@@ -12,9 +13,9 @@ const Macbook = () => {
         <button className="px-9 py-2 rounded-2xl text-black hover:bg-orange-500 hover:text-white hover:border-orange-500 transition border-1 border-black max-md:px-5 max-md:text-[12px]">
           Learn More
         </button>
-        <button className="px-8 py-3 rounded-2xl bg-orange-500 text-white  transition max-md:px-5  max-md:text-[12px]">
+        <Link href={'/category/macbook/macbook-air-m4'} className="px-8 py-3 rounded-2xl bg-orange-500 text-white  transition max-md:px-5  max-md:text-[12px]">
           Buy Now
-        </button>
+        </Link>
       </div>
 
             <div>
