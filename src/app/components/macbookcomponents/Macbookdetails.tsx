@@ -241,7 +241,7 @@ Please let me know more details!`;
     <button
       type="button"
       onClick={() => handleOptionChange(category, "id" in option ? option.id : option.name)}
-      className={`w-full p-2 max-sm:text-[10px] font text-left border-1 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+      className={`w-full p-2 max-sm:text-[12px] font text-left border-1 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
         isSelected
           ? "border-gray-600 bg-gray-50 shadow-md"
           : "border-gray-200 border-1 bg-white hover:border-blue-300 hover:shadow-sm"
@@ -265,18 +265,20 @@ Please let me know more details!`;
         <div className="grid lg:grid-cols-2 gap-12">
           {/* Product Image */}
           <div className="order-1 lg:order-1">
-            <div className="sticky top-8">
-              <div className="bg-white rounded-2xl shadow-xl p-8 aspect-square flex items-center justify-center overflow-hidden  ">
+            <div className="">
+              <div className=" rounded-2xl   aspect-square flex items-center justify-center overflow-hidden  ">
                 {selectedColorConfig?.image ? (
+                  
                   <Image
                     src={selectedColorConfig.image}
                     alt={`${product.name} in ${selectedColorConfig.color}`}
-                    className="w-full h-full object-contain transition-opacity duration-300"
+                    className=" h-full object-contain transition-opacity duration-300"
                     width={500}
                     height={500}
                     onError={(e) => {
                       (e.target as HTMLImageElement).src = "/placeholder-product.png";
                     }}
+                    
                   />
 
                   

@@ -2,6 +2,7 @@
 import React from 'react';
 import appleiphon from '@/../public/Adobe Express - file.png';
 import Image from 'next/image';
+import Link from 'next/link';
 
 const PhoneHome = () => {
   return (
@@ -17,9 +18,9 @@ const PhoneHome = () => {
         <button className="px-9 py-2 rounded-2xl text-black hover:bg-orange-500 hover:text-white hover:border-orange-500 transition border-1 border-black max-md:px-4 max-md:text-[12px]">
           Learn More
         </button>
-        <button className="px-8 py-3 rounded-2xl bg-orange-500 text-white  transition max-md:px-4  max-md:text-[12px]">
+        <Link href={'category/iphone/iphone-16-pro'} className="px-8 py-3 rounded-2xl bg-orange-500 text-white  transition max-md:px-4  max-md:text-[12px]">
           Buy Now
-        </button>
+        </Link>
       </div>
 
       <p className="flex justify-center mt-2 font-medium max-md:text-[12px] mb-4 bg-gradient-to-r from-black via-orange-300 via-pink-500 to-orange-500 
