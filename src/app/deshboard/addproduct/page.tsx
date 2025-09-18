@@ -38,18 +38,22 @@ type PreOrderConfig = {
 // Product Type
 type Product = { 
   name: string; 
-basePrice: string; 
+  basePrice: string; 
   storageConfigs: Config[]; 
   colorImageConfigs: ColorImageConfig[]; 
   dynamicRegions: RegionConfig[]; 
   details: DetailConfig[]; 
   preOrderConfig: PreOrderConfig;
+  sku?: string; // Optional since it can be auto-generated
+  accessories?: string; // Optional since it has a default
 };
 
 const DynamicProductForm: React.FC = () => {
   // Product Info
   const [productName, setProductName] = useState('');
   const [productPrice, setProductPrice] = useState('');
+  const [productSku, setProductSku] = useState('');
+  const [accessories, setAccessories] = useState('iphone');
 
   // Pre-order Configuration
   const [preOrderConfig, setPreOrderConfig] = useState<PreOrderConfig>({
@@ -122,6 +126,16 @@ const DynamicProductForm: React.FC = () => {
     value: string
   ) => {
     setter(prev => prev.map(cfg => cfg.id === id ? { ...cfg, price: value } : cfg));
+  };
+
+  const handleColorImageConfigChange = (id: number, field: 'price', value: string) => {
+    setColorImageConfigs(prev => prev.map(cfg => 
+      cfg.id === id ? { ...cfg, [field]: value } : cfg
+    ));
+  };
+
+  const handleRemoveColorImage = (id: number) => {
+    setColorImageConfigs(prev => prev.filter(config => config.id !== id));
   };
 
   const handleNewImageUpload = async (e: ChangeEvent<HTMLInputElement>) => {
@@ -198,9 +212,11 @@ const DynamicProductForm: React.FC = () => {
       return; 
     }
     
-    const newProduct: Product = { 
+    const newProduct: Product & { sku?: string; accessories?: string } = { 
       name: productName, 
       basePrice: parseFloat(productPrice).toFixed(2), 
+      ...(productSku && { sku: productSku }), // Only include if user provided one
+      accessories: accessories,
       storageConfigs, 
       colorImageConfigs, 
       dynamicRegions: dynamicProducts, 
@@ -210,34 +226,64 @@ const DynamicProductForm: React.FC = () => {
     console.log(newProduct)
 
     await axios.post('/api/productlist', newProduct)
-      .then(res => console.log(res.data))
-      .catch(err => console.log(err));
+      .then(res => {
+        console.log(res.data);
+        alert('Product added successfully!');
+        // Reset form
+        setProductName('');
+        setProductPrice('');
+        setProductSku('');
+        setAccessories('iphone');
+        setStorageConfigs([
+          { id: 1, label: '256GB Storage', price: '' },
+          { id: 2, label: '512GB Storage', price: '' },
+          { id: 3, label: '1TB Storage', price: '' },
+          { id: 4, label: '2TB Storage', price: '' },
+        ]);
+        setColorImageConfigs([]);
+        setDynamicProducts([]);
+        setDetails([]);
+        setPreOrderConfig({
+          isPreOrder: false,
+          availabilityDate: '',
+          estimatedShipping: '',
+          preOrderDiscount: 0,
+          maxPreOrderQuantity: 0
+        });
+      })
+      .catch(err => {
+        console.log(err);
+        alert('Failed to add product. Please try again.');
+      });
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center p-5 font-sans w-full">
       <div className="w-full max-w-4xl bg-white rounded-2xl shadow-2xl overflow-hidden">
         <div className=" text-white text-center p-6 bg-orange-400">
-          <h1 className="text-2xl font-bold mb-1">Iphone Product Manager</h1>
+          <h1 className="text-2xl font-bold mb-1">Apple Product Manager</h1>
         </div>
         
         <div className="p-8">
           <div className="bg-gray-100 p-6 rounded-xl mb-6">
-            {/* Product Name & Price */}
-            <input 
-              type="text" 
-              value={productName} 
-              onChange={(e) => setProductName(e.target.value)} 
-              placeholder="Product Name" 
-              className="w-full p-3 border-2 border-gray-300 rounded-lg mb-2" 
-            />
-            <input 
-              type="number" 
-              value={productPrice} 
-              onChange={(e) => setProductPrice(e.target.value)} 
-              placeholder="Price" 
-              className="w-full p-3 border-2 border-gray-300 rounded-lg mb-4" 
-            />
+            {/* Product Info */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+              <input 
+                type="text" 
+                value={productName} 
+                onChange={(e) => setProductName(e.target.value)} 
+                placeholder="Product Name" 
+                className="w-full p-3 border-2 border-gray-300 rounded-lg" 
+              />
+              <input 
+                type="number" 
+                value={productPrice} 
+                onChange={(e) => setProductPrice(e.target.value)} 
+                placeholder="Base Price" 
+                className="w-full p-3 border-2 border-gray-300 rounded-lg" 
+              />
+              
+            </div>
 
             {/* Pre-order Configuration */}
             <div className="mb-6 bg-blue-50 p-4 rounded-lg border-2 border-blue-200">
@@ -275,15 +321,103 @@ const DynamicProductForm: React.FC = () => {
             {/* Colors & Images */}
             <div className="mb-4">
               <label className="font-semibold text-gray-700">Colors & Images</label>
-              <div className="flex items-center gap-2 mt-2">
-                <input type="color" value={newColor} onChange={(e) => setNewColor(e.target.value)} className="w-16 h-10" />
-                <div onClick={() => document.getElementById('newColorImage')?.click()} className="border-2 border-dashed p-2 rounded cursor-pointer w-20 h-20 flex items-center justify-center">
-                  {uploading ? <LoadingSpinner size="sm" /> : newImagePreview ? <Image src={newImagePreview} width={64} height={64} alt="preview" className="rounded" /> : <span className="text-gray-500 text-sm text-center">Click to Upload</span>}
-                  <input type="file" id="newColorImage" accept="image/*" onChange={handleNewImageUpload} className="hidden" />
+              
+              {/* Add New Color/Image Form */}
+              <div className="flex items-center gap-2 mt-2 mb-4 p-3 bg-white rounded-lg border">
+                <input 
+                  type="color" 
+                  value={newColor} 
+                  onChange={(e) => setNewColor(e.target.value)} 
+                  className="w-16 h-10 border border-gray-300 rounded" 
+                />
+                <div 
+                  onClick={() => document.getElementById('newColorImage')?.click()} 
+                  className="border-2 border-dashed border-gray-300 p-2 rounded cursor-pointer w-20 h-20 flex items-center justify-center hover:border-gray-400 transition-colors"
+                >
+                  {uploading ? (
+                    <LoadingSpinner size="sm" />
+                  ) : newImagePreview ? (
+                    <Image src={newImagePreview} width={64} height={64} alt="preview" className="rounded object-cover" />
+                  ) : (
+                    <span className="text-gray-500 text-xs text-center">Click to Upload</span>
+                  )}
+                  <input 
+                    type="file" 
+                    id="newColorImage" 
+                    accept="image/*" 
+                    onChange={handleNewImageUpload} 
+                    className="hidden" 
+                  />
                 </div>
-                <input type="number" placeholder="Price" value={newPrice} onChange={(e) => setNewPrice(e.target.value)} className="border-2 border-gray-300 p-2 rounded flex-1" />
-                <button onClick={handleAddColorImage} className="text-white px-3 py-1 rounded hover:bg-green-600 transition-colors bg-amber-500">+ Add</button>
+                <input 
+                  type="number" 
+                  placeholder="Price" 
+                  value={newPrice} 
+                  onChange={(e) => setNewPrice(e.target.value)} 
+                  className="border-2 border-gray-300 p-2 rounded flex-1" 
+                />
+                <button 
+                  onClick={handleAddColorImage} 
+                  className="text-white px-4 py-2 rounded hover:bg-green-600 transition-colors bg-amber-500 font-medium"
+                >
+                  + Add
+                </button>
               </div>
+
+              {/* Display Existing Color/Image Configurations */}
+              {colorImageConfigs.length > 0 && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {colorImageConfigs.map((config) => (
+                    <div key={config.id} className="flex items-center gap-3 bg-white p-3 rounded-lg border shadow-sm">
+                      {/* Color Preview */}
+                      <div 
+                        className="w-8 h-8 rounded border border-gray-300 flex-shrink-0"
+                        style={{ backgroundColor: config.color }}
+                        title={`Color: ${config.color}`}
+                      ></div>
+                      
+                      {/* Image Preview */}
+                      <div className="w-12 h-12 flex-shrink-0">
+                        <Image 
+                          src={config.image} 
+                          width={48} 
+                          height={48} 
+                          alt="Product" 
+                          className="w-full h-full object-cover rounded border border-gray-200" 
+                        />
+                      </div>
+                      
+                      {/* Price Input */}
+                      <input 
+                        type="number" 
+                        placeholder="Price" 
+                        value={config.price} 
+                        onChange={(e) => handleColorImageConfigChange(config.id, 'price', e.target.value)} 
+                        className="border border-gray-300 p-2 rounded w-24 text-sm" 
+                      />
+                      
+                      {/* Price Label */}
+                      <span className="text-sm text-gray-600 flex-1">${config.price}</span>
+                      
+                      {/* Remove Button */}
+                      <button 
+                        onClick={() => handleRemoveColorImage(config.id)} 
+                        className="text-red-500 hover:text-red-700 text-lg font-bold flex-shrink-0"
+                        title="Remove this color/image"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Empty State */}
+              {colorImageConfigs.length === 0 && (
+                <div className="text-center text-gray-500 py-4 bg-gray-50 rounded-lg border-2 border-dashed border-gray-200">
+                  No color/image configurations added yet
+                </div>
+              )}
             </div>
 
             {/* Storage Configs */}
