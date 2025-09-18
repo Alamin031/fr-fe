@@ -213,7 +213,7 @@ export default function Mabookcard() {
                       onClick={() => handleShowNow(product)}
                       className="flex-1 flex items-center justify-center gap-2 rounded-full bg-white text-black border border-gray-300  px-4 py-2 hover:bg-amber-600 transition-colors duration-200 font-medium text-sm sm:text-base "
                     >
-                      <span>Shop Now</span>
+                      <span>Order Now</span>
                     </button>
 
                     <button

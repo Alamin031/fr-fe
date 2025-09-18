@@ -7,31 +7,32 @@ import {
   Home, 
   Users, 
   BarChart3, 
-  Settings, 
+  SquarePlus,
   FileText, 
   Mail, 
-  PlusSquare,
   Tablet,
   LaptopMinimal,
-  Smartphone
-     // ✅ Added Tablet icon for iPad
+  Smartphone,
+  Watch // ✅ if you want to add Apple Watch later
 } from 'lucide-react';
 
 const NavSidebar = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const pathname = usePathname();
 
-const menuItems = [
-  { name: 'Dashboard', icon: Home, href: '/' },
-  { name: 'Users', icon: Users, href: '/users' },
-  { name: 'Analytics', icon: BarChart3, href: '/analytics' },
-  { name: 'Reports', icon: FileText, href: '/reports' },
-  { name: 'Messages', icon: Mail, href: '/messages' },
-  { name: 'IPhone', icon: Smartphone, href: '/deshboard/addproduct' }, // ✅ existing iPhone nav item
-  { name: 'iPad', icon: Tablet, href: '/deshboard/ipadaddproduct' }, // ✅ NEW: iPad nav item
-  { name: 'Macbook', icon: LaptopMinimal, href: '/deshboard/macbookadd' }, // ✅ existing Macbook nav item
-];
+  const menuItems = [
+    { name: 'Dashboard', icon: Home, href: '/' },
+    { name: 'Users', icon: Users, href: '/users' },
+    { name: 'Analytics', icon: BarChart3, href: '/analytics' },
+    { name: 'Reports', icon: FileText, href: '/reports' },
+    { name: 'Messages', icon: Mail, href: '/messages' },
+    { name: 'iPhone', icon: Smartphone, href: '/deshboard/addproduct' },   // ✅ fixed casing
+    { name: 'iPad', icon: Tablet, href: '/deshboard/ipadaddproduct' },    // ✅ new item
+    { name: 'MacBook', icon: LaptopMinimal, href: '/deshboard/macbookadd' },
+    { name: 'Updata Data', icon: SquarePlus, href: '/deshboard/updata' },  // ⬅️ optional future item
+    // ✅ fixed casing
 
+  ]
 
   const isActive = (href: string) => pathname === href;
 
