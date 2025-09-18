@@ -146,6 +146,7 @@ const Macbookdetails: React.FC = () => {
   }, [product, selectedOptions]);
 
   const handleOptionChange = (category: keyof SelectedOptions, value: string) => {
+    console.log(`Changing ${category} to ${value}`); // Debug log
     setSelectedOptions((prev) => ({ ...prev, [category]: value }));
   };
 
@@ -296,37 +297,57 @@ Please let me know more details!`;
                   </div>
                 )}
               </div>
+              
+              {/* FIXED COLOR SELECTION SECTION */}
               <div className="mb-2">
-                
-                <div className="flex flex-wrap gap-4 mt-4 max-sm:mt-0 justify-center">
+                <div className="flex flex-wrap gap-4 mt-4 max-sm:mt-2 justify-center">
                   {product.colorImageConfigs.map((color) => (
                     <div key={color.id} className="text-center">
                       <button
                         type="button"
-                        onClick={() => handleOptionChange("color", color.id)}
-                        className={`relative  border-4 rounded-xl transition-all duration-200 focus:outline-none focus:ring-2  focus:ring-offset-2 ${
+                        onClick={() => {
+                          console.log('Color clicked:', color.id); // Debug log
+                          handleOptionChange("color", color.id);
+                        }}
+                        className={`relative border-4 rounded-xl transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
                           selectedOptions.color === color.id 
                             ? "border-gray-600 shadow-lg transform scale-110" 
-                            : "border-gray-300 hover:border-gray-400 hover:shadow-md"
+                            : "border-gray-300 hover:border-gray-400 hover:shadow-md hover:scale-105"
                         }`}
                         title={color.color}
                         aria-label={`Select ${color.color} color`}
                       >
                         <div
-                          className="w-14 h-14  max-sm:h-4 max-sm:w-4 rounded-lg shadow-inner"
+                          className="w-14 h-14 max-sm:h-10 max-sm:w-10 rounded-lg shadow-inner transition-all duration-200"
                           style={{ backgroundColor: color.color }}
                         />
                         {selectedOptions.color === color.id && (
                           <div className="absolute inset-0 flex items-center justify-center">
-                            <svg className="w-6 max-sm:w-2 max-sm:h-2 h-6 text-white drop-shadow-lg" fill="currentColor" viewBox="0 0 20 20">
-                              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                            </svg>
+                            <div className="bg-white bg-opacity-30 rounded-full p-1">
+                              <svg 
+                                className="w-6 h-6 max-sm:w-4 max-sm:h-4 text-white drop-shadow-lg" 
+                                fill="currentColor" 
+                                viewBox="0 0 20 20"
+                              >
+                                <path 
+                                  fillRule="evenodd" 
+                                  d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" 
+                                  clipRule="evenodd" 
+                                />
+                              </svg>
+                            </div>
                           </div>
                         )}
                       </button>
+                      
+                      {/* Color name label for better UX */}
+                      <div className="text-xs text-gray-600 mt-1 max-w-16 truncate">
+                        {color.color}
+                      </div>
+                      
                       {color.price > 0 && (
-                        <div className="text-sm text-blue-600 font-medium mt-2">
-                        {color.price.toLocaleString()}
+                        <div className="text-sm text-blue-600 font-medium mt-1">
+                          +৳{color.price.toLocaleString()}
                         </div>
                       )}
                     </div>
@@ -335,16 +356,17 @@ Please let me know more details!`;
               </div>
             </div>
           </div>
+          
           {/* Product Configuration */}
           <div className="order-2 lg:order-2 max-sm:mt-[-15px]">
           <div className="border-t border-gray-200 ">
                 <div className="bg-gray-50 rounded-xl p-4 mb-2">
                   <div className="flex justify-between items-center">
-                    <span className="text-xl font-semibold text-gray-700">Total Price:</span>
-                    <span className="text-xl font-medium text-gray-900">{totalPrice.toLocaleString()}</span>
+                    <span className="text-xl font-semibold text-gray-700 max-sm:text-[15px]">Total Price:</span>
+                    <span className="text-xl font-medium text-gray-900 max-sm:text-[15px]">৳{totalPrice.toLocaleString()}</span>
                   </div>
                   <div className="text-sm text-gray-500 mt-2">
-                    Starting at {parseFloat(product.basePrice).toLocaleString()}
+                    Starting at ৳{parseFloat(product.basePrice).toLocaleString()}
                   </div>
                 </div>
 
