@@ -190,16 +190,16 @@ Please let me know more details!`;
     window.open(whatsappUrl, '_blank');
   };
 
-  if (isLoading)
-    return (
-      <div className="min-h-screen bg-gray-50 flex justify-center items-center w-full">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-4 border-blue-600 border-t-transparent mx-auto mb-6 flex"></div>
-          <h2 className="text-xl font-semibold text-gray-800 mb-2">Loading Product</h2>
-          <p className="text-gray-600">Please wait while we fetch the details...</p>
-        </div>
-      </div>
-    );
+  // if (isLoading)
+  //   return (
+  //     <div className="min-h-screen bg-gray-50 flex justify-center items-center w-full">
+  //       <div className="text-center">
+  //         <div className="animate-spin rounded-full h-16 w-16 border-4 border-blue-600 border-t-transparent mx-auto mb-6 flex"></div>
+  //         <h2 className="text-xl font-semibold text-gray-800 mb-2">Loading Product</h2>
+  //         <p className="text-gray-600">Please wait while we fetch the details...</p>
+  //       </div>
+  //     </div>
+  //   );
 
   if (queryError)
     return (
@@ -258,21 +258,22 @@ Please let me know more details!`;
   return (
     <div className="min-h-screen bg-gray-50 w-full">
       <div className="container mx-auto px-4 py-8 max-w-7xl">
-        <div className="text-center mb-12 max-sm:mb-6">
-          <h1 className="text-4xl md:text-5xl font-bold  mb-2 text-gray-900">{product.name}</h1>
+        <div className="text-center mb-12 max-sm:mb-0">
+          <h1 className="text-4xl md:text-5xl font-bold   mb-2 max-sm:mb-0 max-sm:text-2xl text-gray-900">{product.name}</h1>
         </div>
 
         <div className="grid lg:grid-cols-2 gap-12">
           {/* Product Image */}
           <div className="order-1 lg:order-1">
             <div className="">
-              <div className=" rounded-2xl   aspect-square flex items-center justify-center overflow-hidden  ">
+              <div className=" rounded-2xl  flex items-center justify-center overflow-hidden  ">
                 {selectedColorConfig?.image ? (
                   
                   <Image
                     src={selectedColorConfig.image}
                     alt={`${product.name} in ${selectedColorConfig.color}`}
-                    className=" h-full object-contain transition-opacity duration-300"
+                    className=" h-full object-contain transition-opacity duration-300 max-sm:w-[200px] max-sm:h-[200px]"
+                    
                     width={500}
                     height={500}
                     onError={(e) => {
@@ -297,13 +298,13 @@ Please let me know more details!`;
               </div>
               <div className="mb-2">
                 
-                <div className="flex flex-wrap gap-4 mt-4 justify-center">
+                <div className="flex flex-wrap gap-4 mt-4 max-sm:mt-0 justify-center">
                   {product.colorImageConfigs.map((color) => (
                     <div key={color.id} className="text-center">
                       <button
                         type="button"
                         onClick={() => handleOptionChange("color", color.id)}
-                        className={`relative p-2 border-4 rounded-xl transition-all duration-200 focus:outline-none focus:ring-2  focus:ring-offset-2 ${
+                        className={`relative  border-4 rounded-xl transition-all duration-200 focus:outline-none focus:ring-2  focus:ring-offset-2 ${
                           selectedOptions.color === color.id 
                             ? "border-gray-600 shadow-lg transform scale-110" 
                             : "border-gray-300 hover:border-gray-400 hover:shadow-md"
@@ -312,12 +313,12 @@ Please let me know more details!`;
                         aria-label={`Select ${color.color} color`}
                       >
                         <div
-                          className="w-14 h-14 rounded-lg shadow-inner"
+                          className="w-14 h-14  max-sm:h-4 max-sm:w-4 rounded-lg shadow-inner"
                           style={{ backgroundColor: color.color }}
                         />
                         {selectedOptions.color === color.id && (
                           <div className="absolute inset-0 flex items-center justify-center">
-                            <svg className="w-4 h-4 text-white drop-shadow-lg" fill="currentColor" viewBox="0 0 20 20">
+                            <svg className="w-6 max-sm:w-2 max-sm:h-2 h-6 text-white drop-shadow-lg" fill="currentColor" viewBox="0 0 20 20">
                               <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                             </svg>
                           </div>
@@ -362,7 +363,7 @@ Please let me know more details!`;
                     >
                       <span className="flex items-center justify-center">
                         <ShopNowLogo />
-                        Shop Now
+                     <span className="max-sm:text-[12px]">Order  Now</span>   
                       </span>
                     </button>
                     <button
@@ -377,12 +378,14 @@ Please let me know more details!`;
                     {addingToCart ? (
                       <span className="flex items-center justify-center">
                         <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent mr-3"></div>
-                        Adding to Cart...
+                        Adding to Bag...
                       </span>
                     ) : (
-                      <span className="flex items-center justify-center">
+                      <span className="flex items-center justify-center ">
                         <ShoppingCart className="w-4 h-4 mr-2"></ShoppingCart>
-                        Add to Cart
+<span className="max-sm:text-[12px]">
+Add to Bag
+</span>
                       </span>
                     )}
                   </button>
@@ -396,19 +399,13 @@ Please let me know more details!`;
                     >
                       <span className="flex items-center justify-center w-full">
                         <WhatsappLogo />
+                     <span className="max-sm:text-[12px]">WhatsApp</span>   
                         
-                        WhatsApp
                       </span>
                     </button>
                 </div>
             <div className="bg-white rounded-2xl shadow-xl p-8">
-              {/* Performance Options */}
-              <div className="grid md:grid-cols-3 gap-6 mb-4">
-
-
-              <div className="grid md:grid-cols-2 gap-6 mb-2 mt-1">
-                {/* Display */}
-                <div>
+            <div className="mb-2">
                   <h3 className="text-base font-medium max-sm:text-[12px] mb-2 text-gray-900 flex items-center">
                     <svg className="w-4 h-4 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
@@ -427,6 +424,10 @@ Please let me know more details!`;
                     ))}
                   </div>
                 </div>
+               {/* Display */}
+              
+              {/* Performance Options */}
+              <div className="grid md:grid-cols-3 gap-6 mb-4">
                 {/* CPU */}
                 <div>
                   <h3 className="text-base font-medium max-sm:text-[12px] mb-2 text-gray-900 flex items-center">
@@ -516,7 +517,8 @@ Please let me know more details!`;
               </div>
 
               {/* Display & Region Options */}
-             
+              <div className="grid md:grid-cols-2 gap-6 mb-2 mt-1">
+               
 
                 {/* Region */}
                 <div>
