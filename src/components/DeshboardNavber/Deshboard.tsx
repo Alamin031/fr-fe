@@ -47,7 +47,7 @@ const NavSidebar = () => {
       {/* Toggle Button */}
       <button
         onClick={() => setSidebarOpen(!sidebarOpen)}
-        className="p-2 m-2 rounded-lg bg-gray-100 hover:bg-gray-200 transition"
+        className=" m-2 rounded-lg bg-gray-100 hover:bg-gray-200 transition"
       >
         {sidebarOpen ? '<' : '>'}
       </button>
