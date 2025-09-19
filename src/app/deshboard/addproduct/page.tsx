@@ -66,10 +66,10 @@ const DynamicProductForm: React.FC = () => {
 
   // Storage Configs
   const [storageConfigs, setStorageConfigs] = useState<Config[]>([
-    { id: 1, label: '256GB Storage', price: '' },
-    { id: 2, label: '512GB Storage', price: '' },
-    { id: 3, label: '1TB Storage', price: '' },
-    { id: 4, label: '2TB Storage', price: '' },
+    { id: 1, label: '256GB ', price: '' },
+    { id: 2, label: '512GB ', price: '' },
+    { id: 3, label: '1TB ', price: '' },
+    { id: 4, label: '2TB ', price: '' },
   ]);
   const [newStorageLabel, setNewStorageLabel] = useState('');
   const [newStoragePrice, setNewStoragePrice] = useState('');
@@ -235,10 +235,10 @@ const DynamicProductForm: React.FC = () => {
         setProductSku('');
         setAccessories('iphone');
         setStorageConfigs([
-          { id: 1, label: '256GB Storage', price: '' },
-          { id: 2, label: '512GB Storage', price: '' },
-          { id: 3, label: '1TB Storage', price: '' },
-          { id: 4, label: '2TB Storage', price: '' },
+          { id: 1, label: '256GB ', price: '' },
+          { id: 2, label: '512GB ', price: '' },
+          { id: 3, label: '1TB ', price: '' },
+          { id: 4, label: '2TB ', price: '' },
         ]);
         setColorImageConfigs([]);
         setDynamicProducts([]);
