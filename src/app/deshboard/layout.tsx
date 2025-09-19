@@ -38,10 +38,12 @@ export default function deshboardLayout({
         <NextAuthjsProvider>
 
           <NextDeshboardProvider>
-            <div className="flex  w-screen">
-<Deshboard></Deshboard>
-             {children}
-            </div>
+            <section className="flex">
+            <Deshboard></Deshboard>
+            {children}
+
+            </section>
+
             
             </NextDeshboardProvider>
 
