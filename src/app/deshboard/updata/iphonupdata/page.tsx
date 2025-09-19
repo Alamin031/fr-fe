@@ -3,17 +3,76 @@ import axios from 'axios';
 import React, { useState, useEffect } from 'react';
 import { Edit, Trash2, X, Plus, Save, Trash, Image } from 'lucide-react';
 
+// Define TypeScript interfaces
+interface StorageConfig {
+  id: number;
+  label: string;
+  price: string;
+}
+
+interface ColorImageConfig {
+  id: number;
+  color: string;
+  image: string;
+  price: string;
+}
+
+interface RegionConfig {
+  name: string;
+  price: string;
+}
+
+interface DetailConfig {
+  id: number;
+  label: string;
+  value: string;
+}
+
+interface PreOrderConfig {
+  isPreOrder: boolean;
+  availabilityDate: string;
+  estimatedShipping: string;
+  preOrderDiscount: number;
+  maxPreOrderQuantity: number;
+}
+
+interface Product {
+  _id: string;
+  name: string;
+  basePrice: string;
+  sku: string;
+  accessories: string;
+  storageConfigs: StorageConfig[];
+  colorImageConfigs: ColorImageConfig[];
+  dynamicRegions: RegionConfig[];
+  details: DetailConfig[];
+  preOrderConfig: PreOrderConfig;
+  createdAt: string;
+}
+
+interface FormData {
+  name: string;
+  basePrice: string;
+  sku: string;
+  accessories: string;
+  storageConfigs: StorageConfig[];
+  colorImageConfigs: ColorImageConfig[];
+  dynamicRegions: RegionConfig[];
+  details: DetailConfig[];
+  preOrderConfig: PreOrderConfig;
+}
+
 const Page = () => {
-  const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [selectedProduct, setSelectedProduct] = useState(null);
-  const [isCreateMode, setIsCreateMode] = useState(false);
-  const [activeTab, setActiveTab] = useState('basic');
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState<boolean>(false);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [isCreateMode, setIsCreateMode] = useState<boolean>(false);
+  const [activeTab, setActiveTab] = useState<string>('basic');
 
   // Initial form data structure
-  const initialFormData = {
+  const initialFormData: FormData = {
     name: '',
     basePrice: '',
     sku: '',
@@ -31,13 +90,13 @@ const Page = () => {
     }
   };
 
-  const [formData, setFormData] = useState(initialFormData);
+  const [formData, setFormData] = useState<FormData>(initialFormData);
 
   // Fetch products
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const response = await axios.get(
+        const response = await axios.get<Product[]>(
           `${process.env.NEXT_PUBLIC_BASE_URL}/api/getproduct/iphonelist`
         );
         setProducts(response.data);
@@ -62,7 +121,7 @@ const Page = () => {
   };
 
   // Handle edit button click
-  const handleEdit = (product) => {
+  const handleEdit = (product: Product) => {
     setIsCreateMode(false);
     setSelectedProduct(product);
     setFormData({
@@ -81,7 +140,7 @@ const Page = () => {
   };
 
   // Handle basic form change
-  const handleChange = (e) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value, type, checked } = e.target;
     
     if (name.startsWith('preOrder.')) {
@@ -103,7 +162,7 @@ const Page = () => {
 
   // Storage Config Functions
   const addStorageConfig = () => {
-    const newConfig = {
+    const newConfig: StorageConfig = {
       id: Date.now(),
       label: '',
       price: '0.00'
@@ -114,7 +173,7 @@ const Page = () => {
     }));
   };
 
-  const updateStorageConfig = (index, field, value) => {
+  const updateStorageConfig = (index: number, field: keyof StorageConfig, value: string) => {
     setFormData(prev => ({
       ...prev,
       storageConfigs: prev.storageConfigs.map((config, i) => 
@@ -123,7 +182,7 @@ const Page = () => {
     }));
   };
 
-  const removeStorageConfig = (index) => {
+  const removeStorageConfig = (index: number) => {
     setFormData(prev => ({
       ...prev,
       storageConfigs: prev.storageConfigs.filter((_, i) => i !== index)
@@ -132,7 +191,7 @@ const Page = () => {
 
   // Color Config Functions
   const addColorConfig = () => {
-    const newConfig = {
+    const newConfig: ColorImageConfig = {
       id: Date.now(),
       color: '#000000',
       image: '',
@@ -144,7 +203,7 @@ const Page = () => {
     }));
   };
 
-  const updateColorConfig = (index, field, value) => {
+  const updateColorConfig = (index: number, field: keyof ColorImageConfig, value: string) => {
     setFormData(prev => ({
       ...prev,
       colorImageConfigs: prev.colorImageConfigs.map((config, i) => 
@@ -153,7 +212,7 @@ const Page = () => {
     }));
   };
 
-  const removeColorConfig = (index) => {
+  const removeColorConfig = (index: number) => {
     setFormData(prev => ({
       ...prev,
       colorImageConfigs: prev.colorImageConfigs.filter((_, i) => i !== index)
@@ -162,7 +221,7 @@ const Page = () => {
 
   // Region Config Functions
   const addRegionConfig = () => {
-    const newConfig = {
+    const newConfig: RegionConfig = {
       name: '',
       price: '0'
     };
@@ -172,7 +231,7 @@ const Page = () => {
     }));
   };
 
-  const updateRegionConfig = (index, field, value) => {
+  const updateRegionConfig = (index: number, field: keyof RegionConfig, value: string) => {
     setFormData(prev => ({
       ...prev,
       dynamicRegions: prev.dynamicRegions.map((config, i) => 
@@ -181,7 +240,7 @@ const Page = () => {
     }));
   };
 
-  const removeRegionConfig = (index) => {
+  const removeRegionConfig = (index: number) => {
     setFormData(prev => ({
       ...prev,
       dynamicRegions: prev.dynamicRegions.filter((_, i) => i !== index)
@@ -190,7 +249,7 @@ const Page = () => {
 
   // Detail Config Functions
   const addDetailConfig = () => {
-    const newDetail = {
+    const newDetail: DetailConfig = {
       id: Date.now(),
       label: '',
       value: ''
@@ -201,7 +260,7 @@ const Page = () => {
     }));
   };
 
-  const updateDetailConfig = (index, field, value) => {
+  const updateDetailConfig = (index: number, field: keyof DetailConfig, value: string) => {
     setFormData(prev => ({
       ...prev,
       details: prev.details.map((detail, i) => 
@@ -210,7 +269,7 @@ const Page = () => {
     }));
   };
 
-  const removeDetailConfig = (index) => {
+  const removeDetailConfig = (index: number) => {
     setFormData(prev => ({
       ...prev,
       details: prev.details.filter((_, i) => i !== index)
@@ -220,43 +279,40 @@ const Page = () => {
   // Handle save
   const handleSave = async () => {
     try {
-      if (!formData.name.trim() || !formData.basePrice.trim()) {
-        alert('Please fill in all required fields');
-        return;
-      }
-
       if (isCreateMode) {
-        const response = await axios.post(
+        // Create new product
+        await axios.post(
           `${process.env.NEXT_PUBLIC_BASE_URL}/api/createproduct`,
           formData
         );
-        setProducts(prev => [...prev, response.data]);
       } else {
+        // Update existing product
         await axios.put(
-          `${process.env.NEXT_PUBLIC_BASE_URL}/api/updateproduct/${selectedProduct._id}`,
+          `${process.env.NEXT_PUBLIC_BASE_URL}/api/upadataApi/phonupadata/${selectedProduct?._id}`,
           formData
         );
-        setProducts(prev =>
-          prev.map(p =>
-            p._id === selectedProduct._id ? { ...p, ...formData } : p
-          )
-        );
       }
-
+      
+      // Refresh the product list
+      const response = await axios.get<Product[]>(
+        `${process.env.NEXT_PUBLIC_BASE_URL}/api/getproduct/iphonelist`
+      );
+      setProducts(response.data);
+      
       setIsDialogOpen(false);
       setSelectedProduct(null);
       setIsCreateMode(false);
     } catch (err) {
-      console.error(`Error ${isCreateMode ? 'creating' : 'updating'} product:`, err);
-      alert(`Failed to ${isCreateMode ? 'create' : 'update'} product`);
+      console.error('Error saving product:', err);
+      alert('Failed to save product');
     }
   };
 
   // Handle delete
-  const handleDelete = async (productId) => {
+  const handleDelete = async (productId: string) => {
     if (window.confirm('Are you sure you want to delete this product?')) {
       try {
-        await axios.delete(`${process.env.NEXT_PUBLIC_BASE_URL}/api/deleteproduct/${productId}`);
+        await axios.delete(`${process.env.NEXT_PUBLIC_BASE_URL}/api/deleteapi/iphonedelete/${productId}`);
         setProducts(products.filter(product => product._id !== productId));
       } catch (err) {
         console.error('Error deleting product:', err);
@@ -274,14 +330,14 @@ const Page = () => {
     setActiveTab('basic');
   };
 
-  const formatDate = (dateString) =>
+  const formatDate = (dateString: string) =>
     new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
     });
 
-  const formatPrice = (price) => `$${parseFloat(price).toLocaleString()}`;
+  const formatPrice = (price: string) => `$${parseFloat(price).toLocaleString()}`;
 
   const tabs = [
     { id: 'basic', label: 'Basic Info' },

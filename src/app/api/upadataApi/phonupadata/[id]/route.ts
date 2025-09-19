@@ -1,10 +1,13 @@
 import { NextResponse } from "next/server";
 import {connect} from '@/dbconfig/dbconfig'
 import Product from "@/models/ProductModels";
+
+
 export async function PUT(request, { params }) {
     try {
       await connect();
       const { id } = params;
+      console.log(id)
       const data = await request.json();
       
       const product = await Product.findByIdAndUpdate(id, data, { 
