@@ -140,28 +140,28 @@ const Page = () => {
           </div>
 
           {/* Thumbnail Gallery */}
-          <div className="grid grid-cols-4 gap-3">
-            {product.colorImageConfigs?.map((config) => (
-              <button
-                key={config.id}
-                onClick={() => {
-                  setCurrentImage(config.image);
-                  setSelectedColor(config);
-                }}
-                className={`aspect-square rounded-lg overflow-hidden border-2 transition-all ${
-                  selectedColor?.id === config.id
-                    ? 'border-blue-600'
-                    : 'border-gray-200'
-                }`}
-              >
-                <img
-                  src={config.image}
-                  alt="thumbnail"
-                  className="w-full h-full object-contain"
+          <div>
+            <div className="flex gap-3 items-center justify-center">
+              {product.colorImageConfigs?.map((config) => (
+                <button
+                  key={config.id}
+                  onClick={() => {
+                    setSelectedColor(config);
+                    setCurrentImage(config.image);
+                  }}
+                  disabled={!config.inStock}
+                  className={`w-10 h-10 max-sm:w-5 max-sm:h-5 rounded-full border transition-all ${
+                    selectedColor?.id === config.id
+                      ? 'border-gray-500 '
+                      : 'border-gray-300'
+                  } ${!config.inStock && 'opacity-50 cursor-not-allowed'}`}
+                  style={{ backgroundColor: config.color }}
+                  title={config.inStock ? 'Available' : 'Out of Stock'}
                 />
-              </button>
-            ))}
+              ))}
+            </div>
           </div>
+         
         </div>
 
         {/* Right Column - Product Info */}
@@ -201,28 +201,7 @@ const Page = () => {
           </div>
 
           {/* Color Options */}
-          <div>
-            <div className="flex gap-3 items-center">
-              <h3 className="text-sm font-semibold text-gray-700 ">Color</h3>
-              {product.colorImageConfigs?.map((config) => (
-                <button
-                  key={config.id}
-                  onClick={() => {
-                    setSelectedColor(config);
-                    setCurrentImage(config.image);
-                  }}
-                  disabled={!config.inStock}
-                  className={`w-10 h-10 max-sm:w-5 max-sm:h-5 rounded-full border transition-all ${
-                    selectedColor?.id === config.id
-                      ? 'border-gray-500 '
-                      : 'border-gray-300'
-                  } ${!config.inStock && 'opacity-50 cursor-not-allowed'}`}
-                  style={{ backgroundColor: config.color }}
-                  title={config.inStock ? 'Available' : 'Out of Stock'}
-                />
-              ))}
-            </div>
-          </div>
+          
 
           {/* SIM Configuration */}
           <div className="flex gap-4">
@@ -287,11 +266,12 @@ const Page = () => {
             <div className="flex gap-3">
               <button
                 onClick={() => {
+                  const phoneNumber = '8801343159931'; // Your WhatsApp number
                   const message = `Hi, I'm interested in ${product.name} ${
                     selectedStorage?.label || ''
                   } - ${selectedColor?.color || ''} for ৳${totalPrice.toLocaleString()}`;
                   window.open(
-                    `https://wa.me/?text=${encodeURIComponent(message)}`,
+                    `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`,
                     '_blank'
                   );
                 }}

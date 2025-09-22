@@ -13,7 +13,7 @@ const Macbook = () => {
         <button className="px-9 py-2 rounded-2xl text-black hover:bg-orange-500 hover:text-white hover:border-orange-500 transition border-1 border-black max-md:px-5 max-md:text-[12px]">
           Learn More
         </button>
-        <Link href={'/category/macbook/macbook-air-m4'} className="px-8 py-3 rounded-2xl bg-orange-500 text-white  transition max-md:px-5  max-md:text-[12px]">
+        <Link href={'/category/macbook'} className="px-8 py-3 rounded-2xl bg-orange-500 text-white  transition max-md:px-5  max-md:text-[12px]">
           Buy Now
         </Link>
       </div>
