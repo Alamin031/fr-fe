@@ -1,6 +1,6 @@
 'use client'
 import React from 'react';
-import appleiphon from '@/../public/Adobe Express - file.png';
+import appleiphon from '@/../public/IiPhone-17-Pro-wallpapers-mockup-by-Apple-iDownloadBlog-Photoroom.png';
 import Image from 'next/image';
 import Link from 'next/link';
 
