@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./checkout.css";
-import NextAuthjsProvider from "@/providers/NextAuthjsProvider";
 import { Suspense } from "react";
 import ResponsiveEcommerce from "../components/ResponsiveEcomerce";
 
@@ -31,16 +30,17 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <NextAuthjsProvider>
         <ResponsiveEcommerce></ResponsiveEcommerce>
+        <Suspense fallback={<div>Loading checkout...</div>}>
+
 
               {children}
+              </Suspense>
 
 
 
           
 
-        </NextAuthjsProvider>
       
        
       </body>
