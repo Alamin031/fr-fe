@@ -6,7 +6,7 @@ import Link from 'next/link';
 const Macbook = () => {
     return (
         <div className='bg-gray-100 flex flex-col items-center justify-center mt-4'>
-            <h1 className='text-5xl font-medium mt-20 max-md:text-3xl '>MacBook Air</h1>
+            <h1 className='text-5xl font-medium mt-20 max-md:text-3xl '>MacBook </h1>
             <p className='text-2xl mb-2 max-md:text-[14px] mt-4'>high performance with m4 chip
             </p>
          <div className="flex gap-4 justify-center my-4 mt-4 mb-10">
@@ -18,8 +18,8 @@ const Macbook = () => {
         </Link>
       </div>
 
-            <div>
-                <Image src={macbook} alt='macbook' />
+            <div >
+                <Image className='min-lg:w-[900px]' src={macbook} alt='macbook' />
             </div>
 
               <p className="flex justify-center mt-10 font-medium max-md:text-[12px] mb-4 bg-gradient-to-r from-black via-orange-300 via-pink-500 to-orange-500 

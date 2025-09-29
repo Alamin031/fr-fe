@@ -7,6 +7,7 @@ import { ShoppingCart } from "lucide-react";
 import { Image, ImageKitProvider } from "@imagekit/next";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import useOrderStore from "../../../../../store/store";
 
 interface ColorImageConfig {
   id: number;
@@ -21,12 +22,19 @@ interface StorageConfig {
   price: string;
 }
 
+interface RamConfig {
+  id: number;
+  label: string;
+  price: string;
+}
+
 interface Product {
   _id: string;
   name: string;
   basePrice: string;
   colorImageConfigs: ColorImageConfig[];
   storageConfigs: StorageConfig[];
+  ramConfigs: RamConfig[];
 }
 
 const slugify = (text: string) =>
@@ -40,6 +48,8 @@ const slugify = (text: string) =>
     .toLowerCase();
 
 export default function Mabookcard() {
+  const { addOrder, clearOrder } = useOrderStore();
+
   const router = useRouter();
   const urlEndpoint = process.env.NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT;
 
@@ -64,7 +74,17 @@ export default function Mabookcard() {
   );
 
   const handleShowNow = (product: Product) => {
-    router.push(`/checkout/${product._id}`);
+    clearOrder()
+    addOrder({
+      productName: product.name,
+      price: parseFloat(product.basePrice),
+      storage: product.storageConfigs?.[0]?.label ?? undefined,
+      RAM: product.ramConfigs?.[0]?.label ?? undefined,
+      quantity: 1,
+      productId: product._id,
+    });
+
+    router.push(`/checkout`);
   };
 
   const handleAddToCart = (product: Product) => {
@@ -144,22 +164,20 @@ export default function Mabookcard() {
                   className="bg-white rounded-2xl shadow-md hover:shadow-lg transition-shadow duration-300 p-4 sm:p-6 flex flex-col items-center text-center border border-gray-100 hover:border-gray-200"
                 >
                   {/* Product Image */}
-                  {currentImage && (
-                    <Link href={`/category/macbook/${productSlug}`} className="block w-full">
-                      <div className="relative w-full aspect-square max-w-[200px] sm:max-w-[220px] lg:max-w-[250px] mx-auto mb-4">
-                        <Image
-                          src={currentImage}
-                          alt={product.name}
-                          fill
-                          className="object-contain rounded-xl transition-transform duration-300 ease-in-out hover:scale-105"
-                          sizes="(max-width: 640px) 200px, (max-width: 1024px) 220px, 250px"
-                        />
-                      </div>
-                    </Link>
-                  )}
+                  <Link href={`/category/macbook/${productSlug}`} className="block w-full">
+                    <div className="relative w-full aspect-square max-w-[200px] sm:max-w-[220px] lg:max-w-[250px] mx-auto mb-4">
+                      <Image
+                        src={currentImage}
+                        alt={product.name}
+                        fill
+                        className="object-contain rounded-xl transition-transform duration-300 ease-in-out hover:scale-105"
+                        sizes="(max-width: 640px) 200px, (max-width: 1024px) 220px, 250px"
+                      />
+                    </div>
+                  </Link>
 
                   {/* Product Name */}
-                  <Link href={`/category/iphone/${productSlug}`} className="block w-full">
+                  <Link href={`/category/macbook/${productSlug}`} className="block w-full">
                     <h3 className="text-lg sm:text-xl font-semibold mb-4 text-gray-900 hover:text-amber-600 transition-colors duration-200 line-clamp-2">
                       {product.name}
                     </h3>
@@ -191,6 +209,20 @@ export default function Mabookcard() {
                         </div>
                       </div>
                     )}
+
+                  {/* Configuration Summary */}
+                  <div className="mb-4 text-sm text-gray-600">
+                    {product.storageConfigs?.[0] && (
+                      <span className="mr-3">
+                        Storage: {product.storageConfigs[0].label}
+                      </span>
+                    )}
+                    {product.ramConfigs?.[0] && (
+                      <span>
+                        RAM: {product.ramConfigs[0].label}
+                      </span>
+                    )}
+                  </div>
 
                   {/* Price Section */}
                   <div className="mb-4 sm:mb-6">
