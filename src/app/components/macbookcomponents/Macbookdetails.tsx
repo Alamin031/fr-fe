@@ -9,6 +9,8 @@ import { useParams } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import { useQuery } from '@tanstack/react-query';
 import useOrderStore from "../../../../store/store";
+import { useRouter } from "next/navigation";
+
 
 // Type definitions
 interface OptionConfig {
@@ -67,6 +69,8 @@ type SelectedOptions = {
 
 const Macbookdetails: React.FC = () => {
   const { addOrder, clearOrder } = useOrderStore();
+  const router = useRouter();
+
   const { productName } = useParams() as { productName: string };
   const [product, setProduct] = useState<Product | null>(null);
   const [selectedOptions, setSelectedOptions] = useState<SelectedOptions>({
@@ -260,9 +264,17 @@ const Macbookdetails: React.FC = () => {
     
     const selectedRegion = selectedOptions.region || product.dynamicRegions[0]?.name || '';
 
+    // Get the selected color config
+    const selectedColorConfig = product.colorImageConfigs.find((opt) => opt.id === selectedOptions.color);
+    
+    // Get the image from selected color config or fallback to first color's image
+    const selectedImage = selectedColorConfig?.image || 
+                         product.colorImageConfigs[0]?.image || 
+                         '/placeholder-product.png';
+
     addOrder({
       productName: product.name,
-      // image: 
+      image: selectedImage,
       price: totalPrice,
       RAM: selectedRAM,
       quantity: quantity,
@@ -271,10 +283,13 @@ const Macbookdetails: React.FC = () => {
       color: selectedColor,
       region: selectedRegion,
     });
+    
+    router.push(`/checkout`);
 
     // Optional: Redirect to checkout or show confirmation
     console.log("Order added:", {
       productName: product.name,
+      image: selectedImage,
       price: totalPrice,
       quantity: quantity,
       RAM: selectedRAM,
@@ -497,9 +512,6 @@ Please let me know more details!`;
               {/* Quantity Selector */}
               <div className="bg-white rounded-xl p-4 mb-4 shadow-sm border border-gray-200">
                 <h3 className="text-base font-medium max-sm:text-[12px] mb-3 text-gray-900 flex items-center">
-                  {/* <svg className="w-4 h-4 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-                  </svg> */}
                   Quantity
                 </h3>
                 <div className="flex items-center justify-between max-w-xs">
@@ -533,9 +545,6 @@ Please let me know more details!`;
                     <Plus className="w-4 h-4" />
                   </button>
                 </div>
-                {/* <div className="text-sm text-gray-500 mt-2">
-                  {quantity} item{quantity !== 1 ? 's' : ''} selected
-                </div> */}
               </div>
 
               {/* Button Group */}

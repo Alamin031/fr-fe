@@ -74,9 +74,14 @@ export default function Mabookcard() {
   );
 
   const handleShowNow = (product: Product) => {
-    clearOrder()
+    clearOrder();
+    
+    // Get the current selected image
+    const currentImage = getCurrentImage(product);
+    
     addOrder({
       productName: product.name,
+      image: currentImage,  // ✅ Added image here
       price: parseFloat(product.basePrice),
       storage: product.storageConfigs?.[0]?.label ?? undefined,
       RAM: product.ramConfigs?.[0]?.label ?? undefined,
