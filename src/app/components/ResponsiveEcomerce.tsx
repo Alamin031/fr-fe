@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { 
@@ -52,7 +52,7 @@ const AppleNavbar = () => {
   ];
 
   return (
-    <nav className="bg-white shadow-md sticky top-0 z-50">
+<nav className="bg-white shadow-md sticky top-0 z-50">
       <div className="px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Mobile menu button */}
@@ -205,6 +205,8 @@ const AppleNavbar = () => {
         </div>
       )}
     </nav>
+
+    
   );
 };
 

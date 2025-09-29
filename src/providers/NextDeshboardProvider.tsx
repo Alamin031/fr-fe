@@ -1,16 +1,20 @@
 "use client";
 
+import { ReactNode, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
 
-const NextDeshboardProvider = ({ children }) => {
+interface NextDashboardProviderProps {
+  children: ReactNode;
+}
+
+const NextDashboardProvider: React.FC<NextDashboardProviderProps> = ({ children }) => {
   const { data: session, status } = useSession();
   const router = useRouter();
 
   useEffect(() => {
     if (status === "unauthenticated") {
-      router.push("/login");
+      router.push("/authcation/login");
     }
   }, [status, router]);
 
@@ -25,4 +29,4 @@ const NextDeshboardProvider = ({ children }) => {
   return <div>{children}</div>;
 };
 
-export default NextDeshboardProvider;
+export default NextDashboardProvider;

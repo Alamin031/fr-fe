@@ -1,14 +1,17 @@
-"use client";
+'use client';
 
 import React, { useState } from "react";
 import { Sparkles, Mail, Lock, ArrowRight, Eye, EyeOff } from "lucide-react";
 import { signIn } from "next-auth/react";
+import { useSearchParams } from "next/navigation";
 
-// Prevent Next.js from prerendering this page
+// Force client-side rendering
 export const dynamic = "force-dynamic";
 
-const LoginPage = () => {
+const Signup = () => {
   const [showPassword, setShowPassword] = useState(false);
+  const searchParams = useSearchParams();
+  const ref = searchParams.get('ref'); // Example: capture referral query
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -37,15 +40,23 @@ const LoginPage = () => {
         {/* Header */}
         <div className="text-center">
           <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-3">
-            Login
+            Signup
           </h2>
           <p className="text-gray-600 text-base sm:text-lg">
             Join the future of digital experiences
           </p>
+          {ref && (
+            <p className="text-sm text-gray-500 mt-1">
+              Referred by: <span className="font-medium">{ref}</span>
+            </p>
+          )}
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="bg-white rounded-3xl p-6 sm:p-8 border border-gray-200 shadow-xl space-y-6">
+        <form
+          onSubmit={handleSubmit}
+          className="bg-white rounded-3xl p-6 sm:p-8 border border-gray-200 shadow-xl space-y-6"
+        >
           {/* Google Button */}
           <button
             type="button"
@@ -98,16 +109,16 @@ const LoginPage = () => {
             className="w-full flex items-center justify-center gap-2 sm:gap-3 py-3 sm:py-4 px-4 sm:px-6 bg-black rounded-2xl text-white font-semibold shadow-lg hover:bg-gray-900 transition transform hover:scale-[1.02]"
           >
             <Sparkles className="w-4 h-4 sm:w-5 sm:h-5" />
-            <span className="text-sm sm:text-base">Login Account</span>
+            <span className="text-sm sm:text-base">Create Account</span>
             <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5" />
           </button>
         </form>
 
         {/* Footer */}
         <p className="text-center text-gray-600 pt-4 sm:pt-6 text-sm sm:text-base">
-          Don’t have an account?{" "}
-          <a href="/signup" className="text-black font-medium hover:underline">
-            Sign up here
+          Already have an account?{" "}
+          <a href="/authcation/login" className="text-black font-medium hover:underline">
+            Log in here
           </a>
         </p>
       </div>
@@ -115,4 +126,4 @@ const LoginPage = () => {
   );
 };
 
-export default LoginPage;
+export default Signup;

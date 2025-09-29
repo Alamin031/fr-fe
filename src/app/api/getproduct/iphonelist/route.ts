@@ -14,6 +14,7 @@ export async function GET() {
     const products = await Product.find({ accessories: "iphone" });
     return NextResponse.json(products, { headers: corsHeaders });
   } catch (error) {
+    console.error(error); // log the actual error
     return NextResponse.json(
       { error: "Failed to fetch products" },
       { status: 500, headers: corsHeaders }

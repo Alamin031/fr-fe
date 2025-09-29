@@ -30,8 +30,8 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <ResponsiveEcommerce></ResponsiveEcommerce>
-        <Suspense fallback={<div>Loading checkout...</div>}>
+<Suspense fallback={<div>Loading...</div>}>
+<ResponsiveEcommerce></ResponsiveEcommerce>
 
 
               {children}
