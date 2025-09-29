@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import useOrderStore from '../../../../../store/store';
+import Image from "next/image";
 
 type StorageConfig = {
   id: string;
@@ -52,7 +53,7 @@ type Product = {
 const Page = () => {
   const params = useParams();
   const productName = params?.productName as string | undefined;
-  const { addOrder , clearOrder} = useOrderStore()
+  const { addOrder, clearOrder } = useOrderStore();
 
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
@@ -62,6 +63,7 @@ const Page = () => {
   const [selectedRegion, setSelectedRegion] = useState<RegionConfig | null>(null);
   const [currentImage, setCurrentImage] = useState<string>('');
   const [totalPrice, setTotalPrice] = useState<number>(0);
+  const [quantity, setQuantity] = useState<number>(1); // Add quantity state
 
   // Order Now click handler
   const handleOrderNow = () => {
@@ -69,10 +71,11 @@ const Page = () => {
       alert('Please select all required options before ordering.');
       return;
     }
-    // const storagePrice = Number(selectedStorage?.label) || 0;
-    clearOrder()
-    // Create order data
-     addOrder({
+    
+    clearOrder();
+    
+    // Create order data with quantity and image
+    addOrder({
       productId: productName || '',
       productName: product?.name || '',
       price: totalPrice,
@@ -80,11 +83,10 @@ const Page = () => {
       color: selectedColor.color,
       sim: selectedSim.type,
       region: selectedRegion.name,
-      totalPrice: totalPrice    });
+      quantity: quantity, // Add quantity to order
+      image: currentImage || selectedColor.image || '' // Add current image to order
+    });
 
-    // Store order data in localStorage for checkout
-    // localStorage.setItem('currentOrder', JSON.stringify(orderData));
-    
     // Navigate to checkout page
     window.location.href = '/checkout';
   };
@@ -125,7 +127,7 @@ const Page = () => {
     }
   }, [productName]);
 
-  // Calculate total price
+  // Calculate total price (updated to include quantity)
   useEffect(() => {
     if (product) {
       const basePrice = Number(product.basePrice) || 0;
@@ -134,9 +136,26 @@ const Page = () => {
       const simPrice = Number(selectedSim?.price) || 0;
       const regionPrice = Number(selectedRegion?.price) || 0;
 
-      setTotalPrice(basePrice + storagePrice + colorPrice + simPrice + regionPrice);
+      const unitPrice = basePrice + storagePrice + colorPrice + simPrice + regionPrice;
+      setTotalPrice(unitPrice * quantity); // Multiply by quantity
     }
-  }, [product, selectedStorage, selectedColor, selectedSim, selectedRegion]);
+  }, [product, selectedStorage, selectedColor, selectedSim, selectedRegion, quantity]);
+
+  // Quantity handlers
+  const increaseQuantity = () => {
+    setQuantity(prev => prev + 1);
+  };
+
+  const decreaseQuantity = () => {
+    setQuantity(prev => (prev > 1 ? prev - 1 : 1));
+  };
+
+  const handleQuantityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = parseInt(e.target.value);
+    if (!isNaN(value) && value > 0) {
+      setQuantity(value);
+    }
+  };
 
   if (loading) {
     return (
@@ -160,10 +179,13 @@ const Page = () => {
         {/* Left Column - Images */}
         <div className="space-y-4">
           <div className="aspect-square rounded-lg overflow-hidden bg-gray-100">
-            <img
+            <Image
               src={currentImage || product.colorImageConfigs?.[0]?.image || ''}
               alt={product.name}
+              width={500}
+              height={500}
               className="w-full h-full object-contain"
+              priority
             />
           </div>
 
@@ -180,7 +202,7 @@ const Page = () => {
                   disabled={!config.inStock}
                   className={`w-10 h-10 max-sm:w-5 max-sm:h-5 rounded-full border transition-all ${
                     selectedColor?.id === config.id
-                      ? 'border-gray-500 '
+                      ? 'border-gray-500'
                       : 'border-gray-300'
                   } ${!config.inStock && 'opacity-50 cursor-not-allowed'}`}
                   style={{ backgroundColor: config.color }}
@@ -189,7 +211,6 @@ const Page = () => {
               ))}
             </div>
           </div>
-         
         </div>
 
         {/* Right Column - Product Info */}
@@ -207,16 +228,12 @@ const Page = () => {
             
             {/* Dynamic Price Breakdown */}
             <div className="mt-3 text-sm text-gray-600">
-              {/* <div className="flex justify-between">
-                <span>Base Price:</span>
-                <span>৳{Number(product.basePrice).toLocaleString()}</span>
-              </div> */}
-              {/* {selectedStorage && Number(selectedStorage.price) > 0 && (
-                <div className="flex justify-between">
-                  <span>Storage ({selectedStorage.label}):</span>
-                  <span>+৳{Number(selectedStorage.price).toLocaleString()}</span>
+              {quantity > 1 && (
+                <div className="flex justify-between font-medium">
+                  <span>Total ({quantity} items):</span>
+                  <span>৳{totalPrice.toLocaleString()}</span>
                 </div>
-              )} */}
+              )}
               {selectedColor && Number(selectedColor.price) > 0 && (
                 <div className="flex justify-between">
                   <span>Color ({selectedColor.color}):</span>
@@ -260,10 +277,7 @@ const Page = () => {
             </div>
           </div>
 
-          {/* Color Options */}
-          
-
-          {/* SIM Configuration */}
+          {/* SIM Configuration and Region */}
           <div className="flex gap-4">
             <div>
               <h3 className="text-sm font-semibold text-gray-700 mb-3">Network</h3>
@@ -311,6 +325,32 @@ const Page = () => {
             </div>
           </div>
 
+          {/* Quantity Selector */}
+          <div>
+            <h3 className="text-sm font-semibold text-gray-700 mb-3">Quantity</h3>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={decreaseQuantity}
+                className="w-10 h-10 rounded-lg border border-gray-300 flex items-center justify-center hover:bg-gray-50 transition-colors"
+              >
+                <span className="text-lg">−</span>
+              </button>
+              <input
+                type="number"
+                value={quantity}
+                onChange={handleQuantityChange}
+                min="1"
+                className="w-16 h-10 text-center border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
+              />
+              <button
+                onClick={increaseQuantity}
+                className="w-10 h-10 rounded-lg border border-gray-300 flex items-center justify-center hover:bg-gray-50 transition-colors"
+              >
+                <span className="text-lg">+</span>
+              </button>
+            </div>
+          </div>
+
           {/* Add to Cart Buttons */}
           <div>
             <div className="flex gap-3 mb-4">
@@ -329,10 +369,10 @@ const Page = () => {
             <div className="flex gap-3">
               <button
                 onClick={() => {
-                  const phoneNumber = '8801343159931'; // Your WhatsApp number
+                  const phoneNumber = '8801343159931';
                   const message = `Hi, I'm interested in ${product.name} ${
                     selectedStorage?.label || ''
-                  } - ${selectedColor?.color || ''} for ৳${totalPrice.toLocaleString()}`;
+                  } - ${selectedColor?.color || ''} (Quantity: ${quantity}) for ৳${totalPrice.toLocaleString()}`;
                   window.open(
                     `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`,
                     '_blank'
@@ -354,7 +394,7 @@ const Page = () => {
                 onClick={() => {
                   const message = `Hi, I'm interested in ${product.name} ${
                     selectedStorage?.label || ''
-                  } - ${selectedColor?.color || ''} for ৳${totalPrice.toLocaleString()}`;
+                  } - ${selectedColor?.color || ''} (Quantity: ${quantity}) for ৳${totalPrice.toLocaleString()}`;
                   window.open(
                     `https://m.me/?text=${encodeURIComponent(message)}`,
                     '_blank'

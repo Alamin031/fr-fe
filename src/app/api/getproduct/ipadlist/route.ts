@@ -13,7 +13,7 @@ export async function GET() {
     await connect();
     const products = await Product.find();
     return NextResponse.json(products, { headers: corsHeaders });
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { error: "Failed to fetch products" },
       { status: 500, headers: corsHeaders }
