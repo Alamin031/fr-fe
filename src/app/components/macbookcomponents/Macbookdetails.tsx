@@ -215,11 +215,11 @@ const Macbookdetails: React.FC = () => {
       // Get selected option labels for display
       const selectedRAM = getOptionLabel(selectedOptions.ram, product.ramConfigs);
       const selectedStorage = getOptionLabel(selectedOptions.storage, product.storageConfigs);
-      const selectedCPU = getOptionLabel(selectedOptions.cpu, product.cpuCoreConfigs);
-      const selectedGPU = getOptionLabel(selectedOptions.gpu, product.gpuCoreConfigs);
-      const selectedDisplay = getOptionLabel(selectedOptions.display, product.displayConfigs);
-      const selectedColor = getColorName(selectedOptions.color);
-      const selectedRegion = product.dynamicRegions.find(region => region.name === selectedOptions.region)?.name || '';
+      // const selectedCPU = getOptionLabel(selectedOptions.cpu, product.cpuCoreConfigs);
+      // const selectedGPU = getOptionLabel(selectedOptions.gpu, product.gpuCoreConfigs);
+      // const selectedDisplay = getOptionLabel(selectedOptions.display, product.displayConfigs);
+      // const selectedColor = getColorName(selectedOptions.color);
+      // const selectedRegion = product.dynamicRegions.find(region => region.name === selectedOptions.region)?.name || '';
 
       console.log("Adding to cart:", {
         product: product.name,

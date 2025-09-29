@@ -12,15 +12,12 @@ import {
   CreditCard,
   Plus,
   Minus,
-  ShoppingCart,
 } from "lucide-react";
 import { Image, ImageKitProvider } from "@imagekit/next";
 import AppleLogo from "@/components/ui/AppleLogo";
 import WhatsappLogo from "@/components/ui/WhatsappLogo";
 import ShopNowLogo from "@/components/ui/ShopNowLogo";
 import useOrderStore from "../../../../store/store";
-
-// No props are passed to this client component
 
 interface ColorImageConfig {
   id: number;
@@ -63,10 +60,9 @@ interface Product {
 export default function IphoneDetails() {
   const routeParams = useParams<{ productName: string }>();
   const productName = routeParams?.productName;
-  const {addOrder , clearOrder} = useOrderStore()
+  const { addOrder, clearOrder } = useOrderStore();
   const router = useRouter();
 
-     
   const urlEndpoint = process.env.NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT;
 
   const [product, setProduct] = useState<Product | null>(null);
@@ -127,36 +123,21 @@ export default function IphoneDetails() {
       product.colorImageConfigs[selectedColorIndex]?.color || "Default";
     const selectedStorage =
       product.storageConfigs[selectedStorageIndex]?.label || "Default";
-    const selectedRegion =
-      product.dynamicRegions?.[selectedRegionIndex]?.name || "Default";
+      // const selectedRegion = product.dynamicRegions?.[selectedRegionIndex]?.name || "Default";
+
     const totalPrice = calculateTotalPrice() * quantity;
-clearOrder()
-    // Log the selection for debugging
+
+    clearOrder();
     addOrder({
       productId: product._id,
       productName: product.name,
       color: selectedColor,
       storage: selectedStorage,
-    
       quantity,
-      price: totalPrice
+      price: totalPrice,
     });
-    
+
     router.push(`/checkout`);
-
-
-    // You can customize this based on your needs:
-    // Option 1: Redirect to checkout page
-    // window.location.href = '/checkout';
-    
-    // Option 2: Open checkout in new tab
-    // window.open('/checkout', '_blank');
-    
-    // Option 3: Navigate using Next.js router
-    // router.push('/checkout');
-    
-    // For now, showing an alert - replace with your actual logic
-    
   };
 
   const handleAddToCart = () => {
@@ -166,21 +147,19 @@ clearOrder()
       product.colorImageConfigs[selectedColorIndex]?.color || "Default";
     const selectedStorage =
       product.storageConfigs[selectedStorageIndex]?.label || "Default";
-    const selectedRegion =
-      product.dynamicRegions?.[selectedRegionIndex]?.name || "Default";
+    // const _selectedRegion =
+    //   product.dynamicRegions?.[selectedRegionIndex]?.name || "Default"; // unused
+
     const totalPrice = calculateTotalPrice() * quantity;
 
-    // Add to cart logic
     console.log('Added to cart:', {
       product: product.name,
       color: selectedColor,
       storage: selectedStorage,
-      region: selectedRegion,
       quantity,
       totalPrice: formatPrice(totalPrice)
     });
 
-    // Replace with your actual add to cart logic
     alert(`Added to cart!\n\nProduct: ${product.name}\nQuantity: ${quantity}`);
   };
 
@@ -197,13 +176,13 @@ clearOrder()
 
     const message = encodeURIComponent(
       `Hi! I'm interested in this product:\n\n` +
-        `Product: ${product.name}\n` +
-        `Color: ${selectedColor}\n` +
-        `Storage: ${selectedStorage}\n` +
-        `Region: ${selectedRegion}\n` +
-        `Quantity: ${quantity}\n` +
-        `Total Price: ${totalPrice}\n\n` +
-        `Please provide more information or help me place an order.`
+      `Product: ${product.name}\n` +
+      `Color: ${selectedColor}\n` +
+      `Storage: ${selectedStorage}\n` +
+      `Region: ${selectedRegion}\n` +
+      `Quantity: ${quantity}\n` +
+      `Total Price: ${totalPrice}\n\n` +
+      `Please provide more information or help me place an order.`
     );
 
     const phoneNumber = "8801343159931";
@@ -298,7 +277,6 @@ clearOrder()
                     fill
                     className="object-contain "
                     transformation={[{ aiRemoveBackground: true }]}
-
                     onError={() => handleImageError(selectedImageIndex)}
                   />
                   {product.colorImageConfigs.length > 1 && (
@@ -347,16 +325,13 @@ clearOrder()
             <div className="space-y-6">
               <div>
                 <div className="flex justify-between items-center">
-
-                  
-
-                <h1 className="text sm:text-3xl font-bold max-sm:font-semibold max-sm:2xl text-gray-900 mb-2 max-sm:mt-[-40px] max-sm:mb-0 mt-[-15px]">
-                  {product.name}
-                </h1>
-                <div className="flex items-center mt-[-40px] ml-4">
-                  <AppleLogo />
-                  <span className="font-bold text-sm sm:text-base">Apple</span>
-                </div>
+                  <h1 className="text sm:text-3xl font-bold max-sm:font-semibold max-sm:2xl text-gray-900 mb-2 max-sm:mt-[-40px] max-sm:mb-0 mt-[-15px]">
+                    {product.name}
+                  </h1>
+                  <div className="flex items-center mt-[-40px] ml-4">
+                    <AppleLogo />
+                    <span className="font-bold text-sm sm:text-base">Apple</span>
+                  </div>
                 </div>
                 <div className="text sm:text-2xl max-sm:mt-[-30px] font-medium text-black">
                   {formatPrice(calculateTotalPrice())}
@@ -366,8 +341,8 @@ clearOrder()
               {/* Color Selection */}
               {product.colorImageConfigs.length > 0 && (
                 <div>
-                  {/* <h3 className="text-lg font-semibold mb-3">Color</h3> */}
-                  <div className="flex flex-wrap gap-2 mt-[-15px] max-sm:gap-0 items-center text-center"> <span className="font-semibold">Color</span>
+                  <div className="flex flex-wrap gap-2 mt-[-15px] max-sm:gap-0 items-center text-center">
+                    <span className="font-semibold">Color</span>
                     {product.colorImageConfigs.map((config, index) => (
                       <button
                         key={config.id}
@@ -455,43 +430,32 @@ clearOrder()
 
                 {/* Action Buttons */}
                 <div className="space-y-3">
-                  {/* Primary Shop Now Button */}
                   <div className="flex justify-center items-center gap-2">
-<button
-                    onClick={handleShopNow}
-                    className="w-full items-center bg-white hover:border-black border border-gray-400 text-black   font-medium py-2 sm:py-2 px-6 rounded-lg transition-colors text-sm sm:text-base flex justify-center gap-2"
-                  >
-                    <ShopNowLogo/>
+                    <button
+                      onClick={handleShopNow}
+                      className="w-full items-center bg-white hover:border-black border border-gray-400 text-black font-medium py-2 sm:py-2 px-6 rounded-lg transition-colors text-sm sm:text-base flex justify-center gap-2"
+                    >
+                      <ShopNowLogo />
+                      Shop Now
+                    </button>
 
-
-                    Shop Now 
-                  </button>
-
-
-
-                    <button 
+                    <button
                       onClick={handleAddToCart}
                       className="w-full bg-white hover:border-black border-gray-400 text-black border font-medium py-2 sm:py-2 px-6 rounded-lg transition-colors text-sm sm:text-base"
                     >
                       Add to Cart
                     </button>
-
                   </div>
-                  
-                  {/* Secondary Actions */}
-                    
-{/* Secondary Actions */}
-<div className="flex w-full gap-3">
-  <button
-    onClick={handleWhatsAppContact}
-    className="w-full flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600 text-white font-medium py-2 sm:py-2 px-6 rounded-lg transition-colors text-sm sm:text-base"
-  >
-    <WhatsappLogo />
-    Contact via WhatsApp
-  </button>
-</div>
 
-                    
+                  <div className="flex w-full gap-3">
+                    <button
+                      onClick={handleWhatsAppContact}
+                      className="w-full flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600 text-white font-medium py-2 sm:py-2 px-6 rounded-lg transition-colors text-sm sm:text-base"
+                    >
+                      <WhatsappLogo />
+                      Contact via WhatsApp
+                    </button>
+                  </div>
                 </div>
               </div>
 
@@ -578,4 +542,5 @@ clearOrder()
         </div>
       </div>
     </ImageKitProvider>
-  )};
+  );
+}
