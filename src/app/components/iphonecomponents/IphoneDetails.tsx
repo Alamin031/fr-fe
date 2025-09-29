@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import axios from "axios";
 import { useQuery } from '@tanstack/react-query';
 import {
@@ -18,6 +18,7 @@ import { Image, ImageKitProvider } from "@imagekit/next";
 import AppleLogo from "@/components/ui/AppleLogo";
 import WhatsappLogo from "@/components/ui/WhatsappLogo";
 import ShopNowLogo from "@/components/ui/ShopNowLogo";
+import useOrderStore from "../../../../store/store";
 
 // No props are passed to this client component
 
@@ -62,6 +63,9 @@ interface Product {
 export default function IphoneDetails() {
   const routeParams = useParams<{ productName: string }>();
   const productName = routeParams?.productName;
+  const {addOrder , clearOrder} = useOrderStore()
+  const router = useRouter();
+
      
   const urlEndpoint = process.env.NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT;
 
@@ -126,16 +130,20 @@ export default function IphoneDetails() {
     const selectedRegion =
       product.dynamicRegions?.[selectedRegionIndex]?.name || "Default";
     const totalPrice = calculateTotalPrice() * quantity;
-
+clearOrder()
     // Log the selection for debugging
-    console.log('Shop Now clicked:', {
-      product: product.name,
+    addOrder({
+      productId: product._id,
+      productName: product.name,
       color: selectedColor,
       storage: selectedStorage,
-      region: selectedRegion,
+    
       quantity,
-      totalPrice: formatPrice(totalPrice)
+      price: totalPrice
     });
+    
+    router.push(`/checkout`);
+
 
     // You can customize this based on your needs:
     // Option 1: Redirect to checkout page
@@ -148,7 +156,7 @@ export default function IphoneDetails() {
     // router.push('/checkout');
     
     // For now, showing an alert - replace with your actual logic
-    alert(`Proceeding to checkout!\n\nProduct: ${product.name}\nTotal: ${formatPrice(totalPrice)}`);
+    
   };
 
   const handleAddToCart = () => {

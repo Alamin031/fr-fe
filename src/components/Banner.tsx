@@ -11,7 +11,7 @@ const PhoneHome = () => {
         iPhone
       </h1>
       <p className="text-2xl mb-2 max-md:text-[14px] ">
-        Introducing the iPhone 16 lineup
+        Introducing the iPhone 17 lineup
       </p>
 
       <div className="flex gap-4 justify-center my-4">

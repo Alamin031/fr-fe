@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
+import useOrderStore from '../../../../../store/store';
 
 type StorageConfig = {
   id: string;
@@ -51,6 +52,7 @@ type Product = {
 const Page = () => {
   const params = useParams();
   const productName = params?.productName as string | undefined;
+  const { addOrder , clearOrder} = useOrderStore()
 
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
@@ -60,6 +62,32 @@ const Page = () => {
   const [selectedRegion, setSelectedRegion] = useState<RegionConfig | null>(null);
   const [currentImage, setCurrentImage] = useState<string>('');
   const [totalPrice, setTotalPrice] = useState<number>(0);
+
+  // Order Now click handler
+  const handleOrderNow = () => {
+    if (!selectedStorage || !selectedColor || !selectedSim || !selectedRegion) {
+      alert('Please select all required options before ordering.');
+      return;
+    }
+    // const storagePrice = Number(selectedStorage?.label) || 0;
+    clearOrder()
+    // Create order data
+     addOrder({
+      productId: productName || '',
+      productName: product?.name || '',
+      price: totalPrice,
+      storage: selectedStorage.label,
+      color: selectedColor.color,
+      sim: selectedSim.type,
+      region: selectedRegion.name,
+      totalPrice: totalPrice    });
+
+    // Store order data in localStorage for checkout
+    // localStorage.setItem('currentOrder', JSON.stringify(orderData));
+    
+    // Navigate to checkout page
+    window.location.href = '/checkout';
+  };
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -176,6 +204,38 @@ const Page = () => {
             <p className="text-[20px] font-semibold text-gray-700 mt-2">
               ৳{totalPrice.toLocaleString()}
             </p>
+            
+            {/* Dynamic Price Breakdown */}
+            <div className="mt-3 text-sm text-gray-600">
+              {/* <div className="flex justify-between">
+                <span>Base Price:</span>
+                <span>৳{Number(product.basePrice).toLocaleString()}</span>
+              </div> */}
+              {/* {selectedStorage && Number(selectedStorage.price) > 0 && (
+                <div className="flex justify-between">
+                  <span>Storage ({selectedStorage.label}):</span>
+                  <span>+৳{Number(selectedStorage.price).toLocaleString()}</span>
+                </div>
+              )} */}
+              {selectedColor && Number(selectedColor.price) > 0 && (
+                <div className="flex justify-between">
+                  <span>Color ({selectedColor.color}):</span>
+                  <span>+৳{Number(selectedColor.price).toLocaleString()}</span>
+                </div>
+              )}
+              {selectedSim && Number(selectedSim.price) > 0 && (
+                <div className="flex justify-between">
+                  <span>Network ({selectedSim.type}):</span>
+                  <span>+৳{Number(selectedSim.price).toLocaleString()}</span>
+                </div>
+              )}
+              {selectedRegion && Number(selectedRegion.price) > 0 && (
+                <div className="flex justify-between">
+                  <span>Region ({selectedRegion.name}):</span>
+                  <span>+৳{Number(selectedRegion.price).toLocaleString()}</span>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Storage Options */}
@@ -257,7 +317,10 @@ const Page = () => {
               <button className="w-full bg-white text-black border-gray-400 border-1 py-4 max-sm:py-2 px-6 rounded-lg font-medium text-[13px] hover:bg-blue-700 transition-colors">
                 Add to Bag
               </button>
-              <button className="w-full bg-white text-black text-[13px] border-1 border-gray-400 py-4 max-sm:p-2 px-6 rounded-lg font-medium hover:bg-gray-800 transition-colors">
+              <button 
+                onClick={handleOrderNow}
+                className="w-full bg-white text-black text-[13px] border-1 border-gray-400 py-4 max-sm:p-2 px-6 rounded-lg font-medium hover:bg-gray-800 transition-colors"
+              >
                 {selectedStorage?.inStock === false ? 'Pre Order' : 'Order Now'}
               </button>
             </div>

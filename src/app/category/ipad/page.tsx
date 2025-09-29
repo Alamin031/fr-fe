@@ -7,6 +7,8 @@ import { ShoppingCart } from "lucide-react";
 import { Image, ImageKitProvider } from "@imagekit/next";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import useOrderStore from "../../../../store/store";
+
 
 interface ColorImageConfig {
   id: number;
@@ -65,6 +67,8 @@ interface Product {
   productlinkname: string;
 }
 
+
+
 const slugify = (text: string) =>
   text
     .toString()
@@ -76,6 +80,7 @@ const slugify = (text: string) =>
     .toLowerCase();
 
 export default function IpadCard() {
+  const {addOrder , clearOrder} = useOrderStore()
   const router = useRouter();
   const urlEndpoint = process.env.NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT;
 
@@ -100,8 +105,31 @@ export default function IpadCard() {
   const [selectedSims, setSelectedSims] = useState<Record<string, number>>({});
 
   const handleShowNow = (product: Product) => {
-    router.push(`/checkout/${product._id}`);
+    const totalPrice = calculateTotalPrice(product);
+   clearOrder()
+  
+    // Get the actual color and storage values
+    const selectedColorId = selectedColors[product._id];
+    const selectedColor = product.colorImageConfigs.find(config => config.id === selectedColorId);
+    const selectedStorageId = selectedStorages[product._id];
+    const selectedStorage = product.storageConfigs.find(config => config.id === selectedStorageId);
+  
+    addOrder({
+      productId: product._id,
+      productName: product.name,
+      price: totalPrice,
+      color: selectedColor?.color,
+      storage: selectedStorage?.label,
+      
+      // simId: selectedSims[product._id],
+      quantity: 1,
+      image: getCurrentImage(product),
+      
+    });
+  
+    router.push("/checkout"); // ✅ navigate to checkout
   };
+  
 
   const handleAddToCart = (product: Product) => {
     console.log("Adding to cart:", product);
@@ -148,15 +176,6 @@ export default function IpadCard() {
     return basePrice + storagePrice + simPrice + colorPrice;
   };
 
-  const getSelectedStorage = (product: Product) => {
-    const selectedStorageId = selectedStorages[product._id];
-    return product.storageConfigs.find(config => config.id === selectedStorageId) || product.storageConfigs[0];
-  };
-
-  const getSelectedSim = (product: Product) => {
-    const selectedSimId = selectedSims[product._id];
-    return product.simConfigs.find(config => config.id === selectedSimId) || product.simConfigs[0];
-  };
 
   useEffect(() => {
     if (!products || products.length === 0) return;
@@ -219,8 +238,6 @@ export default function IpadCard() {
                 ((originalPrice - totalPrice) / originalPrice) * 100
               );
               const productSlug = slugify(product.name);
-              const selectedStorage = getSelectedStorage(product);
-              const selectedSim = getSelectedSim(product);
 
               return (
                 <div
@@ -304,6 +321,7 @@ export default function IpadCard() {
                   <div className="flex flex-row gap-3 w-full mt-auto">
                     <button
                       onClick={() => handleShowNow(product)}
+                      
                       className="flex-1 flex items-center justify-center gap-2 rounded-full bg-white text-black border border-gray-300 px-4 py-2 hover:bg-amber-600 hover:text-white transition-colors duration-200 font-medium text-sm sm:text-base"
                     >
                       <span>Order Now</span>

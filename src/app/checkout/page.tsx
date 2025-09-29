@@ -1,366 +1,435 @@
-"use client";
+'use client';
+import React, { useState, ChangeEvent, FormEvent } from 'react';
+import useOrderStore from '../../../store/store';
+import district from '../../../utils/districtData';
+import toast, { Toaster } from 'react-hot-toast';
 
-import { useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+const districtData = district;
 
-interface Product {
-  _id: string;
+interface OrderItem {
   productName: string;
   price: number;
-  [key: string]: unknown; // অন্যান্য প্রোপার্টি
+  quantity: number;
+  color?: string;
+  storage?: string;
+  RAM?: string;
+  sim?: string;
+  display?: string;
+  region?: string;
+  image?: string;
 }
 
 interface FormData {
-  fullName: string;
+  firstName: string;
+  lastName: string;
+  mobile: string;
   email: string;
-  phoneNumber: string;
-  division: string;
+  address: string;
   district: string;
   upazila: string;
-  postCode: string;
-  address: string;
-  paymentMethod: "cash_on_delivery" | "online_payment";
-  deliveryMethod: "courier_service" | "shop_pickup";
 }
 
-interface FormErrors {
-  [key: string]: string;
-}
+const Page: React.FC = () => {
+  const { order }: { order: OrderItem[] } = useOrderStore();
 
-export default function CheckoutPage() {
-  const searchParams = useSearchParams();
-  const productId = searchParams.get("productId");
-
-  const [product, setProduct] = useState<Product | null>(null);
   const [formData, setFormData] = useState<FormData>({
-    fullName: "",
-    email: "",
-    phoneNumber: "",
-    division: "",
-    district: "",
-    upazila: "",
-    postCode: "",
-    address: "",
-    paymentMethod: "cash_on_delivery",
-    deliveryMethod: "courier_service",
+    firstName: '',
+    lastName: '',
+    mobile: '',
+    email: '',
+    address: '',
+    district: '',
+    upazila: '',
   });
 
-  const [errors, setErrors] = useState<FormErrors>({});
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errors, setErrors] = useState<Partial<FormData>>({});
 
-  const bangladeshDivisions = [
-    "Dhaka",
-    "Chittagong",
-    "Rajshahi",
-    "Khulna",
-    "Barisal",
-    "Sylhet",
-    "Rangpur",
-    "Mymensingh",
-  ];
-
-  const districtsByDivision: Record<string, string[]> = {
-    Dhaka: [
-      "Dhaka",
-      "Gazipur",
-      "Narayanganj",
-      "Tangail",
-      "Kishoreganj",
-      "Manikganj",
-      "Munshiganj",
-      "Narsingdi",
-      "Rajbari",
-      "Shariatpur",
-      "Faridpur",
-      "Gopalganj",
-      "Madaripur",
-    ],
-    Chittagong: [
-      "Chittagong",
-      "Cox's Bazar",
-      "Rangamati",
-      "Bandarban",
-      "Khagrachhari",
-      "Feni",
-      "Lakshmipur",
-      "Comilla",
-      "Noakhali",
-      "Brahmanbaria",
-      "Chandpur",
-    ],
-  };
-
-  const upazilasByDistrict: Record<string, string[]> = {
-    Dhaka: [
-      "Dhanmondi",
-      "Gulshan",
-      "Banani",
-      "Uttara",
-      "Mirpur",
-      "Tejgaon",
-      "Ramna",
-      "Wari",
-      "Kotwali",
-      "Lalbagh",
-      "Hazaribagh",
-      "New Market",
-      "Shahbagh",
-      "Paltan",
-      "Motijheel",
-    ],
-    Chittagong: [
-      "Kotwali",
-      "Panchlaish",
-      "Double Mooring",
-      "Halishahar",
-      "Chandgaon",
-      "Bakalia",
-      "Bayazid",
-      "Pahartali",
-      "Carbazar",
-      "Bandar",
-      "Karnaphuli",
-      "Boalkhali",
-      "Anowara",
-      "Chandanaish",
-      "Satkania",
-      "Lohagara",
-      "Banshkhali",
-      "Sandwip",
-      "Sitakunda",
-      "Mirsharai",
-      "Fatikchhari",
-      "Rangunia",
-      "Raozan",
-      "Patiya",
-      "Hathazari",
-    ],
-  };
-
-  useEffect(() => {
-    if (productId) {
-      fetch(`/api/getproduct/checkout?productId=${productId}`)
-        .then((res) => res.json())
-        .then((data: Product) => setProduct(data))
-        .catch((err: unknown) => console.error(err));
-    }
-  }, [productId]);
-
-  const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
+  // Handler for input changes
+  const handleChange = (
+    e: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
   ) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-      ...(name === "division" && { district: "", upazila: "" }),
-      ...(name === "district" && { upazila: "" }),
-    }));
 
-    if (errors[name]) {
-      setErrors((prev) => ({ ...prev, [name]: "" }));
+    // Clear error for this field when user starts typing
+    if (errors[name as keyof FormData]) {
+      setErrors((prev) => ({ ...prev, [name]: '' }));
+    }
+
+    if (name === 'district') {
+      setFormData((prev) => ({ ...prev, district: value, upazila: '' }));
+    } else {
+      setFormData((prev) => ({ ...prev, [name]: value }));
     }
   };
 
+  // Validation function
   const validateForm = (): boolean => {
-    const newErrors: FormErrors = {};
+    const newErrors: Partial<FormData> = {};
 
-    if (!formData.fullName.trim()) newErrors.fullName = "Full name is required";
-    if (!formData.phoneNumber.trim()) newErrors.phoneNumber = "Phone number is required";
-    if (!formData.division) newErrors.division = "Division is required";
-    if (!formData.district) newErrors.district = "District is required";
-    if (!formData.upazila) newErrors.upazila = "Upazila is required";
-    if (!formData.address.trim()) newErrors.address = "Address is required";
+    if (!formData.firstName.trim()) {
+      newErrors.firstName = 'First name is required';
+    }
+
+    if (!formData.lastName.trim()) {
+      newErrors.lastName = 'Last name is required';
+    }
+
+    if (!formData.mobile.trim()) {
+      newErrors.mobile = 'Mobile number is required';
+    } else if (!/^01[3-9]\d{8}$/.test(formData.mobile)) {
+      newErrors.mobile = 'Please enter a valid BD mobile number (e.g., 01712345678)';
+    }
+
+    if (!formData.email.trim()) {
+      newErrors.email = 'Email is required';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      newErrors.email = 'Please enter a valid email address';
+    }
+
+    if (!formData.district) {
+      newErrors.district = 'Please select a district';
+    }
+
+    if (!formData.upazila) {
+      newErrors.upazila = 'Please select an upazila';
+    }
+
+    if (!formData.address.trim()) {
+      newErrors.address = 'Address is required';
+    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!validateForm()) return;
-
-    setIsSubmitting(true);
-
-    try {
-      const orderData = {
-        ...formData,
-        productId,
-        product,
-        orderDate: new Date().toISOString(),
-        totalAmount: product?.price || 0,
-      };
-
-      console.log("Order submitted:", orderData);
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-      alert("Order placed successfully! We will contact you soon.");
-    } catch (err: unknown) {
-      console.error("Order submission failed:", err);
-      alert("Failed to place order. Please try again.");
-    } finally {
-      setIsSubmitting(false);
+    
+    // Check if order has items
+    if (order.length === 0) {
+      toast.error('Your cart is empty! Please add items before checkout.', {
+        duration: 4000,
+      });
+      return;
     }
+
+    // Validate form
+    if (!validateForm()) {
+      toast.error('Please fill in all required fields correctly', {
+        duration: 4000,
+      });
+      return;
+    }
+
+    // Show loading toast
+    const loadingToast = toast.loading('Processing your order...');
+
+    // Simulate API call
+    const finalData = {
+      customer: formData,
+      orderItems: order,
+      total: totalPrice, // also include total if you want
+      createdAt: new Date().toISOString(), // optional: add timestamp
+    };
+    
+    setTimeout(() => {
+      console.log('Final User Data:', formData);
+      console.log('Final Order:', order);
+      
+      // Dismiss loading and show success
+      toast.dismiss(loadingToast);
+      toast.success(
+        `Order confirmed! Thank you ${formData.firstName}. We'll contact you at ${formData.mobile} soon.`,
+        {
+          duration: 5000,
+        }
+      );
+
+      // Optional: Reset form after successful submission
+      // setFormData({ firstName: '', lastName: '', mobile: '', email: '', address: '', district: '', upazila: '' });
+    }, 1500);
   };
 
-  if (!productId) return <div className="container mx-auto p-4">No product selected</div>;
-  if (!product) return <div className="container mx-auto p-4">Loading product...</div>;
+  // Calculate total price
+  const totalPrice = order.reduce(
+    (sum, item) => sum + item.price * item.quantity,
+    0
+  );
 
   return (
-    <div className="container mx-auto p-6 max-w-4xl">
-      <div className="bg-gray-50 p-6 rounded-lg mb-8">
-        <h2 className="text-xl font-semibold mb-4">Order Summary</h2>
-        <p><strong>Product:</strong> {product.productName}</p>
-        <p><strong>Price:</strong> ৳ {product.price}</p>
-        <hr className="my-3" />
-        <p className="text-lg font-bold">Total: ৳ {product.price}</p>
-      </div>
+    <>
+      {/* Add Toaster component */}
+      <Toaster
+        position="top-center"
+        reverseOrder={false}
+        toastOptions={{
+          duration: 3000,
+          style: {
+            background: '#363636',
+            color: '#fff',
+          },
+          success: {
+            duration: 5000,
+            iconTheme: {
+              primary: '#10b981',
+              secondary: '#fff',
+            },
+          },
+          error: {
+            duration: 4000,
+            iconTheme: {
+              primary: '#ef4444',
+              secondary: '#fff',
+            },
+          },
+        }}
+      />
 
-      <form onSubmit={handleSubmit}>
-        <div className="mb-8">
-          <h2 className="text-2xl font-bold mb-6">Delivery Information</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Left Column */}
-            <div className="space-y-4">
-              <div>
-                <label className="block mb-2">Full Name *</label>
-                <input
-                  type="text"
-                  name="fullName"
-                  value={formData.fullName}
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-3 border rounded-lg"
-                />
-                {errors.fullName && <p className="text-red-500 text-sm">{errors.fullName}</p>}
-              </div>
-              <div>
-                <label className="block mb-2">Phone Number *</label>
-                <input
-                  type="tel"
-                  name="phoneNumber"
-                  value={formData.phoneNumber}
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-3 border rounded-lg"
-                />
-                {errors.phoneNumber && <p className="text-red-500 text-sm">{errors.phoneNumber}</p>}
-              </div>
-              <div>
-                <label className="block mb-2">District *</label>
-                <select
-                  name="district"
-                  value={formData.district}
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-3 border rounded-lg"
-                >
-                  <option value="">Select your district</option>
-                  {formData.division && districtsByDivision[formData.division]?.map((district) => (
-                    <option key={district} value={district}>{district}</option>
-                  ))}
-                </select>
-                {errors.district && <p className="text-red-500 text-sm">{errors.district}</p>}
+      <form
+        className="min-h-screen bg-gray-100 p-4 sm:p-6 lg:p-8"
+        onSubmit={handleSubmit}
+      >
+        <div className="max-w-7xl mx-auto">
+          <div className="flex flex-col lg:flex-row gap-6 lg:gap-8 items-start">
+            {/* User Information Form */}
+            <div className="w-full lg:flex-1 lg:max-w-lg">
+              <div className="bg-white shadow-lg rounded-2xl p-6 sm:p-8 space-y-4">
+                <h2 className="text-xl sm:text-2xl font-bold text-center mb-4">
+                  Customer Information
+                </h2>
+                <p className="text-sm text-gray-600 text-center mb-4">
+                  Please fill in all required fields to complete your order
+                </p>
+
+                {/* First Name */}
+                <div>
+                  <label className="block text-sm font-medium mb-1">
+                    First Name 
+                  </label>
+                  <input
+                    type="text"
+                    name="firstName"
+                    value={formData.firstName}
+                    onChange={handleChange}
+                    placeholder="Enter first name"
+                    className={`w-full border rounded-xl px-3 py-2 focus:ring focus:ring-blue-300 ${
+                      errors.firstName ? 'border-red-500' : ''
+                    }`}
+                  />
+                  {errors.firstName && (
+                    <p className="text-red-500 text-xs mt-1">{errors.firstName}</p>
+                  )}
+                </div>
+
+                {/* Last Name */}
+                <div>
+                  <label className="block text-sm font-medium mb-1">
+                    Last Name 
+                  </label>
+                  <input
+                    type="text"
+                    name="lastName"
+                    value={formData.lastName}
+                    onChange={handleChange}
+                    placeholder="Enter last name"
+                    className={`w-full border rounded-xl px-3 py-2 focus:ring focus:ring-blue-300 ${
+                      errors.lastName ? 'border-red-500' : ''
+                    }`}
+                  />
+                  {errors.lastName && (
+                    <p className="text-red-500 text-xs mt-1">{errors.lastName}</p>
+                  )}
+                </div>
+
+                {/* Mobile */}
+                <div>
+                  <label className="block text-sm font-medium mb-1">
+                    Mobile Number 
+                  </label>
+                  <input
+                    type="tel"
+                    name="mobile"
+                    value={formData.mobile}
+                    onChange={handleChange}
+                    placeholder="e.g. 01712345678"
+                    className={`w-full border rounded-xl px-3 py-2 focus:ring focus:ring-blue-300 ${
+                      errors.mobile ? 'border-red-500' : ''
+                    }`}
+                  />
+                  {errors.mobile && (
+                    <p className="text-red-500 text-xs mt-1">{errors.mobile}</p>
+                  )}
+                </div>
+
+                {/* Email */}
+                <div>
+                  <label className="block text-sm font-medium mb-1">
+                    Email 
+                  </label>
+                  <input
+                    type="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    placeholder="Enter email"
+                    className={`w-full border rounded-xl px-3 py-2 focus:ring focus:ring-blue-300 ${
+                      errors.email ? 'border-red-500' : ''
+                    }`}
+                  />
+                  {errors.email && (
+                    <p className="text-red-500 text-xs mt-1">{errors.email}</p>
+                  )}
+                </div>
+
+                {/* District Dropdown */}
+                <div>
+                  <label className="block text-sm font-medium mb-1">
+                    District 
+                  </label>
+                  <select
+                    name="district"
+                    value={formData.district}
+                    onChange={handleChange}
+                    className={`w-full border rounded-xl px-3 py-2 focus:ring focus:ring-blue-300 ${
+                      errors.district ? 'border-red-500' : ''
+                    }`}
+                  >
+                    <option value="">Select District</option>
+                    {Object.keys(districtData).map((district) => (
+                      <option key={district} value={district}>
+                        {district}
+                      </option>
+                    ))}
+                  </select>
+                  {errors.district && (
+                    <p className="text-red-500 text-xs mt-1">{errors.district}</p>
+                  )}
+                </div>
+
+                {/* Upazila Dropdown */}
+                <div>
+                  <label className="block text-sm font-medium mb-1">
+                    Upazila / Thana 
+                  </label>
+                  <select
+                    name="upazila"
+                    value={formData.upazila}
+                    onChange={handleChange}
+                    disabled={!formData.district}
+                    className={`w-full border rounded-xl px-3 py-2 focus:ring focus:ring-blue-300 disabled:bg-gray-200 ${
+                      errors.upazila ? 'border-red-500' : ''
+                    }`}
+                  >
+                    <option value="">Select Upazila</option>
+                    {formData.district &&
+                      districtData[formData.district as keyof typeof districtData]?.map((upazila: string) => (
+                        <option key={upazila} value={upazila}>
+                          {upazila}
+                        </option>
+                      ))}
+                  </select>
+                  {errors.upazila && (
+                    <p className="text-red-500 text-xs mt-1">{errors.upazila}</p>
+                  )}
+                </div>
+
+                {/* Address */}
+                <div>
+                  <label className="block text-sm font-medium mb-1">
+                    Address 
+                  </label>
+                  <textarea
+                    name="address"
+                    value={formData.address}
+                    onChange={handleChange}
+                    placeholder="Enter your full address"
+                    className={`w-full border rounded-xl px-3 py-2 focus:ring focus:ring-blue-300 ${
+                      errors.address ? 'border-red-500' : ''
+                    }`}
+                    rows={2}
+                  />
+                  {errors.address && (
+                    <p className="text-red-500 text-xs mt-1">{errors.address}</p>
+                  )}
+                </div>
               </div>
             </div>
 
-            {/* Right Column */}
-            <div className="space-y-4">
-              <div>
-                <label className="block mb-2">Division *</label>
-                <select
-                  name="division"
-                  value={formData.division}
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-3 border rounded-lg"
-                >
-                  <option value="">Select division</option>
-                  {bangladeshDivisions.map((div) => (
-                    <option key={div} value={div}>{div}</option>
-                  ))}
-                </select>
-                {errors.division && <p className="text-red-500 text-sm">{errors.division}</p>}
-              </div>
+            {/* Order Summary */}
+            <div className="w-full lg:flex-1 lg:sticky lg:top-8">
+              <div className="bg-white shadow-lg rounded-2xl p-6 sm:p-8">
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="text-xl sm:text-2xl font-bold">Order Summary</h2>
+                </div>
 
-              <div>
-                <label className="block mb-2">Upazila *</label>
-                <select
-                  name="upazila"
-                  value={formData.upazila}
-                  onChange={handleInputChange}
-                  disabled={!formData.district}
-                  className="w-full px-4 py-3 border rounded-lg"
-                >
-                  <option value="">Select upazila</option>
-                  {formData.district && upazilasByDistrict[formData.district]?.map((upazila) => (
-                    <option key={upazila} value={upazila}>{upazila}</option>
-                  ))}
-                </select>
-                {errors.upazila && <p className="text-red-500 text-sm">{errors.upazila}</p>}
-              </div>
+                {order.length === 0 ? (
+                  <p className="text-gray-500 text-center py-8">
+                    No items in your order
+                  </p>
+                ) : (
+                  <div className="space-y-4">
+                    {order.map((item, index) => (
+                      <div key={index} className="border-b pb-4 last:border-b-0">
+                        <div className="flex flex-col sm:flex-row justify-between gap-4">
+                          <div className="flex-1">
+                            <h3 className="font-semibold text-base sm:text-lg">
+                              {item.productName}
+                            </h3>
+                            <div className="text-sm text-gray-600 mt-2">
+                              <p>Price: ৳{item.price}</p>
+                              <p>Quantity: {item.quantity}</p>
+                              {item.color && <p>Color: {item.color}</p>}
+                              {item.storage && <p>Storage: {item.storage}</p>}
+                              {item.RAM && <p>RAM: {item.RAM}</p>}
+                              {item.sim && <p>SIM: {item.sim}</p>}
+                              {item.display && <p>Display: {item.display}</p>}
+                              {item.region && <p>Region: {item.region}</p>}
+                            </div>
+                          </div>
 
-              <div>
-                <label className="block mb-2">Address *</label>
-                <textarea
-                  name="address"
-                  value={formData.address}
-                  onChange={handleInputChange}
-                  rows={3}
-                  className="w-full px-4 py-3 border rounded-lg"
-                />
-                {errors.address && <p className="text-red-500 text-sm">{errors.address}</p>}
+                          <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-start gap-4">
+                            {item.image && (
+                              <img
+                                src={item.image}
+                                alt={item.productName}
+                                className="w-16 h-16 sm:w-20 sm:h-20 object-cover rounded-lg border"
+                              />
+                            )}
+                            <p className="font-bold text-base sm:text-lg">
+                              ৳{(item.price * item.quantity).toFixed(2)}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+
+                    {/* Total */}
+                    <div className="border-t pt-4 mt-4">
+                      <div className="flex justify-between items-center text-lg sm:text-xl font-bold">
+                        <span>Total:</span>
+                        <span>৳{totalPrice.toFixed(2)}</span>
+                      </div>
+                    </div>
+
+                    <button
+                      type="submit"
+                      className="w-full bg-amber-500 text-white py-3 rounded-xl hover:bg-amber-600 transition font-semibold"
+                    >
+                      Confirm Order
+                    </button>
+                    
+                    <p className="text-xs text-gray-500 text-center mt-2">
+                      By confirming, you agree to our terms and conditions
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
           </div>
         </div>
-
-        {/* Payment Method */}
-        <div className="mb-8">
-          <h2 className="text-2xl font-bold mb-6">Payment Method</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <button
-              type="button"
-              onClick={() => setFormData(prev => ({ ...prev, paymentMethod: "online_payment" }))}
-              className={`p-4 border rounded-lg ${formData.paymentMethod === "online_payment" ? "border-orange-500 bg-orange-50" : ""}`}
-            >
-              Online Payment
-            </button>
-            <button
-              type="button"
-              onClick={() => setFormData(prev => ({ ...prev, paymentMethod: "cash_on_delivery" }))}
-              className={`p-4 border rounded-lg ${formData.paymentMethod === "cash_on_delivery" ? "border-orange-500 bg-orange-50" : ""}`}
-            >
-              Cash on Delivery
-            </button>
-          </div>
-        </div>
-
-        {/* Delivery Method */}
-        <div className="mb-8">
-          <h2 className="text-2xl font-bold mb-6">Delivery Method</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <button
-              type="button"
-              onClick={() => setFormData(prev => ({ ...prev, deliveryMethod: "courier_service" }))}
-              className={`p-4 border rounded-lg ${formData.deliveryMethod === "courier_service" ? "border-orange-500 bg-orange-50" : ""}`}
-            >
-              Courier Service
-            </button>
-            <button
-              type="button"
-              onClick={() => setFormData(prev => ({ ...prev, deliveryMethod: "shop_pickup" }))}
-              className={`p-4 border rounded-lg ${formData.deliveryMethod === "shop_pickup" ? "border-orange-500 bg-orange-50" : ""}`}
-            >
-              Shop Pickup
-            </button>
-          </div>
-        </div>
-
-        {/* Submit Button */}
-        <button
-          type="submit"
-          disabled={isSubmitting}
-          className={`w-full py-4 px-6 rounded-lg text-white ${isSubmitting ? "bg-gray-400" : "bg-orange-600 hover:bg-orange-700"}`}
-        >
-          {isSubmitting ? "Placing Order..." : "Place Order"}
-        </button>
       </form>
-    </div>
+    </>
   );
-}
+};
+
+export default Page;
