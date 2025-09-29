@@ -18,8 +18,8 @@ const Macbook = () => {
         </Link>
       </div>
 
-            <div>
-                <Image src={macbook} alt='macbook' />
+            <div >
+                <Image className='min-lg:w-[900px]' src={macbook} alt='macbook' />
             </div>
 
               <p className="flex justify-center mt-10 font-medium max-md:text-[12px] mb-4 bg-gradient-to-r from-black via-orange-300 via-pink-500 to-orange-500 
