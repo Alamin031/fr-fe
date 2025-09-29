@@ -1,7 +1,7 @@
 'use client';
 import axios from 'axios';
 import React, { useState, useEffect } from 'react';
-import { Edit, Trash2, X, Plus, Save, Trash, Image } from 'lucide-react';
+import { Edit, Trash2, X, Plus, Save, Trash } from 'lucide-react';
 
 // Define TypeScript interfaces
 interface StorageConfig {
@@ -141,7 +141,8 @@ const Page = () => {
 
   // Handle basic form change
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-    const { name, value, type, checked } = e.target;
+    const { name, value, type } = e.target;
+    const checked = (e.target as HTMLInputElement).checked;
     
     if (name.startsWith('preOrder.')) {
       const field = name.split('.')[1];
@@ -443,11 +444,11 @@ const Page = () => {
           </table>
         </div>
         {products.length === 0 && (
-          <div className="text-center py-12">
-            <p className="text-gray-500 text-lg">No products found</p>
-            <p className="text-gray-400 text-sm mt-2">Click "Create Product" to add your first product</p>
-          </div>
-        )}
+  <div className="text-center py-12">
+    <p className="text-gray-500 text-lg">No products found</p>
+    <p className="text-gray-400 text-sm mt-2">Click &quot;Create Product&quot; to add your first product</p>
+  </div>
+)}
       </div>
 
       {/* Create/Edit Dialog Modal */}
@@ -752,7 +753,7 @@ const Page = () => {
                           value={detail.value}
                           onChange={(e) => updateDetailConfig(index, 'value', e.target.value)}
                           className="w-full border border-gray-300 rounded px-3 py-2"
-                          rows="2"
+                          rows={2}
                         />
                       </div>
                     </div>

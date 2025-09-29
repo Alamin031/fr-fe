@@ -1,15 +1,11 @@
 import { NextResponse } from "next/server";
-
-import {connect} from '@/dbconfig/dbconfig';
+import { connect } from '@/dbconfig/dbconfig';
 import Product from "@/models/ProductModels";
-
-
 import { Types } from 'mongoose';
 
+// In Next.js 14, params is now a Promise
 interface RouteParams {
-  params: {
-    id: string;
-  };
+  params: Promise<{ id: string }>;
 }
 
 export async function DELETE(
@@ -18,7 +14,9 @@ export async function DELETE(
 ): Promise<NextResponse> {
   try {
     await connect();
-    const { id } = params;
+    
+    // Await the params to get the actual parameters
+    const { id } = await params;
     
     // Validate if the ID is a valid MongoDB ObjectId
     if (!Types.ObjectId.isValid(id)) {

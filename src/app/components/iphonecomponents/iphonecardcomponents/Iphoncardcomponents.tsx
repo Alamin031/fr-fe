@@ -129,12 +129,12 @@ export default function IphoneAll() {
     }));
   };
 
-  const handleStorageSelect = (productId: string, storageId: number) => {
-    setSelectedStorages((prev) => ({
-      ...prev,
-      [productId]: storageId,
-    }));
-  };
+  // const handleStorageSelect = (productId: string, storageId: number) => {
+  //   setSelectedStorages((prev) => ({
+  //     ...prev,
+  //     [productId]: storageId,
+  //   }));
+  // };
 
   const handleSimSelect = (productId: string, simId: number) => {
     setSelectedSims((prev) => ({
@@ -264,7 +264,7 @@ export default function IphoneAll() {
             {products.map((product) => {
               const currentImage = getCurrentImage(product);
               const totalPrice = calculateTotalPrice(product);
-              const basePrice = parseFloat(product.basePrice);
+              // const basePrice = parseFloat(product.basePrice);
               const originalPrice = totalPrice + 10000;
               const discount = Math.round(
                 ((originalPrice - totalPrice) / originalPrice) * 100

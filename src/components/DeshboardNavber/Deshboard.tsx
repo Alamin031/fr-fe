@@ -13,7 +13,7 @@ import {
   Tablet,
   LaptopMinimal,
   Smartphone,
-  Watch // ✅ if you want to add Apple Watch later
+  // ✅ if you want to add Apple Watch later
 } from 'lucide-react';
 
 const NavSidebar = () => {

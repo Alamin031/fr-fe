@@ -4,7 +4,6 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./updata.css";
 import Upadatanav from "./Updatanav";
 import { Suspense } from "react";
-import { h1 } from "framer-motion/client";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",

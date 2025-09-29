@@ -4,38 +4,41 @@
 import React, { useState, useEffect } from "react";
 import { Sparkles, Mail, Lock, ArrowRight, Eye, EyeOff } from "lucide-react";
 import { signIn } from "next-auth/react";
-import { useSearchParams } from "next/navigation";
 
 const LoginForm: React.FC = () => {
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
   
-  const searchParams = useSearchParams();
-  const callbackUrl = searchParams.get("callbackUrl") || "/";
-  const errorParam = searchParams.get("error");
+  // Default callback URL
+  const [callbackUrl] = useState<string>("/");
 
   useEffect(() => {
-    // Handle authentication errors from URL parameters
-    if (errorParam) {
-      switch (errorParam) {
-        case "CredentialsSignin":
-          setError("Invalid email or password");
-          break;
-        case "Configuration":
-          setError("There is a problem with the server configuration");
-          break;
-        case "AccessDenied":
-          setError("Access denied");
-          break;
-        case "Verification":
-          setError("The verification token has expired or has already been used");
-          break;
-        default:
-          setError("An error occurred during authentication");
+    // Handle authentication errors from URL parameters on client side
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search);
+      const errorParam = urlParams.get("error");
+
+      if (errorParam) {
+        switch (errorParam) {
+          case "CredentialsSignin":
+            setError("Invalid email or password");
+            break;
+          case "Configuration":
+            setError("There is a problem with the server configuration");
+            break;
+          case "AccessDenied":
+            setError("Access denied");
+            break;
+          case "Verification":
+            setError("The verification token has expired or has already been used");
+            break;
+          default:
+            setError("An error occurred during authentication");
+        }
       }
     }
-  }, [errorParam]);
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>): Promise<void> => {
     e.preventDefault();
@@ -196,8 +199,8 @@ const LoginForm: React.FC = () => {
 
         {/* Footer */}
         <p className="text-center text-gray-600 pt-4 sm:pt-6 text-sm sm:text-base">
-        Don&apos;t have an account?{" "}
-        <a 
+          Don&apos;t have an account?{" "}
+          <a 
             href="/signup" 
             className="text-black font-medium hover:underline"
             onClick={handleLinkClick}

@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useState, useEffect, Suspense } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { 
   Menu, X, Search, ShoppingCart, Heart, User, ChevronDown
 } from 'lucide-react';
@@ -22,16 +22,18 @@ const accessoriesCategories = [
 
 const AppleNavbar = () => {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState(searchParams?.get('q') || '');
+  const [searchQuery, setSearchQuery] = useState('');
   const [isAccessoriesOpen, setIsAccessoriesOpen] = useState(false);
 
+  // Removed the useEffect that depended on searchParams
   useEffect(() => {
-    setIsMobileMenuOpen(false);
-    setIsMobileSearchOpen(false);
-  }, [searchParams]);
+    // You can keep this for closing menus if needed, but removed searchParams dependency
+    if (isMobileMenuOpen || isMobileSearchOpen) {
+      // Optional: Add logic here if you want to close menus on certain events
+    }
+  }, []);
 
   const handleSearch = (query: string): void => {
     if (query.trim()) {
@@ -52,7 +54,7 @@ const AppleNavbar = () => {
   ];
 
   return (
-<nav className="bg-white shadow-md sticky top-0 z-50">
+    <nav className="bg-white shadow-md sticky top-0 z-50">
       <div className="px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Mobile menu button */}
@@ -205,8 +207,6 @@ const AppleNavbar = () => {
         </div>
       )}
     </nav>
-
-    
   );
 };
 
