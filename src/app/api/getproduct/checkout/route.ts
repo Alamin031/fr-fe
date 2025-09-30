@@ -1,18 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import {connect} from '@/dbconfig/dbconfig';
-import Product from '@/models/ProductModels';
+import Product from '@/models/checkoutmodels';
 
 export async function GET(req: NextRequest) {
-  const { searchParams } = new URL(req.url);
-  const productId = searchParams.get("productId");
 
-  if (!productId) {
-    return NextResponse.json({ error: "Product ID is required" }, { status: 400 });
-  }
+  
 
   try {
     await connect();
-    const product = await Product.findById(productId);
+    const product = await Product.find();
     if (!product) {
       return NextResponse.json({ error: "Product not found" }, { status: 404 });
     }
