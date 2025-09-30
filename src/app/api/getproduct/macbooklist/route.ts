@@ -3,7 +3,9 @@ import Product from "@/models/productmacbookModels";
 import { connect } from "@/dbconfig/dbconfig";
 
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "*", // প্রোডাকশনে নির্দিষ্ট ডোমেইন দিন
+  "Access-Control-Allow-Origin": process.env.NODE_ENV === "production" 
+    ? "https://www.friendstelecom.com.bd" 
+    : "*",
   "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type, Authorization",
 };
