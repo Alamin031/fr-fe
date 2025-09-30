@@ -47,6 +47,55 @@ const slugify = (text: string) =>
     .replace(/\s+/g, "-")
     .toLowerCase();
 
+// Card Loading Skeleton Component
+const CardSkeleton = () => {
+  return (
+    <div className="bg-white rounded-lg sm:rounded-xl shadow-sm p-3 sm:p-4 flex flex-col items-center text-center border border-gray-100 animate-pulse">
+      {/* Image Skeleton */}
+      <div className="relative w-full aspect-square max-w-[140px] sm:max-w-[160px] md:max-w-[180px] lg:max-w-[200px] mx-auto mb-3">
+        <div className="w-full h-full bg-gray-200 rounded-lg"></div>
+      </div>
+      
+      {/* Product Name Skeleton */}
+      <div className="w-full mb-2">
+        <div className="h-4 bg-gray-200 rounded mb-2 mx-auto w-3/4"></div>
+        <div className="h-4 bg-gray-200 rounded mx-auto w-1/2"></div>
+      </div>
+      
+      {/* Color Selection Skeleton */}
+      <div className="flex items-center justify-center gap-1 mb-2">
+        <div className="flex gap-1">
+          <div className="w-4 h-4 bg-gray-200 rounded-full"></div>
+          <div className="w-4 h-4 bg-gray-200 rounded-full"></div>
+          <div className="w-4 h-4 bg-gray-200 rounded-full"></div>
+        </div>
+      </div>
+      
+      {/* Pricing Skeleton */}
+      <div className="mb-3 sm:mb-4 w-full">
+        <div className="h-6 bg-gray-200 rounded mb-1 mx-auto w-1/2"></div>
+        <div className="flex items-center justify-center gap-1">
+          <div className="h-4 bg-gray-200 rounded w-16"></div>
+          <div className="h-4 bg-gray-200 rounded w-12"></div>
+        </div>
+      </div>
+      
+      {/* Action Buttons Skeleton */}
+      <div className="flex flex-row gap-2 w-full mt-auto">
+        <div className="flex-1 h-9 bg-gray-200 rounded-full"></div>
+        <div className="w-9 h-9 bg-gray-200 rounded-full"></div>
+      </div>
+    </div>
+  );
+};
+
+// Generate skeleton cards for loading state
+const generateSkeletons = (count: number) => {
+  return Array.from({ length: count }, (_, index) => (
+    <CardSkeleton key={`skeleton-${index}`} />
+  ));
+};
+
 export default function Mabookcard() {
   const { addOrder, clearOrder } = useOrderStore();
 
@@ -126,23 +175,12 @@ export default function Mabookcard() {
     setSelectedColors(initialColors);
   }, [products]);
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px] p-6 w-full">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading products...</p>
-        </div>
-      </div>
-    );
-  }
-
   if (error) {
     return (
-      <div className="flex items-center justify-center min-h-[400px] p-6">
+      <div className="flex items-center justify-center min-h-[400px] p-4">
         <div className="text-center">
-          <p className="text-red-600 text-lg font-medium">Failed to load products</p>
-          <p className="text-gray-500 mt-2">Please try again later</p>
+          <p className="text-red-600 text-base sm:text-lg font-medium">Failed to load products</p>
+          <p className="text-gray-500 mt-2 text-sm sm:text-base">Please try again later</p>
         </div>
       </div>
     );
@@ -150,11 +188,12 @@ export default function Mabookcard() {
 
   return (
     <ImageKitProvider urlEndpoint={urlEndpoint}>
-      <div className="w-full px-4 sm:px-6 lg:px-8 mt-4">
+      <div className="w-full px-3 sm:px-4 lg:px-6 mt-4">
         <div className="max-w-7xl mx-auto">
-          {/* Grid Layout: 1 column on mobile, 2 on tablet, 3 on desktop, 4 on large screens */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">
-            {(products || []).map((product) => {
+          {/* Grid Layout: 2 columns on mobile, 3 on tablet, 4 on desktop */}
+          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-5 lg:gap-6">
+            {/* Show skeletons when loading, actual products when data is available */}
+            {isLoading ? generateSkeletons(8) : (products || []).map((product) => {
               const currentImage = getCurrentImage(product);
               const basePrice = parseFloat(product.basePrice);
               const originalPrice = basePrice + 10000;
@@ -166,24 +205,24 @@ export default function Mabookcard() {
               return (
                 <div
                   key={product._id}
-                  className="bg-white rounded-2xl shadow-md hover:shadow-lg transition-shadow duration-300 p-4 sm:p-6 flex flex-col items-center text-center border border-gray-100 hover:border-gray-200"
+                  className="bg-white rounded-lg sm:rounded-xl shadow-sm hover:shadow-md transition-all duration-300 p-3 sm:p-4 flex flex-col items-center text-center border border-gray-100 hover:border-gray-200"
                 >
                   {/* Product Image */}
                   <Link href={`/category/macbook/${productSlug}`} className="block w-full">
-                    <div className="relative w-full aspect-square max-w-[200px] sm:max-w-[220px] lg:max-w-[250px] mx-auto mb-4">
+                    <div className="relative w-full aspect-square max-w-[140px] sm:max-w-[160px] md:max-w-[180px] lg:max-w-[200px] mx-auto mb-3">
                       <Image
                         src={currentImage}
                         alt={product.name}
                         fill
-                        className="object-contain rounded-xl transition-transform duration-300 ease-in-out hover:scale-105"
-                        sizes="(max-width: 640px) 200px, (max-width: 1024px) 220px, 250px"
+                        className="object-contain rounded-lg transition-transform duration-300 ease-in-out hover:scale-105"
+                        sizes="(max-width: 640px) 140px, (max-width: 768px) 160px, (max-width: 1024px) 180px, 200px"
                       />
                     </div>
                   </Link>
 
                   {/* Product Name */}
                   <Link href={`/category/macbook/${productSlug}`} className="block w-full">
-                    <h3 className="text-lg sm:text-xl font-semibold mb-4 text-gray-900 hover:text-amber-600 transition-colors duration-200 line-clamp-2">
+                    <h3 className="text-sm sm:text-base font-semibold mb-2 text-gray-900 hover:text-amber-600 transition-colors duration-200 line-clamp-2 leading-tight min-h-[2.5rem] sm:min-h-[3rem]">
                       {product.name}
                     </h3>
                   </Link>
@@ -191,17 +230,17 @@ export default function Mabookcard() {
                   {/* Color Selection */}
                   {product.colorImageConfigs &&
                     product.colorImageConfigs.length > 1 && (
-                      <div className="flex items-center justify-center gap-2 mb-4">
-                        <div className="flex gap-2 flex-wrap justify-center">
+                      <div className="flex items-center justify-center gap-1 mb-2 sm:mb-3">
+                        <div className="flex gap-1 flex-wrap justify-center">
                           {product.colorImageConfigs.map((colorConfig) => (
                             <button
                               key={colorConfig.id}
                               onClick={() =>
                                 handleColorSelect(product._id, colorConfig.id)
                               }
-                              className={`w-4 h-4 sm:w-4 sm:h-4 rounded-full border-2 transition-all duration-200 ${
+                              className={`w-4 h-4 sm:w-4 sm:h-4 rounded-full border transition-all duration-200 ${
                                 selectedColors[product._id] === colorConfig.id
-                                  ? "border-blue-500 scale-110 shadow-lg ring-2 ring-blue-200"
+                                  ? "border-blue-500 scale-110 shadow-md ring-1 ring-blue-200"
                                   : "border-gray-300 hover:border-gray-400 hover:scale-105"
                               }`}
                               style={{ backgroundColor: colorConfig.color }}
@@ -215,50 +254,36 @@ export default function Mabookcard() {
                       </div>
                     )}
 
-                  {/* Configuration Summary */}
-                  <div className="mb-4 text-sm text-gray-600">
-                    {product.storageConfigs?.[0] && (
-                      <span className="mr-3">
-                        Storage: {product.storageConfigs[0].label}
-                      </span>
-                    )}
-                    {product.ramConfigs?.[0] && (
-                      <span>
-                        RAM: {product.ramConfigs[0].label}
-                      </span>
-                    )}
-                  </div>
-
                   {/* Price Section */}
-                  <div className="mb-4 sm:mb-6">
-                    <p className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">
+                  <div className="mb-3 sm:mb-4 w-full">
+                    <p className="text-base sm:text-lg font-bold text-gray-900 mb-1">
                       ৳ {basePrice.toLocaleString()}
                     </p>
-                    <div className="flex items-center justify-center gap-2 flex-wrap">
-                      <span className="line-through text-gray-400 text-sm">
+                    <div className="flex items-center justify-center gap-1 flex-wrap">
+                      <span className="line-through text-gray-400 text-xs">
                         ৳ {originalPrice.toLocaleString()}
                       </span>
-                      <span className="bg-green-100 text-green-600 text-xs font-medium px-2 py-1 rounded-full">
+                      <span className="bg-green-100 text-green-600 text-xs font-medium px-1.5 py-0.5 rounded-full">
                         {discount}% OFF
                       </span>
                     </div>
                   </div>
 
                   {/* Action Buttons */}
-                  <div className="flex flex-row gap-3 w-full mt-auto">
+                  <div className="flex flex-row gap-2 w-full mt-auto">
                     <button
                       onClick={() => handleShowNow(product)}
-                      className="flex-1 flex items-center justify-center gap-2 rounded-full bg-white text-black border border-gray-300  px-4 py-2 hover:bg-amber-600 transition-colors duration-200 font-medium text-sm sm:text-base "
+                      className="flex-1 flex items-center justify-center gap-1 rounded-full bg-white text-black border border-black px-2 py-1.5 sm:py-2 hover:bg-gray-50 transition-colors duration-200 font-medium text-xs sm:text-sm"
                     >
                       <span>Order Now</span>
                     </button>
 
                     <button
                       onClick={() => handleAddToCart(product)}
-                      className="flex items-center justify-center rounded-full bg-white border border-gray-300 text-gray-600  px-4 py-2 hover:bg-amber-500 hover:text-white hover:border-amber-500 transition-all duration-200 sm:w-auto min-w-[48px]"
+                      className="flex items-center justify-center rounded-full bg-white border border-gray-300 text-gray-600 px-2 py-1.5 sm:py-2 hover:bg-amber-500 hover:text-white hover:border-amber-500 transition-all duration-200 min-w-[36px] sm:min-w-[40px]"
                       aria-label="Add to cart"
                     >
-                      <ShoppingCart size={18} />
+                      <ShoppingCart size={14} className="sm:w-4 sm:h-4" />
                     </button>
                   </div>
                 </div>
