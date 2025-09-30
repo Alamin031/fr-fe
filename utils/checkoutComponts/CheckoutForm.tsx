@@ -107,7 +107,7 @@ const CheckoutForm: React.FC = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+  const handleSubmit =async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     
     // Check if order has items
@@ -138,21 +138,48 @@ const CheckoutForm: React.FC = () => {
       createdAt: new Date().toISOString(),
     };
     
-    setTimeout(() => {
-      console.log('Final Order Data:', finalData);
-      
-      // Dismiss loading and show success
+    try {
+      const res = await fetch("/api/checkoutpost", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(finalData),
+      });
+  
+      if (!res.ok) throw new Error("Failed to place order");
+  
+      const data = await res.json();
+  
       toast.dismiss(loadingToast);
       toast.success(
         `Order confirmed! Thank you ${formData.firstName}. We'll contact you at ${formData.mobile} soon.`,
-        {
-          duration: 5000,
-        }
+        { duration: 5000 }
       );
+  
+      console.log("Saved Order:", data);
+  
+      // Reset form
+      // setFormData({ firstName: "", lastName: "", mobile: "", email: "", address: "", district: "", upazila: "" });
+  
+    } catch (error: any) {
+      toast.dismiss(loadingToast);
+      toast.error("Something went wrong. Please try again.");
+      console.error(error);
+    }
+    // // setTimeout(() => {
+    // //   console.log('Final Order Data:', finalData);
+      
+    // //   // Dismiss loading and show success
+    // //   toast.dismiss(loadingToast);
+    // //   toast.success(
+    // //     `Order confirmed! Thank you ${formData.firstName}. We'll contact you at ${formData.mobile} soon.`,
+    // //     {
+    // //       duration: 5000,
+    // //     }
+    // //   );
 
-      // Optional: Reset form after successful submission
-      // setFormData({ firstName: '', lastName: '', mobile: '', email: '', address: '', district: '', upazila: '' });
-    }, 1500);
+    //   // Optional: Reset form after successful submission
+    //   // setFormData({ firstName: '', lastName: '', mobile: '', email: '', address: '', district: '', upazila: '' });
+    // }, 1500);
   };
 
   // Calculate total price
