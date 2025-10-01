@@ -38,7 +38,7 @@ interface Product {
   basePrice: string;
   colorImageConfigs: ColorImageConfig[];
   storageConfigs: StorageConfig[];
-  simConfigs?: SimConfig[]; // Made optional
+  simConfigs?: SimConfig[];
   productlinkname: string;
 }
 
@@ -52,10 +52,9 @@ const slugify = (text: string) =>
     .replace(/\s+/g, "-")
     .toLowerCase();
 
-// Custom hook for fetching iPhone products
 const useIphoneProducts = () => {
   return useQuery({
-    queryKey: ['iphone-products'],
+    queryKey: ["iphone-products"],
     queryFn: async (): Promise<Product[]> => {
       const response = await axios.get(
         `${process.env.NEXT_PUBLIC_BASE_URL}/api/getproduct/iphonelist`
@@ -67,6 +66,61 @@ const useIphoneProducts = () => {
     retry: 3,
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
   });
+};
+
+// Card Loading Skeleton Component
+const CardSkeleton = () => {
+  return (
+    <div className="bg-white rounded-lg sm:rounded-xl shadow-sm p-3 sm:p-4 flex flex-col items-center text-center border border-gray-100 animate-pulse">
+      {/* Image Skeleton */}
+      <div className="relative w-full aspect-square max-w-[140px] sm:max-w-[160px] md:max-w-[180px] lg:max-w-[200px] mx-auto mb-3">
+        <div className="w-full h-full bg-gray-200 rounded-lg"></div>
+      </div>
+      
+      {/* Product Name Skeleton */}
+      <div className="w-full mb-2">
+        <div className="h-4 bg-gray-200 rounded mb-2 mx-auto w-3/4"></div>
+        <div className="h-4 bg-gray-200 rounded mx-auto w-1/2"></div>
+      </div>
+      
+      {/* SIM Configuration Skeleton */}
+      <div className="flex flex-wrap gap-1 mb-2 justify-center">
+        <div className="w-12 h-6 bg-gray-200 rounded-full"></div>
+        <div className="w-12 h-6 bg-gray-200 rounded-full"></div>
+      </div>
+      
+      {/* Color Selection Skeleton */}
+      <div className="flex items-center justify-center mb-2">
+        <div className="flex gap-1.5">
+          <div className="w-4 h-4 bg-gray-200 rounded-full"></div>
+          <div className="w-4 h-4 bg-gray-200 rounded-full"></div>
+          <div className="w-4 h-4 bg-gray-200 rounded-full"></div>
+        </div>
+      </div>
+      
+      {/* Pricing Skeleton */}
+      <div className="mb-3 sm:mb-4 w-full">
+        <div className="h-6 bg-gray-200 rounded mb-1 mx-auto w-1/2"></div>
+        <div className="flex items-center justify-center gap-1.5">
+          <div className="h-4 bg-gray-200 rounded w-16"></div>
+          <div className="h-4 bg-gray-200 rounded w-12"></div>
+        </div>
+      </div>
+      
+      {/* Action Buttons Skeleton */}
+      <div className="flex flex-row gap-2 w-full mt-auto">
+        <div className="flex-1 h-9 bg-gray-200 rounded-full"></div>
+        <div className="w-9 h-9 bg-gray-200 rounded-full"></div>
+      </div>
+    </div>
+  );
+};
+
+// Generate skeleton cards for loading state
+const generateSkeletons = (count: number) => {
+  return Array.from({ length: count }, (_, index) => (
+    <CardSkeleton key={`skeleton-${index}`} />
+  ));
 };
 
 export default function IphoneAll() {
@@ -84,7 +138,7 @@ export default function IphoneAll() {
     isError,
     error,
     refetch,
-    isFetching
+    isFetching,
   } = useIphoneProducts();
 
   const [selectedColors, setSelectedColors] = useState<Record<string, number>>({});
@@ -95,13 +149,12 @@ export default function IphoneAll() {
     const totalPrice = calculateTotalPrice(product);
     clearOrder();
 
-    // Get the actual color, storage, and SIM values with safe access
     const selectedColorId = selectedColors[product._id];
-    const selectedColor = product.colorImageConfigs?.find(config => config.id === selectedColorId);
+    const selectedColor = product.colorImageConfigs?.find((config) => config.id === selectedColorId);
     const selectedStorageId = selectedStorages[product._id];
-    const selectedStorage = product.storageConfigs?.find(config => config.id === selectedStorageId);
+    const selectedStorage = product.storageConfigs?.find((config) => config.id === selectedStorageId);
     const selectedSimId = selectedSims[product._id];
-    const selectedSim = product.simConfigs?.find(config => config.id === selectedSimId);
+    const selectedSim = product.simConfigs?.find((config) => config.id === selectedSimId);
 
     addOrder({
       productId: product._id,
@@ -119,36 +172,20 @@ export default function IphoneAll() {
 
   const handleAddToCart = (product: Product) => {
     console.log("Adding to cart:", product);
-    // implement your cart logic here
   };
 
   const handleColorSelect = (productId: string, colorId: number) => {
-    setSelectedColors((prev) => ({
-      ...prev,
-      [productId]: colorId,
-    }));
+    setSelectedColors((prev) => ({ ...prev, [productId]: colorId }));
   };
 
-  // const handleStorageSelect = (productId: string, storageId: number) => {
-  //   setSelectedStorages((prev) => ({
-  //     ...prev,
-  //     [productId]: storageId,
-  //   }));
-  // };
-
   const handleSimSelect = (productId: string, simId: number) => {
-    setSelectedSims((prev) => ({
-      ...prev,
-      [productId]: simId,
-    }));
+    setSelectedSims((prev) => ({ ...prev, [productId]: simId }));
   };
 
   const getCurrentImage = (product: Product) => {
     const selectedColorId = selectedColors[product._id];
     if (selectedColorId && product.colorImageConfigs) {
-      const selectedConfig = product.colorImageConfigs.find(
-        (config) => config.id === selectedColorId
-      );
+      const selectedConfig = product.colorImageConfigs.find((config) => config.id === selectedColorId);
       return selectedConfig?.image || product.colorImageConfigs[0]?.image;
     }
     return product.colorImageConfigs?.[0]?.image || "";
@@ -156,77 +193,49 @@ export default function IphoneAll() {
 
   const calculateTotalPrice = (product: Product) => {
     const basePrice = parseFloat(product.basePrice || "0");
-    
-    // Safe access to storage configs
     const selectedStorageId = selectedStorages[product._id];
-    const selectedStorage = product.storageConfigs?.find(config => config.id === selectedStorageId);
+    const selectedStorage = product.storageConfigs?.find((config) => config.id === selectedStorageId);
     const storagePrice = parseFloat(selectedStorage?.price || "0");
-    
-    // Safe access to SIM configs (optional)
     const selectedSimId = selectedSims[product._id];
-    const selectedSim = product.simConfigs?.find(config => config.id === selectedSimId);
+    const selectedSim = product.simConfigs?.find((config) => config.id === selectedSimId);
     const simPrice = parseFloat(selectedSim?.price || "0");
-    
-    // Safe access to color configs
     const selectedColorId = selectedColors[product._id];
-    const selectedColor = product.colorImageConfigs?.find(config => config.id === selectedColorId);
+    const selectedColor = product.colorImageConfigs?.find((config) => config.id === selectedColorId);
     const colorPrice = parseFloat(selectedColor?.price || "0");
-    
     return basePrice + storagePrice + simPrice + colorPrice;
   };
 
-  // Initialize selected options when products are loaded
   useEffect(() => {
     if (products.length > 0) {
       const initialColors: Record<string, number> = {};
       const initialStorages: Record<string, number> = {};
       const initialSims: Record<string, number> = {};
-      
       products.forEach((product) => {
-        // Initialize colors
         if (product.colorImageConfigs && product.colorImageConfigs.length > 0) {
           initialColors[product._id] = product.colorImageConfigs[0].id;
         }
-        
-        // Initialize storages
         if (product.storageConfigs && product.storageConfigs.length > 0) {
           initialStorages[product._id] = product.storageConfigs[0].id;
         }
-        
-        // Initialize SIMs (only if they exist)
         if (product.simConfigs && product.simConfigs.length > 0) {
           initialSims[product._id] = product.simConfigs[0].id;
         }
       });
-      
       setSelectedColors(initialColors);
       setSelectedStorages(initialStorages);
       setSelectedSims(initialSims);
     }
   }, [products]);
 
-  // Loading state
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px] p-6 w-full">
-        <div className="text-center w-full">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading products...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // Error state
   if (isError) {
     return (
-      <div className="p-6 text-center">
-        <div className="text-red-500 mb-4">
+      <div className="p-4 text-center">
+        <div className="text-red-500 mb-3 text-sm sm:text-base">
           <p>Error loading products: {error?.message}</p>
         </div>
         <button
           onClick={() => refetch()}
-          className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition"
+          className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition text-sm sm:text-base"
         >
           Try Again
         </button>
@@ -234,14 +243,13 @@ export default function IphoneAll() {
     );
   }
 
-  // Empty state
-  if (products.length === 0) {
+  if (products.length === 0 && !isLoading) {
     return (
-      <div className="p-6 text-center">
-        <p>No products found.</p>
+      <div className="p-4 text-center">
+        <p className="text-sm sm:text-base">No products found.</p>
         <button
           onClick={() => refetch()}
-          className="mt-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition"
+          className="mt-3 bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition text-sm sm:text-base"
         >
           Refresh
         </button>
@@ -251,79 +259,54 @@ export default function IphoneAll() {
 
   return (
     <ImageKitProvider urlEndpoint={urlEndpoint}>
-      {/* Show background refetch indicator */}
       {isFetching && !isLoading && (
-        <div className="fixed top-4 right-4 bg-blue-500 text-white px-3 py-1 rounded-full text-sm z-50">
+        <div className="fixed top-3 right-3 sm:top-4 sm:right-4 bg-blue-500 text-white px-2 py-1 rounded-full text-xs sm:text-sm z-50">
           Updating...
         </div>
       )}
-      
-      <div className="w-full px-4 sm:px-6 lg:px-8 mt-4">
+      <div className="w-full px-3 sm:px-4 lg:px-6 mt-4">
         <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">
-            {products.map((product) => {
+          {/* Mobile: 2 columns, Tablet: 3 columns, Desktop: 4 columns */}
+          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-5 lg:gap-6">
+            {/* Show skeletons when loading, actual products when data is available */}
+            {isLoading ? generateSkeletons(8) : products.map((product) => {
               const currentImage = getCurrentImage(product);
               const totalPrice = calculateTotalPrice(product);
-              // const basePrice = parseFloat(product.basePrice);
               const originalPrice = totalPrice + 10000;
               const discount = Math.round(
                 ((originalPrice - totalPrice) / originalPrice) * 100
               );
               const productSlug = slugify(product.name);
-
               return (
                 <div
                   key={product._id}
-                  className="bg-white rounded-2xl shadow-md hover:shadow-lg transition-shadow duration-300 p-4 sm:p-6 flex flex-col items-center text-center border border-gray-100 hover:border-gray-200"
+                  className="bg-white rounded-lg sm:rounded-xl shadow-sm hover:shadow-md transition-all duration-300 p-3 sm:p-4 flex flex-col items-center text-center border border-gray-100 hover:border-gray-200"
                 >
-                  {/* Product Image */}
                   {currentImage && (
                     <Link href={`/category/iphone/${productSlug}`} className="block w-full">
-                      <div className="relative w-full aspect-square max-w-[200px] sm:max-w-[220px] lg:max-w-[250px] mx-auto mb-4">
+                      <div className="relative w-full aspect-square max-w-[140px] sm:max-w-[160px] md:max-w-[180px] lg:max-w-[200px] mx-auto mb-3">
                         <Image
                           src={currentImage}
                           alt={product.name}
                           fill
-                          className="object-contain rounded-xl transition-transform duration-300 ease-in-out hover:scale-105"
-                          sizes="(max-width: 640px) 200px, (max-width: 1024px) 220px, 250px"
+                          className="object-contain rounded-lg transition-transform duration-300 ease-in-out hover:scale-105"
+                          sizes="(max-width: 640px) 140px, (max-width: 768px) 160px, (max-width: 1024px) 180px, 200px"
                           transformation={[{ aiRemoveBackground: true }]}
                         />
                       </div>
                     </Link>
                   )}
-
+                  
                   {/* Product Name */}
-                  <Link href={`/category/iphone/${productSlug}`} className="block w-full">
-                    <h3 className="text-lg sm:text-xl font-semibold mb-4 text-gray-900 hover:text-amber-600 transition-colors duration-200 line-clamp-2">
+                  <Link href={`/category/iphone/${productSlug}`} className="block w-full mb-2">
+                    <h3 className="text-sm sm:text-base font-semibold text-gray-900 hover:text-amber-600 transition-colors duration-200 line-clamp-2 leading-tight min-h-[2.5rem] sm:min-h-[3rem]">
                       {product.name}
                     </h3>
                   </Link>
-
-                  {/* Storage Selection */}
-                  {/* {product.storageConfigs && product.storageConfigs.length > 1 && (
-                    <div className="flex flex-wrap gap-2 mb-3 justify-center">
-                      {product.storageConfigs.map((storageConfig) => (
-                        <button
-                          key={storageConfig.id}
-                          onClick={() => handleStorageSelect(product._id, storageConfig.id)}
-                          disabled={!storageConfig.inStock}
-                          className={`px-2 py-1 text-xs rounded-full border transition-all duration-200 ${
-                            selectedStorages[product._id] === storageConfig.id
-                              ? "bg-blue-500 text-white border-blue-500"
-                              : storageConfig.inStock
-                              ? "border-gray-300 text-gray-700 hover:border-gray-400"
-                              : "border-gray-200 text-gray-400 cursor-not-allowed"
-                          }`}
-                        >
-                          {storageConfig.label}
-                        </button>
-                      ))}
-                    </div>
-                  )} */}
-
-                  {/* SIM Selection - Only show if SIM configs exist */}
+                  
+                  {/* SIM Configuration */}
                   {product.simConfigs && product.simConfigs.length > 1 && (
-                    <div className="flex flex-wrap gap-2 mb-3 justify-center">
+                    <div className="flex flex-wrap gap-1 mb-2 justify-center">
                       {product.simConfigs.map((simConfig) => (
                         <button
                           key={simConfig.id}
@@ -333,7 +316,7 @@ export default function IphoneAll() {
                             selectedSims[product._id] === simConfig.id
                               ? "bg-green-500 text-white border-green-500"
                               : simConfig.inStock
-                              ? "border-gray-300 text-gray-700 hover:border-gray-400"
+                              ? "border-gray-300 text-gray-700 hover:border-gray-400 hover:bg-gray-50"
                               : "border-gray-200 text-gray-400 cursor-not-allowed"
                           }`}
                         >
@@ -342,25 +325,25 @@ export default function IphoneAll() {
                       ))}
                     </div>
                   )}
-
+                  
                   {/* Color Selection */}
                   {product.colorImageConfigs && product.colorImageConfigs.length > 1 && (
-                    <div className="flex items-center justify-center gap-2 mb-3">
-                      <div className="flex gap-2 flex-wrap justify-center">
+                    <div className="flex items-center justify-center mb-2">
+                      <div className="flex gap-1.5 flex-wrap justify-center">
                         {product.colorImageConfigs.map((colorConfig) => (
                           <button
                             key={colorConfig.id}
                             onClick={() => handleColorSelect(product._id, colorConfig.id)}
                             disabled={!colorConfig.inStock}
-                            className={`w-4 h-4 sm:w-4 sm:h-4 rounded-full border-2 transition-all duration-200 ${
+                            className={`w-4 h-4 sm:w-4 sm:h-4 rounded-full border transition-all duration-200 ${
                               selectedColors[product._id] === colorConfig.id
-                                ? "border-blue-500 scale-110 shadow-lg ring-2 ring-blue-200"
+                                ? "border-blue-500 scale-110 shadow-md ring-1 ring-blue-200"
                                 : colorConfig.inStock
                                 ? "border-gray-300 hover:border-gray-400 hover:scale-105"
                                 : "border-gray-200 opacity-50 cursor-not-allowed"
                             }`}
                             style={{ backgroundColor: colorConfig.color }}
-                            title={colorConfig.inStock ? `Color: ${colorConfig.color}` : 'Out of stock'}
+                            title={colorConfig.inStock ? `Color: ${colorConfig.color}` : "Out of stock"}
                           >
                             <div className="w-full h-full rounded-full border border-white/20"></div>
                           </button>
@@ -368,41 +351,35 @@ export default function IphoneAll() {
                       </div>
                     </div>
                   )}
-
-                  {/* Price Section */}
-                  <div className="mb-4 sm:mb-6">
-                    <p className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">
+                  
+                  {/* Pricing */}
+                  <div className="mb-3 sm:mb-4 w-full">
+                    <p className="text-base sm:text-lg font-bold text-gray-900 mb-1">
                       ৳ {totalPrice.toLocaleString()}
                     </p>
-                    <div className="flex items-center justify-center gap-2 flex-wrap">
-                      <span className="line-through text-gray-400 text-sm">
+                    <div className="flex items-center justify-center gap-1.5 flex-wrap">
+                      <span className="line-through text-gray-400 text-xs">
                         ৳ {originalPrice.toLocaleString()}
                       </span>
-                      <span className="bg-green-100 text-green-600 text-xs font-medium px-2 py-1 rounded-full">
+                      <span className="bg-green-100 text-green-600 text-xs font-medium px-2 py-0.5 rounded-full">
                         {discount}% OFF
                       </span>
                     </div>
-                    {/* {totalPrice !== basePrice && (
-                      <p className="text-xs text-gray-500 mt-1">
-                        Base: ৳{basePrice.toLocaleString()} + Options: ৳{(totalPrice - basePrice).toLocaleString()}
-                      </p>
-                    )} */}
                   </div>
-
+                  
                   {/* Action Buttons */}
-                  <div className="flex flex-row gap-3 w-full mt-auto">
+                  <div className="flex flex-row gap-2 w-full mt-auto">
                     <button
                       onClick={() => handleShowNow(product)}
-                      className="flex-1 flex items-center justify-center gap-2 rounded-full bg-white t text-black border border-black px-4 py-2 hover: transition-colors duration-200 font-medium text-sm sm:text-base"
+                      className="flex-1 flex items-center justify-center gap-1 rounded-full bg-white text-black border border-black px-2 py-1.5 sm:py-2 hover:bg-gray-50 transition-colors duration-200 font-medium text-xs sm:text-sm"
                     >
                       <span>Order Now</span>
                     </button>
-
                     <button
                       onClick={() => handleAddToCart(product)}
-                      className="flex items-center justify-center rounded-full bg-white border border-gray-300 text-gray-600 px-4 py-2 hover:bg-amber-500 hover:text-white hover:border-amber-500 transition-all duration-200 sm:w-auto min-w-[48px]"
+                      className="flex items-center justify-center rounded-full bg-white border border-gray-300 text-gray-600 px-2 py-1.5 sm:py-2 hover:bg-amber-500 hover:text-white hover:border-amber-500 transition-all duration-200 min-w-[36px] sm:min-w-[40px]"
                     >
-                      <ShoppingCart size={18} />
+                      <ShoppingCart size={14} className="sm:w-4 sm:h-4" />
                     </button>
                   </div>
                 </div>

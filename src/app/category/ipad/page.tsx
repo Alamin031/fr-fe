@@ -9,7 +9,6 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import useOrderStore from "../../../../store/store";
 
-
 interface ColorImageConfig {
   id: number;
   color: string;
@@ -67,8 +66,6 @@ interface Product {
   productlinkname: string;
 }
 
-
-
 const slugify = (text: string) =>
   text
     .toString()
@@ -79,8 +76,53 @@ const slugify = (text: string) =>
     .replace(/\s+/g, "-")
     .toLowerCase();
 
+// Skeleton Loader Component
+const ProductCardSkeleton = () => {
+  return (
+    <div className="bg-white rounded-lg sm:rounded-xl shadow-sm p-3 sm:p-4 flex flex-col items-center text-center border border-gray-100 animate-pulse">
+      {/* Image Skeleton */}
+      <div className="relative w-full aspect-square max-w-[140px] sm:max-w-[160px] md:max-w-[180px] lg:max-w-[200px] mx-auto mb-3">
+        <div className="w-full h-full bg-gray-200 rounded-lg"></div>
+      </div>
+
+      {/* Product Name Skeleton */}
+      <div className="w-full mb-2">
+        <div className="h-4 bg-gray-200 rounded mb-2"></div>
+        <div className="h-4 bg-gray-200 rounded w-3/4 mx-auto"></div>
+      </div>
+
+      {/* Color Selection Skeleton */}
+      <div className="flex items-center justify-center gap-1 mb-3">
+        <div className="flex gap-1">
+          {[...Array(3)].map((_, i) => (
+            <div
+              key={i}
+              className="w-4 h-4 sm:w-4 sm:h-4 rounded-full bg-gray-200"
+            ></div>
+          ))}
+        </div>
+      </div>
+
+      {/* Price Section Skeleton */}
+      <div className="mb-3 sm:mb-4 w-full">
+        <div className="h-6 bg-gray-200 rounded w-1/2 mx-auto mb-2"></div>
+        <div className="flex items-center justify-center gap-2">
+          <div className="h-4 bg-gray-200 rounded w-1/3"></div>
+          <div className="h-5 bg-gray-200 rounded w-1/4"></div>
+        </div>
+      </div>
+
+      {/* Action Buttons Skeleton */}
+      <div className="flex flex-row gap-2 w-full mt-auto">
+        <div className="flex-1 h-10 bg-gray-200 rounded-full"></div>
+        <div className="w-10 h-10 bg-gray-200 rounded-full"></div>
+      </div>
+    </div>
+  );
+};
+
 export default function IpadCard() {
-  const {addOrder , clearOrder} = useOrderStore()
+  const { addOrder, clearOrder } = useOrderStore()
   const router = useRouter();
   const urlEndpoint = process.env.NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT;
 
@@ -106,7 +148,7 @@ export default function IpadCard() {
 
   const handleShowNow = (product: Product) => {
     const totalPrice = calculateTotalPrice(product);
-   clearOrder()
+    clearOrder()
   
     // Get the actual color and storage values
     const selectedColorId = selectedColors[product._id];
@@ -120,16 +162,12 @@ export default function IpadCard() {
       price: totalPrice,
       color: selectedColor?.color,
       storage: selectedStorage?.label,
-      
-      // simId: selectedSims[product._id],
       quantity: 1,
       image: getCurrentImage(product),
-      
     });
   
-    router.push("/checkout"); // ✅ navigate to checkout
+    router.push("/checkout");
   };
-  
 
   const handleAddToCart = (product: Product) => {
     console.log("Adding to cart:", product);
@@ -142,10 +180,6 @@ export default function IpadCard() {
       [productId]: colorId,
     }));
   };
-
-  
-
- 
 
   const getCurrentImage = (product: Product) => {
     const selectedColorId = selectedColors[product._id];
@@ -176,7 +210,6 @@ export default function IpadCard() {
     return basePrice + storagePrice + simPrice + colorPrice;
   };
 
-
   useEffect(() => {
     if (!products || products.length === 0) return;
     
@@ -203,10 +236,14 @@ export default function IpadCard() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px] p-6 w-full">
-        <div className="text-center w-full">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading products...</p>
+      <div className="w-full px-3 sm:px-4 lg:px-6 mt-4">
+        <div className="max-w-7xl mx-auto">
+          {/* Grid Layout with Skeleton Loaders */}
+          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-5 lg:gap-6">
+            {[...Array(8)].map((_, index) => (
+              <ProductCardSkeleton key={index} />
+            ))}
+          </div>
         </div>
       </div>
     );
@@ -214,10 +251,10 @@ export default function IpadCard() {
 
   if (error) {
     return (
-      <div className="flex items-center justify-center min-h-[400px] p-6">
+      <div className="flex items-center justify-center min-h-[400px] p-4">
         <div className="text-center">
-          <p className="text-red-600 text-lg font-medium">Failed to load products</p>
-          <p className="text-gray-500 mt-2">Please try again later</p>
+          <p className="text-red-600 text-base sm:text-lg font-medium">Failed to load products</p>
+          <p className="text-gray-500 mt-2 text-sm sm:text-base">Please try again later</p>
         </div>
       </div>
     );
@@ -225,15 +262,15 @@ export default function IpadCard() {
 
   return (
     <ImageKitProvider urlEndpoint={urlEndpoint}>
-      <div className="w-full px-4 sm:px-6 lg:px-8 mt-4">
+      <div className="w-full px-3 sm:px-4 lg:px-6 mt-4">
         <div className="max-w-7xl mx-auto">
-          {/* Grid Layout: 1 column on mobile, 2 on tablet, 3 on desktop, 4 on large screens */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">
+          {/* Grid Layout: 2 columns on mobile, 3 on tablet, 4 on desktop */}
+          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-5 lg:gap-6">
             {(products || []).map((product) => {
               const currentImage = getCurrentImage(product);
               const totalPrice = calculateTotalPrice(product);
               const basePrice = parseFloat(product.basePrice);
-              const originalPrice = totalPrice + 15000; // Add markup for discount calculation
+              const originalPrice = totalPrice + 15000;
               const discount = Math.round(
                 ((originalPrice - totalPrice) / originalPrice) * 100
               );
@@ -242,18 +279,18 @@ export default function IpadCard() {
               return (
                 <div
                   key={product._id}
-                  className="bg-white rounded-2xl shadow-md hover:shadow-lg transition-shadow duration-300 p-4 sm:p-6 flex flex-col items-center text-center border border-gray-100 hover:border-gray-200"
+                  className="bg-white rounded-lg sm:rounded-xl shadow-sm hover:shadow-md transition-all duration-300 p-3 sm:p-4 flex flex-col items-center text-center border border-gray-100 hover:border-gray-200"
                 >
                   {/* Product Image */}
                   {currentImage && (
                     <Link href={`/category/ipad/${productSlug}`} className="block w-full">
-                      <div className="relative w-full aspect-square max-w-[200px] sm:max-w-[220px] lg:max-w-[250px] mx-auto mb-4">
+                      <div className="relative w-full aspect-square max-w-[140px] sm:max-w-[160px] md:max-w-[180px] lg:max-w-[200px] mx-auto mb-3">
                         <Image
                           src={currentImage}
                           alt={product.name}
                           fill
-                          className="object-contain rounded-xl transition-transform duration-300 ease-in-out hover:scale-105"
-                          sizes="(max-width: 640px) 200px, (max-width: 1024px) 220px, 250px"
+                          className="object-contain rounded-lg transition-transform duration-300 ease-in-out hover:scale-105"
+                          sizes="(max-width: 640px) 140px, (max-width: 768px) 160px, (max-width: 1024px) 180px, 200px"
                         />
                       </div>
                     </Link>
@@ -261,25 +298,23 @@ export default function IpadCard() {
 
                   {/* Product Name */}
                   <Link href={`/category/ipad/${productSlug}`} className="block w-full">
-                    <h3 className="text-lg sm:text-xl font-semibold mb-4 text-gray-900 hover:text-amber-600 transition-colors duration-200 line-clamp-2">
+                    <h3 className="text-sm sm:text-base font-semibold mb-[-12px]  text-gray-900 hover:text-amber-600 transition-colors duration-200 line-clamp-2 leading-tight min-h-[2.5rem] sm:min-h-[3rem]">
                       {product.name}
                     </h3>
                   </Link>
 
-                  {/* Storage Selection */}
-                 
                   {/* Color Selection */}
                   {product.colorImageConfigs && product.colorImageConfigs.length > 1 && (
-                    <div className="flex items-center justify-center gap-2 mb-3">
-                      <div className="flex gap-2 flex-wrap justify-center">
+                    <div className="flex items-center justify-center gap-1 mb-2">
+                      <div className="flex gap-1 flex-wrap justify-center">
                         {product.colorImageConfigs.map((colorConfig) => (
                           <button
                             key={colorConfig.id}
                             onClick={() => handleColorSelect(product._id, colorConfig.id)}
                             disabled={!colorConfig.inStock}
-                            className={`w-4 h-4 sm:w-4 sm:h-4 rounded-full border-2 transition-all duration-200 ${
+                            className={`w-4 h-4 sm:w-4 sm:h-4 rounded-full border transition-all duration-200 ${
                               selectedColors[product._id] === colorConfig.id
-                                ? "border-blue-500 scale-110 shadow-lg ring-2 ring-blue-200"
+                                ? "border-blue-500 scale-110 shadow-md ring-1 ring-blue-200"
                                 : colorConfig.inStock
                                 ? "border-gray-300 hover:border-gray-400 hover:scale-105"
                                 : "border-gray-200 opacity-50 cursor-not-allowed"
@@ -295,18 +330,16 @@ export default function IpadCard() {
                     </div>
                   )}
 
-                  {/* Connectivity Selection */}
-                 
                   {/* Price Section */}
-                  <div className="mb-4 sm:mb-6">
-                    <p className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">
+                  <div className="mb-3 sm:mb-4 w-full">
+                    <p className="text-base sm:text-lg font-bold text-gray-900 mb-1">
                       ৳ {totalPrice.toLocaleString()}
                     </p>
-                    <div className="flex items-center justify-center gap-2 flex-wrap">
-                      <span className="line-through text-gray-400 text-sm">
+                    <div className="flex items-center justify-center gap-1 flex-wrap">
+                      <span className="line-through text-gray-400 text-xs">
                         ৳ {originalPrice.toLocaleString()}
                       </span>
-                      <span className="bg-green-100 text-green-600 text-xs font-medium px-2 py-1 rounded-full">
+                      <span className="bg-green-100 text-green-600 text-xs font-medium px-1.5 py-0.5 rounded-full">
                         {discount}% OFF
                       </span>
                     </div>
@@ -318,21 +351,20 @@ export default function IpadCard() {
                   </div>
 
                   {/* Action Buttons */}
-                  <div className="flex flex-row gap-3 w-full mt-auto">
+                  <div className="flex flex-row gap-2 w-full mt-auto">
                     <button
                       onClick={() => handleShowNow(product)}
-                      
-                      className="flex-1 flex items-center justify-center gap-2 rounded-full bg-white text-black border border-gray-300 px-4 py-2 hover:bg-amber-600 hover:text-white transition-colors duration-200 font-medium text-sm sm:text-base"
+                      className="flex-1 flex items-center justify-center gap-1 rounded-full bg-white text-black border border-black px-2 py-1.5 sm:py-2 hover:bg-gray-50 transition-colors duration-200 font-medium text-xs sm:text-sm"
                     >
                       <span>Order Now</span>
                     </button>
 
                     <button
                       onClick={() => handleAddToCart(product)}
-                      className="flex items-center justify-center rounded-full bg-white border border-gray-300 text-gray-600 px-4 py-2 hover:bg-amber-500 hover:text-white hover:border-amber-500 transition-all duration-200 sm:w-auto min-w-[48px]"
+                      className="flex items-center justify-center rounded-full bg-white border border-gray-300 text-gray-600 px-2 py-1.5 sm:py-2 hover:bg-amber-500 hover:text-white hover:border-amber-500 transition-all duration-200 min-w-[36px] sm:min-w-[40px]"
                       aria-label="Add to cart"
                     >
-                      <ShoppingCart size={18} />
+                      <ShoppingCart size={14} className="sm:w-4 sm:h-4" />
                     </button>
                   </div>
                 </div>
