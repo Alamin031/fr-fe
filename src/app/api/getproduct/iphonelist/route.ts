@@ -13,7 +13,7 @@ const corsHeaders = {
 export async function GET() {
   try {
     await connect(); // ✅ make sure it's not creating multiple connections
-    const products = await Product.find({ accessories: "iphone" }).lean();
+    const products = await Product.find().lean();
     return NextResponse.json(products, { headers: corsHeaders });
   } catch (error) {
     console.error("DB Error:", error);

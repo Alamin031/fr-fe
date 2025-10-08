@@ -38,7 +38,7 @@ export default function deshboardLayout({
         <NextAuthjsProvider>
 
           <NextDeshboardProvider>
-            <section className="flex">
+            <section className="flex ">
             <Deshboard></Deshboard>
             {children}
 

@@ -13,7 +13,8 @@ import {
   Tablet,
   LaptopMinimal,
   Smartphone,
-  Clipboard, // ✅ added for Order Massage
+  Clipboard, // ✅ Order
+  Headphones, // ✅ added for Accessories
 } from 'lucide-react';
 
 const NavSidebar = () => {
@@ -22,15 +23,12 @@ const NavSidebar = () => {
 
   const menuItems = [
     { name: 'Dashboard', icon: Home, href: '/' },
-    { name: 'Users', icon: Users, href: '/users' },
-    { name: 'Analytics', icon: BarChart3, href: '/analytics' },
-    { name: 'Reports', icon: FileText, href: '/reports' },
-    { name: 'Messages', icon: Mail, href: '/messages' },
     { name: 'iPhone', icon: Smartphone, href: '/deshboard/addproduct' },
     { name: 'iPad', icon: Tablet, href: '/deshboard/ipadaddproduct' },
     { name: 'MacBook', icon: LaptopMinimal, href: '/deshboard/macbookadd' },
+    { name: 'Accessories', icon: Headphones, href: '/deshboard/accessories' }, // ✅ new item
     { name: 'Updata Data', icon: SquarePlus, href: '/deshboard/updata' },
-    { name: 'Order', icon: Clipboard, href: '/deshboard/orderdata' }, // ✅ new item
+    { name: 'Order', icon: Clipboard, href: '/deshboard/orderdata' }, 
   ];
 
   const isActive = (href: string) => pathname === href;
