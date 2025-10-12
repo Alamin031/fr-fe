@@ -6,7 +6,6 @@ import Image from 'next/image';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { CheckCircle2, Package, ShoppingBag, CreditCard } from 'lucide-react';
 
@@ -271,18 +270,14 @@ export default function Page() {
           </Card>
           
           {/* Color Selection */}
-          {product.imageConfigs && product.imageConfigs.length > 0 && (
-            <Card>
-              <CardHeader className="my-[-10px]">
-              </CardHeader>
-              <CardContent>
-                <div className="flex gap-3 justify-center items-center mt-[-10px]">
+          
+          <div className="flex gap-3 justify-center items-center ">
                   {product.imageConfigs.map(config => (
                     <button
                       key={config._id.$oid}
-                      className={`relative w-10 h-10 rounded-full border-2 transition-all ${
+                      className={`relative w-10 h-10 rounded-full border-2  ${
                         selectedColor === config.colorName 
-                          ? 'border-black ring-2 ring-offset-2 ring-black' 
+                          ? 'border-black ring-2 ring-offset-1 ring-black' 
                           : 'border-gray-300 hover:border-gray-400'
                       } ${!config.inStock ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}`}
                       style={{ backgroundColor: config.colorHex }}
@@ -294,12 +289,10 @@ export default function Page() {
                         <CheckCircle2 className="absolute -top-1 -right-1 w-5 h-5 text-black bg-white rounded-full" />
                       )}
                     </button>
+                    
                   ))}
                 </div>
                 <p className="text-sm text-muted-foreground mt-3 font-medium flex justify-center items-center">{selectedColor}</p>
-              </CardContent>
-            </Card>
-          )}
         </div>
 
         {/* Product Details Section */}
@@ -334,7 +327,7 @@ export default function Page() {
             </Button>
             <Button 
               size="lg" 
-              className="w-full bg-white text-black border border-gray-300"
+              className="w-full bg-black text-white border border-gray-300"
               onClick={handleOrderNow}
               disabled={isOrdering}
             >
@@ -349,10 +342,10 @@ export default function Page() {
             {product.storageConfigs && product.storageConfigs.length > 0 && (
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-lg">{product.accessoriesType}</CardTitle>
+                  <CardTitle className="text-[15px] mt-[-16px]">{product.accessoriesType}</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="grid grid-cols-2 mt-[-14px] gap-2 flex-wrap">
+                  <div className="grid grid-cols-2 mt-[-14px] gap-2 flex-wrap max-sm:mt-[-24px]">
                     {product.storageConfigs.map(config => (
                       <Button
                         key={config._id.$oid}
@@ -373,10 +366,10 @@ export default function Page() {
             {product.dynamicInputs.map((group) => (
               <Card key={group._id.$oid}>
                 <CardHeader>
-                  <CardTitle className="text-lg capitalize">{group.type}</CardTitle>
+                  <CardTitle className="text-[15px] capitalize mt-[-16px]">{group.type}</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="grid grid-cols-2 mt-[-14px] gap-2">
+                  <div className="grid grid-cols-2 mt-[-14px] gap-2 max-sm:mt-[-24px]">
                     {group.items.map((item) => (
                       <Button
                         key={item._id.$oid}

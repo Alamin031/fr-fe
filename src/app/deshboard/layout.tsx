@@ -6,6 +6,7 @@ import './deshboard.css';
 
 import NextDeshboardProvider from "@/providers/NextDeshboardProvider";
 import  Deshboard from '@/components/DeshboardNavber/Deshboard';
+import MobileBottomNav from "../components/MobileBottomNav";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -41,6 +42,7 @@ export default function deshboardLayout({
             <section className="flex ">
             <Deshboard></Deshboard>
             {children}
+            <MobileBottomNav></MobileBottomNav>
 
             </section>
 
