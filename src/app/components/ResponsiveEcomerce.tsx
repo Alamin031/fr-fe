@@ -87,7 +87,7 @@ const AppleNavbar = () => {
                 <div key={link.name} className="relative group">
                   <Link
                     href={link.href}
-                    className="inline-flex items-center justify-center h-10 px-4 py-2 text-sm font-medium text-gray-700 rounded-md ring-offset-white transition-colors hover:bg-gray-100 hover:text-gray-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-950 focus-visible:ring-offset-2"
+                    className="inline-flex items-center justify-center h-10 px-4 py-2 text-sm font-semibold text-gray-700 rounded-md ring-offset-white transition-colors hover:bg-gray-100 hover:text-gray-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-950 focus-visible:ring-offset-2"
                   >
                     {link.name}
                     <ChevronDown size={16} className="ml-1 transition-transform group-hover:rotate-180" />
@@ -112,7 +112,7 @@ const AppleNavbar = () => {
                 <Link
                   key={link.name}
                   href={link.href}
-                  className="inline-flex items-center justify-center h-10 px-4 py-2 text-sm font-medium text-gray-700 rounded-md ring-offset-white transition-colors hover:bg-gray-100 hover:text-gray-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-950 focus-visible:ring-offset-2"
+                  className="inline-flex font-semibold  items-center justify-center h-10 px-4 py-2 text-sm  text-gray-700 rounded-md ring-offset-white transition-colors hover:bg-gray-100 hover:text-gray-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-950 focus-visible:ring-offset-2"
                 >
                   {link.name}
                 </Link>
