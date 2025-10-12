@@ -184,7 +184,7 @@ const AppleNavbar = () => {
               <h2 className="text-lg font-semibold">Menu</h2>
               <button
                 onClick={() => setIsMobileMenuOpen(false)}
-                className="inline-flex items-center justify-center h-10 w-10 rounded-md text-sm font-medium ring-offset-white transition-colors hover:bg-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-950 focus-visible:ring-offset-2"
+                className="inline-flex items-center justify-center mt-[-8px] h-10 w-10 rounded-md text-sm font-medium ring-offset-white transition-colors hover:bg-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-950 focus-visible:ring-offset-2"
                 aria-label="Close menu"
               >
                 <X size={20} />
