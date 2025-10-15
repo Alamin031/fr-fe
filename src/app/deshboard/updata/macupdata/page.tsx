@@ -139,7 +139,7 @@ const MacBookTable: React.FC = () => {
     
     if (window.confirm(`Are you sure you want to delete "${productToDelete?.name}"?`)) {
       const deletePromise = (async () => {
-        const res = await fetch(`/api/deleteproduct/${id}`, {
+        const res = await fetch(`/api/deleteapi/macbookdelete/${id}`, {
           method: 'DELETE',
         });
         

@@ -3,7 +3,8 @@ import mongoose from "mongoose";
 // Schema for DynamicInputItem
 const DynamicInputItemSchema = new mongoose.Schema({
   label: { type: String, required: true },
-  price: { type: String, required: true }, // Stored as string to preserve formatting like "0.00"
+  price: { type: String, required: true },
+  inStock: { type: Boolean, default: true },
 });
 
 // Schema for DynamicInputForm
@@ -24,15 +25,15 @@ const PreOrderConfigSchema = new mongoose.Schema({
 // Schema for Config (Storage/Variant Configurations)
 const ConfigSchema = new mongoose.Schema({
   label: { type: String, required: true },
-  price: { type: String, required: true }, // Stored as string for formatting
+  price: { type: String, required: true },
   shortDetails: { type: String, default: '' },
   inStock: { type: Boolean, default: true },
 });
 
 // Schema for ImageConfig
 const ImageConfigSchema = new mongoose.Schema({
-  image: { type: String, required: true }, // URL of the image
-  price: { type: String, required: true }, // Stored as string for formatting
+  image: { type: String, required: true },
+  price: { type: String, required: true },
   colorName: { type: String, default: '' },
   colorHex: { type: String, default: '' },
   inStock: { type: Boolean, default: true },
@@ -47,7 +48,7 @@ const DetailConfigSchema = new mongoose.Schema({
 // Schema for RegionConfig (Dynamic Products)
 const RegionConfigSchema = new mongoose.Schema({
   name: { type: String, required: true },
-  price: { type: String, required: true }, // Stored as string for formatting
+  price: { type: String, required: true },
   inStock: { type: Boolean, default: true },
 });
 
@@ -64,23 +65,22 @@ function generateSlug(name: string) {
 // Main Product Schema
 const ProductSchema = new mongoose.Schema({
   name: { type: String, required: true },
-  basePrice: { type: String, required: true }, // Stored as string for formatting
+  basePrice: { type: String, required: true },
   storageConfigs: [ConfigSchema],
   imageConfigs: [ImageConfigSchema],
   details: [DetailConfigSchema],
   accessories: { type: String, default: '' },
   accessoriesType: { type: String, default: '' },
-  description: { type: String, default: '' }, // HTML content from Tiptap editor
+  description: { type: String, default: '' },
   dynamicInputs: [DynamicInputFormSchema],
   preOrderConfig: { type: PreOrderConfigSchema, default: {} },
-  regions: [RegionConfigSchema],
   productlinkname: {
     type: String,
     unique: true,
     sparse: true,
-  }, // Added to support dynamicProducts from the code
+  },
 }, {
-  timestamps: true, // Adds createdAt and updatedAt fields
+  timestamps: true,
 });
 
 // Middleware to generate slug before saving
@@ -92,6 +92,6 @@ ProductSchema.pre('save', function(next) {
 });
 
 // Create and export the Product model
-const Product = mongoose.models.accessories || mongoose.model("accessories", ProductSchema);
+const Product = mongoose.models.accessories1 || mongoose.model("accessories1", ProductSchema);
 
 export default Product;

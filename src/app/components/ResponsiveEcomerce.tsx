@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { 
   Menu, X, Search, ShoppingCart, Heart, User, ChevronDown, Home, Grid, Percent,
+  ShoppingBag,
 } from 'lucide-react';
 import Image from 'next/image';
 import logo from './../../../public/WhatsApp_Image_2025-08-23_at_19.59.58__1_-removebg-preview (1).png';
@@ -156,7 +157,7 @@ const AppleNavbar = () => {
               className="inline-flex items-center justify-center h-10 w-10 rounded-md text-sm font-medium ring-offset-white transition-colors hover:bg-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-950 focus-visible:ring-offset-2 relative"
               aria-label="Shopping cart"
             >
-              <ShoppingCart size={20} />
+              <ShoppingBag size={20} />
               <span className="absolute -top-1 -right-1 inline-flex items-center justify-center rounded-full bg-red-500 px-1.5 py-0.5 text-xs font-semibold leading-none text-white">
                 3
               </span>

@@ -92,6 +92,7 @@ type Product = {
 type DynamicInputItem = {
   label: string;
   price: string;
+  inStock: boolean;
 };
 
 type DynamicInputForm = {
@@ -340,20 +341,25 @@ const TiptapEditor = ({ onContentChange }: { onContentChange: (content: string) 
   );
 };
 
+// DynamicInputForm Component with Stock IN/OUT
 const DynamicInputForm = ({ forms, setForms }: { forms: DynamicInputForm[], setForms: React.Dispatch<React.SetStateAction<DynamicInputForm[]>> }) => {
   const handleCreateInput = () => {
-    setForms([...forms, { type: "", items: [{ label: "", price: "" }] }]);
+    setForms([...forms, { type: "", items: [{ label: "", price: "", inStock: true }] }]);
   };
 
   const handleAddItem = (formIndex: number) => {
     const updatedForms = [...forms];
-    updatedForms[formIndex].items.push({ label: "", price: "" });
+    updatedForms[formIndex].items.push({ label: "", price: "", inStock: true });
     setForms(updatedForms);
   };
 
-  const handleChange = (formIndex: number, itemIndex: number, key: keyof DynamicInputItem, value: string) => {
+  const handleChange = (formIndex: number, itemIndex: number, key: keyof DynamicInputItem, value: string | boolean) => {
     const updatedForms = [...forms];
-    updatedForms[formIndex].items[itemIndex][key] = value;
+    if (key === 'inStock') {
+      updatedForms[formIndex].items[itemIndex][key] = value as boolean;
+    } else {
+      updatedForms[formIndex].items[itemIndex][key] = value as string;
+    }
     setForms(updatedForms);
   };
 
@@ -374,6 +380,11 @@ const DynamicInputForm = ({ forms, setForms }: { forms: DynamicInputForm[], setF
     setForms(updatedForms);
   };
 
+  // Stock toggle handler
+  const handleStockToggle = (formIndex: number, itemIndex: number, inStock: boolean) => {
+    handleChange(formIndex, itemIndex, 'inStock', inStock);
+  };
+
   return (
     <div className="space-y-4">
       <Button onClick={handleCreateInput} variant="outline" className="w-full">
@@ -382,7 +393,7 @@ const DynamicInputForm = ({ forms, setForms }: { forms: DynamicInputForm[], setF
       </Button>
 
       {forms.map((form, formIndex) => (
-        <Card key={formIndex}>
+        <Card key={formIndex} className="border-2">
           <CardContent className="p-4 relative">
             <Button
               onClick={() => handleRemoveForm(formIndex)}
@@ -395,43 +406,95 @@ const DynamicInputForm = ({ forms, setForms }: { forms: DynamicInputForm[], setF
 
             <div className="space-y-3 pt-8">
               <div>
-                <Label>Form Type</Label>
+                <Label htmlFor={`form-type-${formIndex}`} className="text-sm font-medium">
+                  Form Type <span className="text-red-500">*</span>
+                </Label>
                 <Input
+                  id={`form-type-${formIndex}`}
                   type="text"
                   placeholder="Enter type (e.g., Warranty, Protection)"
                   value={form.type}
                   onChange={(e) => handleTypeChange(formIndex, e.target.value)}
                   className="mt-1"
+                  required
                 />
+                {!form.type && (
+                  <p className="text-red-500 text-xs mt-1">Form type is required</p>
+                )}
               </div>
 
               <div className="space-y-2">
                 <Label>Options</Label>
                 {form.items.map((item, itemIndex) => (
-                  <div key={itemIndex} className="flex items-center gap-2">
-                    <Input
-                      type="text"
-                      placeholder="Label"
-                      value={item.label}
-                      onChange={(e) => handleChange(formIndex, itemIndex, "label", e.target.value)}
-                      className="flex-1"
-                    />
-                    <Input
-                      type="number"
-                      placeholder="Price"
-                      value={item.price}
-                      onChange={(e) => handleChange(formIndex, itemIndex, "price", e.target.value)}
-                      className="w-32"
-                    />
-                    {form.items.length > 1 && (
-                      <Button
-                        onClick={() => handleRemoveItem(formIndex, itemIndex)}
-                        variant="ghost"
-                        size="icon"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    )}
+                  <div key={itemIndex} className="flex items-center gap-2 p-3 border rounded-lg bg-gray-50/50 hover:bg-gray-50 transition-colors">
+                    <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-2">
+                      <div>
+                        <Input
+                          type="text"
+                          placeholder="Label"
+                          value={item.label}
+                          onChange={(e) => handleChange(formIndex, itemIndex, "label", e.target.value)}
+                          className="flex-1"
+                          required
+                        />
+                        {!item.label && (
+                          <p className="text-red-500 text-xs mt-1">Label is required</p>
+                        )}
+                      </div>
+                      <div>
+                        <Input
+                          type="number"
+                          placeholder="Price"
+                          value={item.price}
+                          onChange={(e) => handleChange(formIndex, itemIndex, "price", e.target.value)}
+                          className="w-full"
+                          required
+                        />
+                        {!item.price && (
+                          <p className="text-red-500 text-xs mt-1">Price is required</p>
+                        )}
+                      </div>
+                    </div>
+                    
+                    {/* Stock Button Section */}
+                    <div className="flex items-center gap-3">
+                      <div className="flex items-center space-x-2">
+                        <Switch 
+                          checked={item.inStock} 
+                          onCheckedChange={(checked) => handleStockToggle(formIndex, itemIndex, checked)}
+                          id={`dynamic-stock-${formIndex}-${itemIndex}`}
+                        />
+                        <Label 
+                          htmlFor={`dynamic-stock-${formIndex}-${itemIndex}`} 
+                          className={`text-xs cursor-pointer whitespace-nowrap flex items-center gap-1 ${
+                            item.inStock ? 'text-green-600' : 'text-red-600'
+                          }`}
+                        >
+                          {item.inStock ? (
+                            <>
+                              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                              Stock IN
+                            </>
+                          ) : (
+                            <>
+                              <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                              Stock OUT
+                            </>
+                          )}
+                        </Label>
+                      </div>
+                      
+                      {form.items.length > 1 && (
+                        <Button
+                          onClick={() => handleRemoveItem(formIndex, itemIndex)}
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                        </Button>
+                      )}
+                    </div>
                   </div>
                 ))}
               </div>
@@ -620,7 +683,7 @@ const Accessories: React.FC = () => {
   const [newImageInStock, setNewImageInStock] = useState(true);
   const [uploading, setUploading] = useState(false);
 
-  // কালার পিকার স্টেট
+  // Color picker state
   const [showColorPicker, setShowColorPicker] = useState(false);
   const [selectedColor, setSelectedColor] = useState('#000000');
 
@@ -702,13 +765,13 @@ const Accessories: React.FC = () => {
     };
   };
 
-  // কালার অ্যাড করার ফাংশন
+  // Color add function
   const handleAddColor = () => {
     setNewColorHex(selectedColor);
     setShowColorPicker(false);
   };
 
-  // কালার পিকার থেকে কালার সিলেক্ট করা হলে
+  // Color picker change handler
   const handleColorPickerChange = (color: string) => {
     setSelectedColor(color);
     setNewColorHex(color);
@@ -771,6 +834,16 @@ const Accessories: React.FC = () => {
       alert('Enter name and price'); 
       return; 
     }
+
+    // Validate dynamic input forms
+    const hasInvalidForms = dynamicInputForms.some(form => 
+      !form.type || form.items.some(item => !item.label || !item.price)
+    );
+
+    if (hasInvalidForms) {
+      alert('Please fill all required fields in Dynamic Options (Form Type, Label, and Price for each option)');
+      return;
+    }
     
     const newProduct: Product = { 
       name: productName, 
@@ -784,7 +857,8 @@ const Accessories: React.FC = () => {
       dynamicInputs: dynamicInputForms,
       preOrderConfig: preOrderConfig.isPreOrder ? preOrderConfig : undefined
     };
-    console.log(newProduct)
+    
+    console.log('Submitting product:', newProduct);
 
     await axios.post('/api/accessorieslist', newProduct)
       .then(res => {
@@ -924,7 +998,7 @@ const Accessories: React.FC = () => {
                         ) : newImagePreview ? (
                           <>
                             <Image src={newImagePreview} width={96} height={96} alt="preview" className="rounded object-cover w-full h-full" />
-                            {/* কালার ইন্ডিকেটর */}
+                            {/* Color indicator */}
                             {newColorHex && (
                               <div 
                                 className="absolute bottom-2 right-2 w-6 h-6 rounded-full border-2 border-white shadow-md"
@@ -999,7 +1073,7 @@ const Accessories: React.FC = () => {
                             )}
                           </div>
                           
-                          {/* কালার পিকার */}
+                          {/* Color Picker */}
                           {showColorPicker && (
                             <div className="absolute mt-1 p-3 bg-white border border-gray-200 rounded-lg shadow-lg z-10">
                               <div className="flex gap-2 mb-2">
@@ -1040,7 +1114,9 @@ const Accessories: React.FC = () => {
                               onCheckedChange={setNewImageInStock}
                               id="newImageStock"
                             />
-                            <Label htmlFor="newImageStock" className="text-sm cursor-pointer">In Stock</Label>
+                            <Label htmlFor="newImageStock" className="text-sm cursor-pointer">
+                              {newImageInStock ? 'Stock IN' : 'Stock OUT'}
+                            </Label>
                           </div>
                           
                           <Button 
@@ -1072,9 +1148,9 @@ const Accessories: React.FC = () => {
                             className="w-full h-48 object-cover" 
                           />
                           {!config.inStock && (
-                            <Badge className="absolute top-2 left-2 bg-red-500">Out of Stock</Badge>
+                            <Badge className="absolute top-2 left-2 bg-red-500">Stock OUT</Badge>
                           )}
-                          {/* কালার ইন্ডিকেটর */}
+                          {/* Color indicator */}
                           {config.colorHex && (
                             <div 
                               className="absolute top-2 left-12 w-6 h-6 rounded-full border-2 border-white shadow-md"
@@ -1138,7 +1214,9 @@ const Accessories: React.FC = () => {
                                 onCheckedChange={(checked) => handleImageConfigChange(config.id, 'inStock', checked)}
                                 id={`stock-${config.id}`}
                               />
-                              <Label htmlFor={`stock-${config.id}`} className="text-xs cursor-pointer">In Stock</Label>
+                              <Label htmlFor={`stock-${config.id}`} className="text-xs cursor-pointer">
+                                {config.inStock ? 'Stock IN' : 'Stock OUT'}
+                              </Label>
                             </div>
                           </div>
                         </div>
@@ -1211,7 +1289,9 @@ const Accessories: React.FC = () => {
                           onCheckedChange={setNewStorageInStock}
                           id="storageStock"
                         />
-                        <Label htmlFor="storageStock" className="text-xs cursor-pointer whitespace-nowrap">In Stock</Label>
+                        <Label htmlFor="storageStock" className="text-xs cursor-pointer whitespace-nowrap">
+                          {newStorageInStock ? 'Stock IN' : 'Stock OUT'}
+                        </Label>
                       </div>
                     </div>
                     <div className="md:col-span-1 flex items-end">
@@ -1250,7 +1330,9 @@ const Accessories: React.FC = () => {
                                   onCheckedChange={(checked) => handleConfigChange(setStorageConfigs, config.id, 'inStock', checked)}
                                   id={`config-${config.id}`}
                                 />
-                                <Label htmlFor={`config-${config.id}`} className="text-xs cursor-pointer whitespace-nowrap">Stock</Label>
+                                <Label htmlFor={`config-${config.id}`} className="text-xs cursor-pointer whitespace-nowrap">
+                                  {config.inStock ? 'Stock IN' : 'Stock OUT'}
+                                </Label>
                               </div>
                               <Button 
                                 variant="ghost" 
