@@ -13,6 +13,8 @@ interface OrderItem {
   sim ?: string,
   display ? : string,
   region ? : string,
+  colorname ? : string,
+  dynamicInputs ? : object,
 }
 
 interface OrderState {

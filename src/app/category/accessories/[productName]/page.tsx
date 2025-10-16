@@ -3,7 +3,7 @@
 import { useParams } from 'next/navigation';
 import React, { useEffect, useState, useMemo } from 'react';
 import Image from 'next/image';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -11,6 +11,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { CheckCircle2, Package, ShoppingBag, CreditCard, Bell, Calendar } from 'lucide-react';
+import useOrderStore from '../../../../../store/store';
+
 
 interface StorageConfig {
   label: string;
@@ -105,6 +107,7 @@ const isProduct = (data: unknown): data is Product => {
 };
 
 export default function Page() {
+  const {addOrder} = useOrderStore()
   const params = useParams();
   const productName = params?.productName as string | undefined;
   
@@ -203,6 +206,7 @@ export default function Page() {
   const isAnyItemOutOfStock = useMemo(() => {
     return Object.values(getStockStatus).some(status => status === 'Out of Stock');
   }, [getStockStatus]);
+  
 
   // Check if storage is in stock
   const isStorageInStock = useMemo(() => {
@@ -286,26 +290,27 @@ export default function Page() {
     };
 
     // Log the data to console
-    console.log('🔔 NOTIFY DIALOG SUBMITTED:', notifyData);
+    // console.log('🔔 NOTIFY DIALOG SUBMITTED:', notifyData);
+    
     
 
     // Here you can add your API call to save this data
     try {
       // Example API call:
-      // const response = await fetch('/api/notifications', {
-      //   method: 'POST',
-      //   headers: {
-      //     'Content-Type': 'application/json',
-      //   },
-      //   body: JSON.stringify(notifyData),
-      // });
+      const response = await fetch('/api/notifypost', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(notifyData),
+      });
       
-      // if (!response.ok) {
-      //   throw new Error('Failed to save notification');
-      // }
+      if (!response.ok) {
+        throw new Error('Failed to save notification');
+      }
 
       // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+
       
       console.log('✅ Notification data saved successfully!');
       
@@ -376,8 +381,22 @@ export default function Page() {
       alert('Cannot order out of stock items');
       return;
     }
+    console.log('oderr')
     
     setIsOrdering(true);
+    // addOrder({
+    //   productId: product?._id.$oid,
+    //   productName: product?.name || '',
+    //   price: totalPrice,
+    //   storage: selectedStorage,
+    //   color: selectedColor,
+    //   sim: selectedSim.type,
+    //   region: selectedRegion.name,
+    //   // dynamicInputs: 
+
+    //   quantity: quantity, // Add quantity to order
+    //   image: currentImage || selectedColor.image || '' // Add current image to order
+    // });
     
     // Prepare order data
     const orderData = {
@@ -716,7 +735,7 @@ export default function Page() {
           </div>
 
           {/* Pre-order Information */}
-          {product.preOrderConfig.isPreOrder && (
+          {/* {product.preOrderConfig.isPreOrder && (
             <Alert className="bg-amber-50 border-amber-200">
               <Package className="h-4 w-4 text-amber-600" />
               <AlertDescription className="text-amber-900">
@@ -733,7 +752,7 @@ export default function Page() {
                 )}
               </AlertDescription>
             </Alert>
-          )}
+          )} */}
 
           {/* Specifications */}
           <Card>
