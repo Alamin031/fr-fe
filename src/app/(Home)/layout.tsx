@@ -17,6 +17,9 @@ export const metadata: Metadata = {
   
   title: "Friends Telecom",
   description: "Bangladesh’s most trusted and popular Apple shop. Buy iPhone, MacBook, iPad, AirPods & more with best prices, warranty & fast delivery.",
+  icons: {
+    icon: '/favicon.jpg',
+  },
 };
 
 export default function RootLayout({
