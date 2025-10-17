@@ -10,6 +10,8 @@ import {
   Headphones,
   SquarePlus,
   Clipboard,
+  Bell,
+  Package,
   ChevronLeft,
   ChevronRight,
   Menu
@@ -30,13 +32,16 @@ const NavSidebar = () => {
     { name: 'Accessories', icon: Headphones, href: '/deshboard/accessories' },
     { name: 'Update Data', icon: SquarePlus, href: '/deshboard/updata' },
     { name: 'Order', icon: Clipboard, href: '/deshboard/orderdata' }, 
+    { name: 'Notify', icon: Bell, href: '/deshboard/notify' },
+    { name: 'PreOrder', icon: Package, href: '/deshboard/preorder' },
   ];
 
-  const isActive = (href) => pathname === href;
+  const isActive = (href: string) => pathname === href;
 
-  const handleNavigation = (href) => {
-    router.push(href);
-  };
+const handleNavigation = (href: string) => {
+  router.push(href);
+};
+
 
   return (
     <div className="flex h-screen">
