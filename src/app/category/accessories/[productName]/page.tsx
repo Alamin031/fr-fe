@@ -10,7 +10,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { CheckCircle2, Package, ShoppingBag, CreditCard, Bell, Calendar } from 'lucide-react';
+import { CheckCircle2, Package, ShoppingBag, CreditCard, Bell, Calendar, Minus, Plus } from 'lucide-react';
 import useOrderStore from '../../../../../store/store';
 
 
@@ -117,6 +117,7 @@ export default function Page() {
   const [selectedStorageDetails, setSelectedStorageDetails] = useState<string>('');
   const [selectedColor, setSelectedColor] = useState<string>('');
   const [selectedDynamicInputs, setSelectedDynamicInputs] = useState<{[key: string]: string}>({});
+  const [quantity, setQuantity] = useState<number>(1); // Add quantity state
   const [isAddingToBag, setIsAddingToBag] = useState<boolean>(false);
   const [isOrdering, setIsOrdering] = useState<boolean>(false);
   const [stockStatus, setStockStatus] = useState<{[key: string]: string}>({});
@@ -133,7 +134,7 @@ export default function Page() {
   const debouncedSelectedStorage = useDebounce(selectedStorage, 300);
   const debouncedSelectedColor = useDebounce(selectedColor, 300);
 
-  // Calculate total price with memoization
+  // Calculate total price with memoization (including quantity)
   const totalPrice = useMemo(() => {
     if (!product) return 0;
     
@@ -163,8 +164,8 @@ export default function Page() {
       }
     });
     
-    return price;
-  }, [product, debouncedSelectedStorage, debouncedSelectedColor, debouncedDynamicInputs]);
+    return price * quantity; // Multiply by quantity
+  }, [product, debouncedSelectedStorage, debouncedSelectedColor, debouncedDynamicInputs, quantity]);
 
   // Get stock status
   const getStockStatus = useMemo(() => {
@@ -215,6 +216,17 @@ export default function Page() {
     );
     return selectedStorageItem?.inStock ?? true;
   }, [product, selectedStorage]);
+
+  // Handle quantity changes
+  const handleQuantityChange = (newQuantity: number) => {
+    if (newQuantity < 1) return;
+    // Check if there's a max pre-order quantity limit
+    if (product?.preOrderConfig.isPreOrder && product.preOrderConfig.maxPreOrderQuantity.$numberInt !== "0") {
+      const maxQty = parseInt(product.preOrderConfig.maxPreOrderQuantity.$numberInt);
+      if (newQuantity > maxQty) return;
+    }
+    setQuantity(newQuantity);
+  };
 
   useEffect(() => {
     if (!productName) return;
@@ -283,7 +295,8 @@ export default function Page() {
       selectedOptions: {
         storage: selectedStorage,
         color: selectedColor,
-        dynamicInputs: selectedDynamicInputs
+        dynamicInputs: selectedDynamicInputs,
+        quantity: quantity // Add quantity to notification
       },
       totalPrice: totalPrice,
       timestamp: new Date().toISOString()
@@ -351,7 +364,7 @@ export default function Page() {
       color: selectedColor,
       dynamicInputs: selectedDynamicInputs,
       totalPrice: totalPrice,
-      quantity: 1
+      quantity: quantity // Use state quantity instead of hardcoded 1
     };
 
     try {
@@ -406,7 +419,7 @@ export default function Page() {
       color: selectedColor,
       dynamicInputs: selectedDynamicInputs,
       totalPrice: totalPrice,
-      quantity: 1
+      quantity: quantity // Use state quantity instead of hardcoded 1
     };
 
     try {
@@ -562,7 +575,55 @@ export default function Page() {
             <div>
               <p className="text-sm font-medium">Total Price</p>
               <p className="text-2xl font-bold mt-1">৳{totalPrice.toFixed(2)}</p>
+              {quantity > 1 && (
+                <p className="text-sm text-muted-foreground mt-1">
+                  ({quantity} × ৳{(totalPrice / quantity).toFixed(2)})
+                </p>
+              )}
             </div>
+          </div>
+
+          {/* Quantity Selector */}
+          <div className="flex items-center space-x-4">
+            <Label htmlFor="quantity" className="text-sm font-medium">Quantity:</Label>
+            <div className="flex items-center border rounded-md">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => handleQuantityChange(quantity - 1)}
+                disabled={quantity <= 1}
+                className="h-8 w-8 p-0"
+              >
+                <Minus className="h-4 w-4" />
+              </Button>
+              <Input
+                id="quantity"
+                type="number"
+                min="1"
+                max={product.preOrderConfig.isPreOrder && product.preOrderConfig.maxPreOrderQuantity.$numberInt !== "0" 
+                  ? parseInt(product.preOrderConfig.maxPreOrderQuantity.$numberInt) 
+                  : 99}
+                value={quantity}
+                onChange={(e) => handleQuantityChange(Math.max(1, parseInt(e.target.value) || 1))}
+                className="w-16 h-8 text-center border-0 focus-visible:ring-0"
+              />
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => handleQuantityChange(quantity + 1)}
+                disabled={product.preOrderConfig.isPreOrder && 
+                  product.preOrderConfig.maxPreOrderQuantity.$numberInt !== "0" && 
+                  quantity >= parseInt(product.preOrderConfig.maxPreOrderQuantity.$numberInt)}
+                className="h-8 w-8 p-0"
+              >
+                <Plus className="h-4 w-4" />
+              </Button>
+            </div>
+            {product.preOrderConfig.isPreOrder && product.preOrderConfig.maxPreOrderQuantity.$numberInt !== "0" && (
+              <span className="text-xs text-muted-foreground">
+                Max: {product.preOrderConfig.maxPreOrderQuantity.$numberInt}
+              </span>
+            )}
           </div>
 
           {/* Action Buttons */}

@@ -5,7 +5,6 @@ import ResponsiveEcomerce from "../components/ResponsiveEcomerce";
 import './category.css';
 import { Suspense } from "react";
 import ReactQueryProvider from "@/providers/QueryProvider";
-import MobileBottomNav from "../components/MobileBottomNav";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
