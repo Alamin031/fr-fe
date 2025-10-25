@@ -1,7 +1,6 @@
 import Banner from '@/components/Banner';
 import Macbook from '@/components/Macbook';
 import AppleProduct from '@/components/AppleProduct';
-import ResponsiveEcommerce from "../components/ResponsiveEcomerce";
 
 // import { connect } from "@/dbconfig/dbconfig";
 // await connect()

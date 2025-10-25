@@ -135,7 +135,7 @@ export default function Mabookcard() {
       setIsError(false);
       setError(null);
 
-      const url = `${process.env.NEXT_PUBLIC_BASE_URL}/api/getproduct/macbooklist?ts=${Date.now()}`;
+      const url = `${process.env.NEXT_PUBLIC_BASE_URI}/macbooklist?ts=${Date.now()}`;
       const response = await fetch(url, {
         cache: 'no-store',
         headers: {
