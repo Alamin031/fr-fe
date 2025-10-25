@@ -14,7 +14,8 @@ import {
   Package,
   ChevronLeft,
   ChevronRight,
-  Menu
+  Menu,
+  Globe // <-- Added for Landing Page
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -25,6 +26,7 @@ const NavSidebar = () => {
   const pathname = usePathname();
 
   const menuItems = [
+    { name: 'Landing Page', icon: Globe, href: '/deshboard/landingpage' }, // <-- New Landing Page Link
     { name: 'Dashboard', icon: Home, href: '/' },
     { name: 'iPhone', icon: Smartphone, href: '/deshboard/addproduct' },
     { name: 'iPad', icon: Tablet, href: '/deshboard/ipadaddproduct' },
@@ -38,10 +40,9 @@ const NavSidebar = () => {
 
   const isActive = (href: string) => pathname === href;
 
-const handleNavigation = (href: string) => {
-  router.push(href);
-};
-
+  const handleNavigation = (href: string) => {
+    router.push(href);
+  };
 
   return (
     <div className="flex h-screen">
@@ -115,7 +116,7 @@ const handleNavigation = (href: string) => {
 
       {/* Main Content */}
       <main className="flex-1 overflow-auto p-6 bg-muted/30">
-        
+        {/* Add your main dashboard content here */}
       </main>
     </div>
   );

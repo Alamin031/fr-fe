@@ -9,7 +9,6 @@ import ResponsiveEcommerce from "../components/ResponsiveEcomerce";
 const page = () => {
   return (
     <div>
-                  <ResponsiveEcommerce></ResponsiveEcommerce>
 
        <Banner />
       <Macbook></Macbook>
