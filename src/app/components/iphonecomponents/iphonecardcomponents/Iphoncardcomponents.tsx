@@ -141,7 +141,7 @@ export default function IphoneAll() {
       setIsError(false);
       setError(null);
   
-      const url = `${process.env.NEXT_PUBLIC_BASE_URL}/api/getproduct/iphonelist?ts=${Date.now()}`;
+      const url = `${process.env.NEXT_PUBLIC_BASE_URI}/iphonelist?ts=${Date.now()}`;
       const response = await fetch(url, { 
         cache: 'no-store',
         headers: {
