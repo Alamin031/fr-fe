@@ -63,7 +63,7 @@ const HeroBannerSlider: React.FC = () => {
     setCurrentSlide((prev) => (prev === 0 ? sliderImages.length - 1 : prev - 1));
   };
 
-  const goToSlide = (index: number): void => {
+  const goToSlide = (index) => {
     setCurrentSlide(index);
   };
 
@@ -109,9 +109,9 @@ const HeroBannerSlider: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Main Slider - Takes 2 columns on large screens */}
         {sliderImages.length > 0 && (
-          <div className="lg:col-span-2 relative overflow-hidden rounded-3xl shadow-2xl bg-black">
+          <div className="lg:col-span-2 relative overflow-hidden rounded-[10px] shadow-2xl bg-black">
             {/* Slides */}
-            <div className="relative h-96 lg:h-[500px]">
+            <div className="relative h-96 max-sm:h-60 lg:h-[500px]">
               {sliderImages.map((imageUrl, index) => (
                 <div
                   key={index}
@@ -138,7 +138,7 @@ const HeroBannerSlider: React.FC = () => {
               className="absolute left-4 lg:left-6 top-1/2 transform -translate-y-1/2 bg-white/90 hover:bg-white text-gray-900 rounded-full p-3 shadow-xl transition-all duration-300 hover:scale-110 z-10"
               aria-label="Previous slide"
             >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-6 h-6 max-sm:w-3 max-sm:h-3"  fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
               </svg>
             </button>
@@ -148,7 +148,7 @@ const HeroBannerSlider: React.FC = () => {
               className="absolute right-4 lg:right-6 top-1/2 transform -translate-y-1/2 bg-white/90 hover:bg-white text-gray-900 rounded-full p-3 shadow-xl transition-all duration-300 hover:scale-110 z-10"
               aria-label="Next slide"
             >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-6 h-6 max-sm:w-2 max-sm:h-2 " fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
               </svg>
             </button>
@@ -173,11 +173,11 @@ const HeroBannerSlider: React.FC = () => {
 
         {/* Sidebar Product Tiles - Takes 1 column on large screens */}
         {sidebarProducts.length > 0 && (
-          <div className="lg:col-span-1 space-y-4">
+          <div className="lg:col-span-1 space-y-4 max-sm:flex max-sm:overflow-x-auto max-sm:flex-row max-sm:space-y-0 max-sm:space-x-4 max-sm:pb-2">
             {sidebarProducts.map((imageUrl, index) => (
               <div
                 key={index}
-                className={`relative overflow-hidden rounded-3xl shadow-xl h-48 lg:h-[242px] group cursor-pointer transition-transform duration-300 hover:scale-105 ${
+                className={`relative overflow-hidden rounded-[10px] shadow-xl h-48 max-sm:h-30 lg:h-[242px] group cursor-pointer transition-transform duration-300 hover:scale-105 ${
                   index === 0 ? 'bg-gray-900' : 'bg-amber-100'
                 }`}
               >
@@ -186,21 +186,10 @@ const HeroBannerSlider: React.FC = () => {
                   alt={`Product ${index + 1}`}
                   className="w-full h-full object-cover"
                 />
-                <div className="absolute inset-0 bg-gradient-to-br from-transparent via-transparent to-black/30" />
+               
                 
                 {/* Optional product info overlay */}
-                <div className="absolute top-6 right-6 text-right">
-                  <h3 className={`text-2xl font-bold ${
-                    index === 0 ? 'text-white' : 'text-gray-900'
-                  }`}>
-                    Featured
-                  </h3>
-                  <p className={`text-sm mt-2 ${
-                    index === 0 ? 'text-blue-400' : 'text-blue-600'
-                  }`}>
-                    Shop Now
-                  </p>
-                </div>
+                
               </div>
             ))}
           </div>

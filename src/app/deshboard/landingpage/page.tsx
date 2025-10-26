@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Upload, CheckCircle2, XCircle, Loader2, Trash2, Save, Download, Edit } from 'lucide-react';
+import TextInputDashboard from '@/components/utils/Text_input_deshboard';
 
 interface MongoDBData {
   _id: string;
@@ -485,6 +486,8 @@ export default function LandingPage() {
           </Card>
         )}
       </div>
+
+      <TextInputDashboard />
     </div>
   );
 }
