@@ -1,99 +1,79 @@
-import mongoose from "mongoose";
+import mongoose from 'mongoose';
+const { Schema } = mongoose;
 
-// Sub-schemas
-const configSchema = new mongoose.Schema({
-  id: { type: Number, required: true },
-  label: { type: String, required: true },
-  price: { type: String, required: true },
-  inStock: { type: Boolean, default: true }
+// Sub-schema for image configurations
+const ImageConfigSchema = new Schema({
+  url: { type: String, required: true },
+  altText: { type: String, default: '' },
 });
 
-const colorImageConfigSchema = new mongoose.Schema({
-  id: { type: Number, required: true },
-  color: { type: String, required: true },
-  image: { type: String, required: true },
-  price: { type: String, required: true },
-  inStock: { type: Boolean, default: true }
+// Sub-schema for storage options
+const StorageConfigSchema = new Schema({
+  type: { type: String, required: true },
+  size: { type: String, required: true },
+  price: { type: Number, required: true },
 });
 
-const regionConfigSchema = new mongoose.Schema({
-  name: { type: String, required: true },
-  price: { type: String, required: true },
-  inStock: { type: Boolean, default: true }
-});
-
-const detailConfigSchema = new mongoose.Schema({
-  id: { type: Number, required: true },
-  label: { type: String, required: true },
-  value: { type: String, required: true }
-});
-
-const secondConfigSchema = new mongoose.Schema({
-  id: { type: Number, required: true },
-  seconddetails: { type: String, required: true },
-  value: { type: String, required: true }
-});
-
-// Main product schema
-const macbookSchema = new mongoose.Schema({
-  name: { type: String, required: true },
-  basePrice: { type: String, required: true },
-  cpuCoreConfigs: [configSchema],
-  gpuCoreConfigs: [configSchema],
-  storageConfigs: [configSchema],
-  ramConfigs: [configSchema],
-  displayConfigs: [configSchema],
-  colorImageConfigs: [colorImageConfigSchema],
-  dynamicRegions: [regionConfigSchema],
-  details: [detailConfigSchema],
-  secondDetails: [secondConfigSchema],
-  createdAt: { type: Date, default: Date.now },
-  updatedAt: { type: Date, default: Date.now },
-  accessories: {
-    type: String,
-    default: "macbook",
+// Main Product Schema
+const ProductSchema = new Schema(
+  {
+    name: { type: String, required: true, trim: true },
+    basePrice: { type: Number, required: true, min: 0 },
+    description: { type: String, default: '' },
+    accessories: { type: String },
+    accessoriesType: { type: String },
+    storageConfigs: [StorageConfigSchema],
+    imageConfigs: [ImageConfigSchema],
+    dynamicInputs: { type: [Schema.Types.Mixed], default: [] },
+    details: { type: [Schema.Types.Mixed], default: [] },
+    preOrderConfig: { type: Schema.Types.Mixed, default: null },
+    productLinkName: {
+      type: String,
+      unique: true,
+      sparse: true,
+    },
   },
-  porductlinkname: {
-    type: String,
-    unique: true,
-    sparse: true
-  }
-});
+  { timestamps: true }
+);
 
-// Function to generate slug from name
+// --- Slug Generation Middleware ---
 function generateSlug(name) {
+  if (!name) return '';
   return name
     .toLowerCase()
-    .replace(/\s+/g, '-') // Replace spaces with hyphens
-    .replace(/[^a-z0-9-]/g, '') // Remove special characters
-    .replace(/-+/g, '-') // Replace multiple hyphens with single
-    .trim('-');
+    .trim()
+    .replace(/\s+/g, '-')           // Replace spaces with -
+    .replace(/[^a-z0-9-]/g, '')     // Remove all non-alphanumeric (except -)
+    .replace(/-+/g, '-')            // Replace multiple - with single -
+    .replace(/^-+|-+$/g, '');       // Trim - from start and end
 }
 
-// Auto-generate porductlinkname before saving
-macbookSchema.pre('save', function(next) {
-  this.updatedAt = Date.now();
-  
-  // Only generate porductlinkname if it doesn't exist and name exists
-  if (this.name && !this.porductlinkname) {
-    this.porductlinkname = generateSlug(this.name);
+// Auto-generate slug before saving
+ProductSchema.pre('save', function (next) {
+  if (this.isModified('name') || !this.productLinkName) {
+    const baseSlug = generateSlug(this.name);
+    this.productLinkName = baseSlug;
+
+    // Optional: Ensure uniqueness by appending counter if duplicate
+    // (Advanced: use async check in service layer or plugin)
   }
-  
   next();
 });
 
-// Auto-generate porductlinkname before updating if name changed
-macbookSchema.pre('findOneAndUpdate', function(next) {
+// Optional: Handle Mixed type updates
+ProductSchema.pre('findOneAndUpdate', function (next) {
   const update = this.getUpdate();
-  
-  if (update && update.name && !update.porductlinkname) {
-    update.porductlinkname = generateSlug(update.name);
+  if (update.dynamicInputs || update.details || update.preOrderConfig) {
+    this.markModified('dynamicInputs');
+    this.markModified('details');
+    this.markModified('preOrderConfig');
   }
-  
   next();
 });
 
-const Product =
-  mongoose.models.macbook || mongoose.model("macbook", macbookSchema);
+// Optional: Index for better query performance
+ProductSchema.index({ productLinkName: 1 });
+ProductSchema.index({ name: 'text', description: 'text' });
 
-export default Product;
+// Export the model
+export default ProductSchema;

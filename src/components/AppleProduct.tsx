@@ -1,3 +1,5 @@
+'use client';
+
 import React from 'react';
 import Image from 'next/image';
 
@@ -6,6 +8,7 @@ import ipad from '@/../public/hero__ecv967jz1y82_large-removebg-preview.png';
 import iphon from '@/../public/iphon.png';
 import applywatch from '@/../public/welcome_hero_endframe__d71hj6st53gy_xlarge-removebg-preview.png';
 import macmin from '@/../public/zokAT5JkBbdn1T5OXZkJ1xvNenKPSGkW0wV4aOXh-removebg-preview.png';
+import axios from 'axios';
 
 const products = [
   {
@@ -34,6 +37,9 @@ const products = [
   },
 ];
 
+ const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URI}/lendingbenar/LendingProductget`,);
+
+console.log("Lending Product Data:", response);
 const AppleProduct = () => {
   return (
     <div className=" mx-auto px-4 py-8 bg-gray-100 mt-4">

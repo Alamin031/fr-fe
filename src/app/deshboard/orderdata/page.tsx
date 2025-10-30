@@ -50,7 +50,7 @@ const OrderCheckoutUI: React.FC = () => {
     const fetchOrders = async () => {
       try {
         const response = await fetch(
-          `${process.env.NEXT_PUBLIC_BASE_URL}/api/getproduct/checkout`
+          `${process.env.NEXT_PUBLIC_BASE_URI}/checkout`
         );
         if (!response.ok) throw new Error('Failed to fetch orders');
         const data: Order[] = await response.json();
@@ -99,7 +99,7 @@ const OrderCheckoutUI: React.FC = () => {
 
     try {
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_BASE_URL}/api/deleteapi/checkoutdelete/${orderId}`,
+        `${process.env.NEXT_PUBLIC_BASE_URI}/checkout/delete/${orderId}`,
         { method: 'DELETE' }
       );
 

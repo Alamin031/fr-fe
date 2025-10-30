@@ -20,6 +20,7 @@ interface OrderItem {
   display?: string;
   region?: string;
   image?: string;
+  dynamicInputs?: Record<string, string | number>;
 }
 
 interface FormData {
@@ -128,18 +129,28 @@ const CheckoutForm: React.FC = () => {
 
     // Show loading toast
     const loadingToast = toast.loading('Processing your order...');
+      
 
     // Simulate API call
     const finalData = {
       customer: formData,
       orderItems: order,
       total: totalPrice,
-      
+      productName : order[0].productName,
+      basePrice : order[0].price,
+      quantity : order[0].quantity,
+      image : order[0].image,
+      color : order[0].color,
+      storage : order[0].storage,
+      RAM : order[0].RAM,
+      sim : order[0].sim,
+      dynamicInputs : order[0].dynamicInputs,
+
       createdAt: new Date().toISOString(),
     };
-    
+    console.log('Final Order Data:', finalData);
     try {
-      const res = await fetch("/api/checkoutpost", {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URI}/checkout/post`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(finalData),
@@ -427,6 +438,17 @@ const CheckoutForm: React.FC = () => {
                               {item.sim && <p>SIM: {item.sim}</p>}
                               {item.display && <p>Display: {item.display}</p>}
                               {item.region && <p>Region: {item.region}</p>}
+                              {item.dynamicInputs && (
+                                <div>
+                                  {Object.entries(item.dynamicInputs).map(
+                                    ([key, value]) => (
+                                      <p key={key}>
+                                        {key}: {value}
+                                      </p>
+                                    )
+                                  )}
+                                </div>
+                              )}  
                             </div>
                           </div>
 
@@ -456,7 +478,7 @@ const CheckoutForm: React.FC = () => {
 
                     <button
                       type="submit"
-                      className="w-full bg-amber-500 text-white py-3 rounded-xl hover:bg-amber-600 transition font-semibold"
+                      className="w-full bg-black text-white py-3 rounded-[5px] hover:bg-gray-800 transition font-semibold"
                     >
                       Confirm Order
                     </button>

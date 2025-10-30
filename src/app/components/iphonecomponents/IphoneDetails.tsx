@@ -1,546 +1,1171 @@
-"use client";
+'use client'
 
-import React, { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
-import axios from "axios";
-import { useQuery } from '@tanstack/react-query';
-import {
-  ChevronLeft,
-  ChevronRight,
-  Truck,
-  Shield,
-  CreditCard,
-  Plus,
-  Minus,
-} from "lucide-react";
-import { Image, ImageKitProvider } from "@imagekit/next";
-import AppleLogo from "@/components/ui/AppleLogo";
-import WhatsappLogo from "@/components/ui/WhatsappLogo";
-import ShopNowLogo from "@/components/ui/ShopNowLogo";
-import useOrderStore from "../../../../store/store";
+import { useParams, useRouter } from 'next/navigation';
+import React, { useEffect, useState, useMemo } from 'react';
+import Image from 'next/image';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { CheckCircle2, ShoppingBag, CreditCard, Bell, Calendar, Minus, Plus, MessageCircle, X } from 'lucide-react';
+import useOrderStore, { useSidebarStore } from '../../../../store/store';
+import toast, { Toaster } from 'react-hot-toast';
 
-interface ColorImageConfig {
-  id: number;
-  color: string;
-  image: string;
-  price: string;
-}
+import { useaddtobagStore } from '../../../../store/store';
 
 interface StorageConfig {
-  id: number;
-  label: string;
-  price: string;
-}
-
-interface DynamicRegion {
+  id: { $numberDouble: string };
   name: string;
-  price: string;
+  shortDetails: string;
+  inStock: boolean;
+  basicPrice: string;
+  prices: Array<{ [key: string]: string }>;
+  colorStocks: Array<{ [key: string]: boolean }>;
+  _id: { $oid: string };
 }
 
-interface ProductDetail {
-  id: number;
+interface ImageConfig {
+  colorHex: string;
+  colorName: string;
+  id: { $numberDouble: string };
+  image: string;
+  inStock: boolean;
+  _id: { $oid: string };
+}
+
+interface Detail {
+  id: { $numberDouble: string };
   label: string;
   value: string;
+  _id?: { $oid: string };
+}
+
+interface DynamicInputItem {
+  label: string;
+  price: string;
+  inStock: boolean;
+}
+
+interface DynamicInput {
+  type: string;
+  items: DynamicInputItem[];
+  _id?: { $oid: string };
+}
+
+interface PreOrderConfig {
+  isPreOrder: boolean;
+  availabilityDate?: string;
+  estimatedShipping?: string;
+  preOrderDiscount?: { $numberInt: string };
+  maxPreOrderQuantity?: { $numberInt: string };
+  _id?: { $oid: string };
 }
 
 interface Product {
-  _id: string;
+  _id: { $oid: string };
   name: string;
-  basePrice: string;
-  colorImageConfigs: ColorImageConfig[];
-  storageConfigs: StorageConfig[];
-  dynamicRegions?: DynamicRegion[];
-  details: ProductDetail[];
+  basePrice: { $numberInt: string };
+  description: string;
   accessories: string;
-  sku: string;
-  createdAt: string;
-  updatedAt: string;
+  accessoriesType: string;
+  storageConfigs: StorageConfig[];
+  imageConfigs: ImageConfig[];
+  details: Detail[];
+  dynamicInputs: DynamicInput[];
+  preOrderConfig: PreOrderConfig | null;
+  createdAt: { $date: { $numberLong: string } };
+  updatedAt: { $date: { $numberLong: string } };
+  __v: { $numberInt: string };
 }
 
-export default function IphoneDetails() {
-  const routeParams = useParams<{ productName: string }>();
-  const productName = routeParams?.productName;
-  const { addOrder, clearOrder } = useOrderStore();
-  const router = useRouter();
+// WhatsApp Icon Component
+const WhatsAppIcon = () => (
+  <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
+    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/>
+  </svg>
+);
 
-  const urlEndpoint = process.env.NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT;
-
-  const [product, setProduct] = useState<Product | null>(null);
-  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
-  const [selectedColorIndex, setSelectedColorIndex] = useState(0);
-  const [selectedStorageIndex, setSelectedStorageIndex] = useState(0);
-  const [selectedRegionIndex, setSelectedRegionIndex] = useState(0);
-  const [quantity, setQuantity] = useState(1);
-  const [, setImageError] = useState<Record<number, boolean>>({});
-
-  const { data, isLoading, error } = useQuery({
-    queryKey: ['iphone', productName],
-    enabled: !!productName,
-    queryFn: async () => {
-      const res = await axios.get<Product>(
-        `/api/getproduct/iphonedetaits/product`,
-        { params: { name: productName } }
-      );
-      return res.data;
-    },
-    refetchOnWindowFocus: false,
-    staleTime: 5 * 60 * 1000,
-  });
+// Custom debounce hook
+function useDebounce<T>(value: T, delay: number): T {
+  const [debouncedValue, setDebouncedValue] = useState<T>(value);
 
   useEffect(() => {
-    if (!data) return;
-    setProduct(data);
-    if (data.colorImageConfigs?.length) setSelectedColorIndex(0);
-    if (data.colorImageConfigs?.length) setSelectedImageIndex(0);
-    if (data.storageConfigs?.length) setSelectedStorageIndex(0);
-    if (data.dynamicRegions?.length) setSelectedRegionIndex(0);
-  }, [data]);
+    const handler = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
 
-  const calculateTotalPrice = (): number => {
-    if (!product) return 0;
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [value, delay]);
 
-    const basePrice = Number(product.basePrice) || 0;
-    const colorPrice =
-      Number(product.colorImageConfigs[selectedColorIndex]?.price) || 0;
-    const storagePrice =
-      Number(product.storageConfigs[selectedStorageIndex]?.price) || 0;
-    const regionPrice =
-      Number(product.dynamicRegions?.[selectedRegionIndex]?.price) || 0;
+  return debouncedValue;
+}
 
-    return basePrice + colorPrice + storagePrice + regionPrice;
-  };
+// Type guard for Product
+const isProduct = (data: unknown): data is Product => {
+  return (
+    typeof data === 'object' &&
+    data !== null &&
+    'name' in data &&
+    'basePrice' in data &&
+    'storageConfigs' in data &&
+    'imageConfigs' in data
+  );
+};
 
-  const formatPrice = (price: number) =>
-    new Intl.NumberFormat("en-BD", {
-      style: "currency",
-      currency: "BDT",
-    }).format(price);
+// Helper function to safely convert string prices to numbers (supports MongoDB numeric wrappers)
+const parsePrice = (price: unknown): number => {
+  // Handle undefined or null
+  if (price === undefined || price === null) return 0;
 
-  const handleShopNow = () => {
-    if (!product) return;
+  // If it's already a number, return it
+  if (typeof price === 'number') return Math.max(0, price);
 
-    const selectedColor =
-      product.colorImageConfigs[selectedColorIndex]?.color || "Default";
-    const selectedStorage =
-      product.storageConfigs[selectedStorageIndex]?.label || "Default";
-      // const selectedRegion = product.dynamicRegions?.[selectedRegionIndex]?.name || "Default";
+  // If it's a string, trim and parse
+  if (typeof price === 'string') {
+    const trimmed = price.trim();
+    if (trimmed === '') return 0;
+    const cleanString = trimmed.replace(/[^\d.-]/g, '');
+    const parsed = parseFloat(cleanString);
+    return isNaN(parsed) ? 0 : Math.max(0, parsed);
+  }
 
-    const totalPrice = calculateTotalPrice() * quantity;
+  // If it's an object, try to unwrap common MongoDB numeric wrappers
+  if (typeof price === 'object') {
+    try {
+      const p: any = price;
+      const candidates = [
+        p.$numberInt,
+        p.$numberDouble,
+        p.$numberLong,
+        p.$numberDecimal,
+        p.value,
+      ];
 
-    clearOrder();
-    addOrder({
-      productId: product._id,
-      productName: product.name,
-      color: selectedColor,
-      storage: selectedStorage,
-      quantity,
-      price: totalPrice,
-    });
-
-    router.push(`/checkout`);
-  };
-
-  const handleAddToCart = () => {
-    if (!product) return;
-
-    const selectedColor =
-      product.colorImageConfigs[selectedColorIndex]?.color || "Default";
-    const selectedStorage =
-      product.storageConfigs[selectedStorageIndex]?.label || "Default";
-    // const _selectedRegion =
-    //   product.dynamicRegions?.[selectedRegionIndex]?.name || "Default"; // unused
-
-    const totalPrice = calculateTotalPrice() * quantity;
-
-    console.log('Added to cart:', {
-      product: product.name,
-      color: selectedColor,
-      storage: selectedStorage,
-      quantity,
-      totalPrice: formatPrice(totalPrice)
-    });
-
-    alert(`Added to cart!\n\nProduct: ${product.name}\nQuantity: ${quantity}`);
-  };
-
-  const handleWhatsAppContact = () => {
-    if (!product) return;
-
-    const selectedColor =
-      product.colorImageConfigs[selectedColorIndex]?.color || "Default";
-    const selectedStorage =
-      product.storageConfigs[selectedStorageIndex]?.label || "Default";
-    const selectedRegion =
-      product.dynamicRegions?.[selectedRegionIndex]?.name || "Default";
-    const totalPrice = formatPrice(calculateTotalPrice() * quantity);
-
-    const message = encodeURIComponent(
-      `Hi! I'm interested in this product:\n\n` +
-      `Product: ${product.name}\n` +
-      `Color: ${selectedColor}\n` +
-      `Storage: ${selectedStorage}\n` +
-      `Region: ${selectedRegion}\n` +
-      `Quantity: ${quantity}\n` +
-      `Total Price: ${totalPrice}\n\n` +
-      `Please provide more information or help me place an order.`
-    );
-
-    const phoneNumber = "8801343159931";
-    const whatsappUrl = `https://wa.me/${phoneNumber}?text=${message}`;
-    window.open(whatsappUrl, "_blank");
-  };
-
-  const nextImage = () => {
-    if (product?.colorImageConfigs) {
-      setSelectedImageIndex((prev) =>
-        prev === product.colorImageConfigs.length - 1 ? 0 : prev + 1
-      );
+      for (const candidate of candidates) {
+        if (candidate === undefined || candidate === null) continue;
+        if (typeof candidate === 'number') return Math.max(0, candidate);
+        if (typeof candidate === 'string') {
+          const fromCandidate = parsePrice(candidate); // recursive call will handle string parsing
+          if (fromCandidate !== 0) return fromCandidate;
+        }
+      }
+    } catch (err) {
+      // ignore and fall through to return 0
     }
+  }
+
+  // Fallback
+  return 0;
+};
+
+// Price Breakdown Component
+const PriceBreakdown = ({ 
+  product, 
+  basePrice, 
+  selectedStorage, 
+  selectedColor, 
+  selectedDynamicInputs, 
+  quantity 
+}: {
+  product: Product | null;
+  basePrice: number;
+  selectedStorage: string;
+  selectedColor: string;
+  selectedDynamicInputs: {[key: string]: string};
+  quantity: number;
+}) => {
+  if (!product) return null;
+
+  // Calculate individual components
+  const breakdown = {
+    base: basePrice,
+    storage: 0,
+    color: 0,
+    dynamic: 0
   };
 
-  const prevImage = () => {
-    if (product?.colorImageConfigs) {
-      setSelectedImageIndex((prev) =>
-        prev === 0 ? product.colorImageConfigs.length - 1 : prev - 1
-      );
+  // Storage basic price
+  if (selectedStorage && product.storageConfigs) {
+    const storageConfig = product.storageConfigs.find(config => 
+      config.shortDetails === selectedStorage
+    );
+    if (storageConfig && storageConfig.basicPrice) {
+      breakdown.storage = parsePrice(storageConfig.basicPrice);
     }
-  };
+  }
 
-  const handleColorChange = (index: number) => {
-    setSelectedColorIndex(index);
-    setSelectedImageIndex(index);
-  };
-
-  const handleQuantityChange = (delta: number) => {
-    setQuantity((prev) => Math.max(1, prev + delta));
-  };
-
-  const handleImageError = (index: number) => {
-    setImageError((prev) => ({ ...prev, [index]: true }));
-  };
-
-  if (!urlEndpoint)
-    return <div>Error: ImageKit URL endpoint is not configured.</div>;
-
-  if (isLoading)
-    return (
-      <ImageKitProvider urlEndpoint={urlEndpoint}>
-        <div className="min-h-screen flex items-center justify-center bg-gray-50 w-full">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
-        </div>
-      </ImageKitProvider>
+  // Color-specific price
+  if (selectedStorage && selectedColor && product.storageConfigs && product.imageConfigs) {
+    const storageConfig = product.storageConfigs.find(config => 
+      config.shortDetails === selectedStorage
     );
-
-  if (error)
-    return (
-      <ImageKitProvider urlEndpoint={urlEndpoint}>
-        <div className="min-h-screen flex items-center justify-center bg-gray-50 w-full">
-          <div className="text-center px-4">
-            <h2 className="text-xl font-semibold text-red-600 mb-2">Failed to load product</h2>
-            <p className="text-gray-600">Please try again later.</p>
-          </div>
-        </div>
-      </ImageKitProvider>
+    const colorConfig = product.imageConfigs.find(config => 
+      config.colorName === selectedColor
     );
+    
+    if (storageConfig && colorConfig && storageConfig.prices) {
+      const colorId = colorConfig.id.$numberDouble;
+      storageConfig.prices.forEach(priceObj => {
+        Object.entries(priceObj).forEach(([key, value]) => {
+          if (key === colorId) {
+            breakdown.color += parsePrice(value);
+          }
+        });
+      });
+    }
+  }
 
-  if (!product)
-    return (
-      <ImageKitProvider urlEndpoint={urlEndpoint}>
-        <div className="min-h-screen flex items-center justify-center bg-gray-50">
-          <div className="text-center">
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">
-              Product not found
-            </h2>
-            <p className="text-gray-600">
-              The requested product could not be loaded.
-            </p>
-          </div>
-        </div>
-      </ImageKitProvider>
-    );
+  // Dynamic inputs prices
+  if (product.dynamicInputs) {
+    Object.values(selectedDynamicInputs).forEach(itemLabel => {
+      for (const group of product.dynamicInputs) {
+        const item = group.items.find(item => item.label === itemLabel);
+        if (item) {
+          breakdown.dynamic += parsePrice(item.price);
+          break;
+        }
+      }
+    });
+  }
 
-  const currentImage = product.colorImageConfigs[selectedImageIndex];
-  const regions = product.dynamicRegions ?? [];
+  const unitPrice = breakdown.base + breakdown.storage + breakdown.color + breakdown.dynamic;
+  const total = unitPrice * quantity;
 
   return (
-    <ImageKitProvider urlEndpoint={urlEndpoint}>
-      <div className="min-h-screen w-full bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
-            {/* Image Gallery */}
-            <div className="space-y-4">
-              <div className="relative rounded-lg  overflow-hidden max-sm:flex max-sm:justify-center max-sm:items-center ">
-                <div className="aspect-square relative max-sm:w-[300px] ">
-                  <Image
-                    src={currentImage?.image || ""}
-                    alt={product.name}
-                    fill
-                    className="object-contain "
-                    transformation={[{ aiRemoveBackground: true }]}
-                    onError={() => handleImageError(selectedImageIndex)}
-                  />
-                  {product.colorImageConfigs.length > 1 && (
-                    <>
-                      <button
-                        onClick={prevImage}
-                        className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white rounded-full p-2 shadow-lg transition-all z-10"
-                      >
-                        <ChevronLeft className="w- h-4 sm:w-4 sm:h-4" />
-                      </button>
-                      <button
-                        onClick={nextImage}
-                        className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white rounded-full p-2 shadow-lg transition-all z-10"
-                      >
-                        <ChevronRight className="w-3 h-3 sm:w-3 sm:h-3" />
-                      </button>
-                    </>
-                  )}
-                </div>
-              </div>
+    <div className="space-y-2">
+      {/* Base Price */}
+     
 
-              {/* Color Thumbnails */}
-              <div className="flex space-x-2 overflow-x-auto pb-2 items-center justify-center">
-                {product.colorImageConfigs.map((config, index) => (
-                  <button
-                    key={config.id}
-                    onClick={() => handleColorChange(index)}
-                    className={`flex-shrink-0 w-12 h-12 sm:w-16 sm:h-16 rounded-lg overflow-hidden border-2 transition-all relative ${
-                      selectedColorIndex === index
-                        ? "border-black shadow-lg"
-                        : "border-gray-200 hover:border-gray-300"
-                    }`}
-                  >
-                    <Image
-                      src={config.image}
-                      alt={`Color option ${index + 1}`}
-                      fill
-                      className="object-contain"
-                    />
-                  </button>
-                ))}
-              </div>
-            </div>
+      {/* Storage Price */}
+     
+      
 
-            {/* Product Info */}
-            <div className="space-y-6">
-              <div>
-                <div className="flex justify-between items-center">
-                  <h1 className="text sm:text-3xl font-bold max-sm:font-semibold max-sm:2xl text-gray-900 mb-2 max-sm:mt-[-40px] max-sm:mb-0 mt-[-15px]">
-                    {product.name}
-                  </h1>
-                  <div className="flex items-center mt-[-40px] ml-4">
-                    <AppleLogo />
-                    <span className="font-bold text-sm sm:text-base">Apple</span>
-                  </div>
-                </div>
-                <div className="text sm:text-2xl max-sm:mt-[-30px] font-medium text-black">
-                  {formatPrice(calculateTotalPrice())}
-                </div>
-              </div>
+      {/* Color Price */}
+     
 
-              {/* Color Selection */}
-              {product.colorImageConfigs.length > 0 && (
-                <div>
-                  <div className="flex flex-wrap gap-2 mt-[-15px] max-sm:gap-0 items-center text-center">
-                    <span className="font-semibold">Color</span>
-                    {product.colorImageConfigs.map((config, index) => (
-                      <button
-                        key={config.id}
-                        onClick={() => handleColorChange(index)}
-                        className={`w-8 h-8 sm:w-5 sm:h-5 rounded-full border-2 transition-all max-sm:w-5 max-sm:h-5 max-sm:ml-5 ${
-                          selectedColorIndex === index
-                            ? "border-gray-800 scale-110"
-                            : "border-gray-300 hover:border-gray-500"
-                        }`}
-                        style={{ backgroundColor: config.color }}
-                        aria-pressed={selectedColorIndex === index}
-                        title={`Color option ${index + 1}`}
-                      />
-                    ))}
-                  </div>
-                </div>
-              )}
+      {/* Dynamic Inputs Prices */}
+     
+      {/* Unit Price */}
+     
 
-              {/* Storage & Region */}
-              <div className="flex gap-6 max-sm:flex  max-sm:justify-around ">
-                {product.storageConfigs.length > 0 && (
-                  <div>
-                    <h3 className=" font-semibold mb-3">Storage</h3>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                      {product.storageConfigs.map((config, index) => (
-                        <button
-                          key={config.id}
-                          onClick={() => setSelectedStorageIndex(index)}
-                          className={`p-2 sm:p-3 rounded-lg border transition-all text-center text-sm sm:text-base ${
-                            selectedStorageIndex === index
-                              ? "border-gray-500  text-black"
-                              : "border-gray-300 hover:border-gray-400 bg-white"
-                          }`}
-                        >
-                          <div className="font-medium">{config.label}</div>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
+      {/* Quantity and Total */}
+     
 
-                {regions.length > 0 && (
-                  <div>
-                    <h3 className="font-semibold mb-3">Region</h3>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                      {regions.map((region, index) => (
-                        <button
-                          key={index}
-                          onClick={() => setSelectedRegionIndex(index)}
-                          className={`p-2 sm:p-3 rounded-lg border transition-all text-center text-sm sm:text-base ${
-                            selectedRegionIndex === index
-                              ? "border-gray-500  text-black"
-                              : "border-gray-300 hover:border-gray-400 bg-white"
-                          }`}
-                        >
-                          <div className="font-medium">{region.name}</div>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
+      {/* Total Price */}
+      <div className="flex items-baseline justify-between pt-2 border-t">
+        <p className="text-lg font-bold">Total Amount</p>
+        <p className="text-2xl font-bold text-black">৳{total.toFixed(2)}</p>
+      </div>
+    </div>
+  );
+};
 
-              {/* Quantity & Actions */}
-              <div>
-                <h3 className="text-lg font-semibold mb-3">Quantity</h3>
-                <div className="flex items-center space-x-3 mb-6">
-                  <button
-                    onClick={() => handleQuantityChange(-1)}
-                    className="w-8 h-8 sm:w-10 sm:h-10 rounded-full border border-gray-300 flex items-center justify-center hover:bg-gray-100 transition-colors disabled:opacity-50"
-                    disabled={quantity <= 1}
-                  >
-                    <Minus className="w-3 h-3 sm:w-4 sm:h-4" />
-                  </button>
-                  <span className="text-lg sm:text-xl font-semibold px-4">
-                    {quantity}
-                  </span>
-                  <button
-                    onClick={() => handleQuantityChange(1)}
-                    className="w-8 h-8 sm:w-10 sm:h-10 rounded-full border border-gray-300 flex items-center justify-center hover:bg-gray-100 transition-colors"
-                  >
-                    <Plus className="w-3 h-3 sm:w-4 sm:h-4" />
-                  </button>
-                </div>
+export default function Page() {
+  const { addOrder , clearOrder} = useOrderStore();
+    const { toggleSidebar } = useSidebarStore();
+  
+  const { addOrderbag } = useaddtobagStore();
+  const params = useParams();
+  const router = useRouter();
+  const productName = params?.productName as string | undefined;
+  
+  const [product, setProduct] = useState<Product | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [selectedStorage, setSelectedStorage] = useState<string>('');
+  const [selectedStorageDetails, setSelectedStorageDetails] = useState<string>('');
+  const [selectedColor, setSelectedColor] = useState<string>('');
+  const [selectedDynamicInputs, setSelectedDynamicInputs] = useState<{[key: string]: string}>({});
+  const [quantity, setQuantity] = useState<number>(1);
+  const [isAddingToBag, setIsAddingToBag] = useState<boolean>(false);
+  const [isOrdering, setIsOrdering] = useState<boolean>(false);
+  const [isWhatsAppOrdering, setIsWhatsAppOrdering] = useState<boolean>(false);
+  const [stockStatus, setStockStatus] = useState<{[key: string]: string}>({});
+  const [retryCount, setRetryCount] = useState<number>(0);
+  
+  // Notify dialog states
+  const [isNotifyDialogOpen, setIsNotifyDialogOpen] = useState<boolean>(false);
+  const [notifyName, setNotifyName] = useState<string>('');
+  const [notifyEmail, setNotifyEmail] = useState<string>('');
+  const [notifyNumber, setNotifyNumber] = useState<string>('');
 
-                {/* Action Buttons */}
-                <div className="space-y-3">
-                  <div className="flex justify-center items-center gap-2">
-                    <button
-                      onClick={handleShopNow}
-                      className="w-full items-center bg-white hover:border-black border border-gray-400 text-black font-medium py-2 sm:py-2 px-6 rounded-lg transition-colors text-sm sm:text-base flex justify-center gap-2"
-                    >
-                      <ShopNowLogo />
-                      Shop Now
-                    </button>
+  // CONFIGURE YOUR CONTACT DETAILS HERE
+  const WHATSAPP_NUMBER = '8801234567890';
 
-                    <button
-                      onClick={handleAddToCart}
-                      className="w-full bg-white hover:border-black border-gray-400 text-black border font-medium py-2 sm:py-2 px-6 rounded-lg transition-colors text-sm sm:text-base"
-                    >
-                      Add to Cart
-                    </button>
-                  </div>
+  // Debounce rapid selections
+  const debouncedDynamicInputs = useDebounce(selectedDynamicInputs, 300);
+  const debouncedSelectedStorage = useDebounce(selectedStorage, 300);
+  const debouncedSelectedColor = useDebounce(selectedColor, 300);
 
-                  <div className="flex w-full gap-3">
-                    <button
-                      onClick={handleWhatsAppContact}
-                      className="w-full flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600 text-white font-medium py-2 sm:py-2 px-6 rounded-lg transition-colors text-sm sm:text-base"
-                    >
-                      <WhatsappLogo />
-                      Contact via WhatsApp
-                    </button>
-                  </div>
-                </div>
-              </div>
+  // Get base price as number
+  const basePriceNumber = useMemo(() => {
+      if (!product) return 0;
+  const basePrice = parsePrice(product.basePrice);
+  console.log('Base Price:', basePrice);
+  return basePrice;;
+  }, [product]);
 
-              {/* Features */}
-              <div className="border-t pt-6">
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  <div className="flex items-center space-x-2">
-                    <Truck className="w-4 h-4 sm:w-5 sm:h-5 text-green-600 flex-shrink-0" />
-                    <span className="text-xs sm:text-sm text-gray-600">
-                      Free Delivery
-                    </span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Shield className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600 flex-shrink-0" />
-                    <span className="text-xs sm:text-sm text-gray-600">
-                      1 Year Apple official Warranty
-                    </span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <CreditCard className="w-4 h-4 sm:w-5 sm:h-5 text-purple-600 flex-shrink-0" />
-                    <span className="text-xs sm:text-sm text-gray-600">
-                      Easy Returns
-                    </span>
-                  </div>
-                </div>
-              </div>
+  // Get price for selected storage and color - UPDATED VERSION
+  const getAdditionalPrice = useMemo(() => {
+    if (!product) return 0;
+    
+    let additionalPrice = 0;
+    
+    // Storage basic price
+    if (debouncedSelectedStorage && product.storageConfigs) {
+      const storageConfig = product.storageConfigs.find(config => 
+        config.shortDetails === debouncedSelectedStorage
+      );
+      
+      if (storageConfig?.basicPrice) {
+        additionalPrice += parsePrice(storageConfig.basicPrice);
+      }
+    }
+    
+    // Storage + Color combination price
+    if (debouncedSelectedStorage && selectedColor && product.storageConfigs && product.imageConfigs) {
+      const storageConfig = product.storageConfigs.find(config => 
+        config.shortDetails === debouncedSelectedStorage
+      );
+      
+      const colorConfig = product.imageConfigs.find(config => 
+        config.colorName === selectedColor
+      );
+      
+      if (storageConfig?.prices && colorConfig) {
+        const colorId = colorConfig.id.$numberDouble;
+        
+        // Look through all price objects to find one with our color ID
+        storageConfig.prices.forEach(priceObj => {
+          if (priceObj && typeof priceObj === 'object') {
+            Object.entries(priceObj).forEach(([key, value]) => {
+              // Compare as strings since both are strings
+              if (key === colorId && value !== undefined) {
+                additionalPrice += parsePrice(value);
+              }
+            });
+          }
+        });
+      }
+    }
+    
+    // Dynamic inputs prices
+    if (product.dynamicInputs) {
+      Object.values(debouncedDynamicInputs).forEach(itemLabel => {
+        for (const group of product.dynamicInputs) {
+          const item = group.items?.find(item => item.label === itemLabel);
+          if (item?.price) {
+            additionalPrice += parsePrice(item.price);
+            break;
+          }
+        }
+      });
+    }
+    
+    return additionalPrice;
+  }, [product, debouncedSelectedStorage, selectedColor, debouncedDynamicInputs]);
+
+  // Calculate total price with memoization (including quantity)
+  const totalPrice = useMemo(() => {
+    if (!product) return 0;
+    
+    const basePrice = basePriceNumber;
+    const additionalPrice = getAdditionalPrice;
+    
+    return (basePrice + additionalPrice) * quantity;
+  }, [product, basePriceNumber, getAdditionalPrice, quantity]);
+
+  // Get stock status
+  const getStockStatus = useMemo(() => {
+    if (!product) return {};
+    
+    const status: {[key: string]: string} = {};
+    
+    // Check storage stock
+    if (product.storageConfigs) {
+      const selectedStorageItem = product.storageConfigs.find(config => 
+        config.shortDetails === selectedStorage
+      );
+      if (selectedStorageItem && !selectedStorageItem.inStock) {
+        status.storage = 'Out of Stock';
+      }
+    }
+    
+    // Check color stock
+    if (product.imageConfigs) {
+      const selectedColorItem = product.imageConfigs.find(config => 
+        config.colorName === selectedColor
+      );
+      if (selectedColorItem && !selectedColorItem.inStock) {
+        status.color = 'Out of Stock';
+      }
+    }
+    
+    // Check dynamic inputs stock
+    if (product.dynamicInputs) {
+      Object.entries(selectedDynamicInputs).forEach(([groupType, itemLabel]) => {
+        const group = product.dynamicInputs.find(input => input.type === groupType);
+        if (group) {
+          const item = group.items.find(item => item.label === itemLabel);
+          if (item && !item.inStock) {
+            status[groupType] = 'Out of Stock';
+          }
+        }
+      });
+    }
+    
+    return status;
+  }, [product, selectedStorage, selectedColor, selectedDynamicInputs]);
+
+  // Check if any selected item is out of stock
+  const isAnyItemOutOfStock = useMemo(() => {
+    return Object.values(getStockStatus).some(status => status === 'Out of Stock');
+  }, [getStockStatus]);
+
+  // Check if storage is in stock
+  const isStorageInStock = useMemo(() => {
+    const selectedStorageItem = product?.storageConfigs?.find(config => 
+      config.shortDetails === selectedStorage
+    );
+    return selectedStorageItem?.inStock ?? true;
+  }, [product, selectedStorage]);
+
+  // Handle quantity changes
+  const handleQuantityChange = (newQuantity: number) => {
+    if (newQuantity < 1) return;
+    // Check if there's a max pre-order quantity limit
+    if (product?.preOrderConfig?.isPreOrder && product.preOrderConfig.maxPreOrderQuantity?.$numberInt !== "0") {
+      const maxQty = parseInt(product.preOrderConfig.maxPreOrderQuantity.$numberInt) || 99;
+      if (newQuantity > maxQty) return;
+    }
+    setQuantity(newQuantity);
+  };
+
+  useEffect(() => {
+    if (!productName) return;
+
+    const fetchProduct = async () => {
+      try {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URI}/iphone/getBySlug/${productName}`);
+        console.log('Fetch response:', response);
+        if (!response.ok) {
+          throw new Error('Failed to fetch product');
+        }
+        const data = await response.json();
+        console.log('Fetched product data:', data);
+        
+        if (!isProduct(data)) {
+          throw new Error('Invalid product data format');
+        }
+        
+        setProduct(data);
+        setError(null);
+        
+        // Set default selections
+        if (data.storageConfigs?.[0]) {
+          setSelectedStorage(data.storageConfigs[0].shortDetails);
+          setSelectedStorageDetails(data.storageConfigs[0].shortDetails);
+        }
+        if (data.imageConfigs?.[0]) setSelectedColor(data.imageConfigs[0].colorName);
+        
+        // Set default dynamic inputs
+        const defaultSelections: {[key: string]: string} = {};
+        
+        data.dynamicInputs?.forEach((group: DynamicInput) => {
+          if (group.items?.[0]) {
+            defaultSelections[group.type] = group.items[0].label;
+          }
+        });
+        
+        setSelectedDynamicInputs(defaultSelections);
+      } catch (err) {
+        if (err instanceof Error) {
+          setError(err.message);
+        } else {
+          setError('An unknown error occurred');
+        }
+      }
+    };
+
+    fetchProduct();
+  }, [productName, retryCount]);
+
+  const handleStorageSelect = (config: StorageConfig) => {
+    setSelectedStorage(config.shortDetails);
+    setSelectedStorageDetails(config.shortDetails);
+  };
+
+  const notify = () => {
+    setIsNotifyDialogOpen(true);
+  };
+
+  const handleNotifySubmit = async () => {
+    // Prepare the notification data
+    const notifyData = {
+      name: notifyName,
+      email: notifyEmail,
+      phone: notifyNumber,
+      product: product?.name,
+      productId: product?._id.$oid,
+      selectedOptions: {
+        storage: selectedStorage,
+        color: selectedColor,
+        dynamicInputs: selectedDynamicInputs,
+        quantity: quantity
+      },
+      totalPrice: totalPrice,
+      timestamp: new Date().toISOString()
+    };
+
+    try {
+      const response = await fetch('/api/notifypost', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(notifyData),
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to save notification');
+      }
+
+const notify = () => toast('Here is your toast.');
+      
+    } catch (error) {
+      console.error('❌ Error saving notification:', error);
+    }
+
+    // Reset form and close dialog
+    setNotifyName('');
+    setNotifyEmail('');
+    setNotifyNumber('');
+    setIsNotifyDialogOpen(false);
+    
+    alert('Thank you! We will notify you when this product is back in stock!');
+  };
+
+  const handleDynamicInputSelect = (groupType: string, itemLabel: string, inStock: boolean) => {
+    
+    // Update selected item
+    setSelectedDynamicInputs(prev => ({
+      ...prev,
+      [groupType]: itemLabel
+      
+    }));
+  };
+
+  const handleAddToBag = async () => {
+    if (isAnyItemOutOfStock) {
+      alert('Cannot add out of stock items to bag');
+      return;
+    }
+    
+    setIsAddingToBag(true);
+    
+    // Prepare order data
+    const orderData = {
+      productId: product?._id?.$oid,
+      productName: product?.name,
+      storage: selectedStorage,
+      color: selectedColor,
+      dynamicInputs: selectedDynamicInputs,
+      totapricelPrice: totalPrice,
+      quantity: quantity
+    };
+
+    
+
+    // Ensure we use a valid image URL (prefer selected color image, fallback to first image or empty string)
+    const selectedImage = product?.imageConfigs?.find(cfg => cfg.colorName === selectedColor)?.image
+      || product?.imageConfigs?.[0]?.image
+      || '';
+
+      // const id = parseInt(product?._id)
+      
+      const date = new Date();
+
+  // Format date and time: YYYYMMDDTHHMMSS
+  const dateTimeStr = date.toISOString().replace(/[-:T.Z]/g, "").slice(0, 14);
+
+  // Generate random 6-character string
+  const randomPart = Math.random().toString(36).substring(2, 8).toUpperCase();
+
+  // Combine date-time and random string
+  const randomId = `${dateTimeStr}-${randomPart}`;
+  const id = parseInt(randomId)
+    addOrderbag({
+      productId: id,
+      image : selectedImage,
+      productName: product?.name || '',
+      storage: selectedStorage,
+      color: selectedColor,
+      dynamicInputs: selectedDynamicInputs,
+      price: totalPrice || 0,
+      quantity: quantity
+    });
+
+    console.log(selectedStorage)
+
+    try {
+      
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+    } catch (error) {
+      console.error('Error adding to bag:', error);
+      alert('Failed to add to bag. Please try again.');
+    } finally {
+      setIsAddingToBag(false);
+    }
+  };
+
+  
+
+  const handleOrderNow = async () => {
+    if (isAnyItemOutOfStock) {
+      alert('Cannot order out of stock items');
+      return;
+    }
+    
+    setIsOrdering(true);
+  // Prepare order data
+  const orderData = {
+    productId: product?._id.$oid,
+    productName: product?.name,
+    storage: selectedStorage,
+    color: selectedColor,
+    dynamicInputs: selectedDynamicInputs,
+    totalPrice: totalPrice,
+    quantity: quantity
+  };
+
+  // Ensure we use a valid image URL (prefer selected color image, fallback to first image or empty string)
+  const selectedImage = product?.imageConfigs?.find(cfg => cfg.colorName === selectedColor)?.image
+    || product?.imageConfigs?.[0]?.image
+    || '';
+
+  clearOrder();
+  addOrder({
+    productName: product?.name || '',
+    price: totalPrice,
+    color: selectedColor,
+    image: selectedImage,
+    quantity: quantity,
+    storage: selectedStorage,
+    productId: product?._id.$oid || '',
+    dynamicInputs: selectedDynamicInputs
+  });
+  router.push('/checkout');
+        router.push("/checkout");
+
+
+    try {
+      console.log('Creating order:', orderData);
+      
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      alert('Proceeding to checkout...');
+    } catch (error) {
+      console.error('Error creating order:', error);
+      alert('Failed to create order. Please try again.');
+    } finally {
+      setIsOrdering(false);
+    }
+  };
+
+  const handleWhatsAppOrder = async () => {
+    if (isAnyItemOutOfStock) {
+      alert('Cannot order out of stock items');
+      return;
+    }
+    
+    setIsWhatsAppOrdering(true);
+    
+    try {
+      // Get selected color details
+      const selectedColorConfig = product?.imageConfigs.find(config => config.colorName === selectedColor);
+      
+      // Prepare comprehensive order details
+      const orderDetails = `
+🛒 *ORDER REQUEST - ${product?.name}*
+
+📦 *Product Details:*
+• Product: ${product?.name}
+• Storage: ${selectedStorage}
+• Color: ${selectedColor} ${selectedColorConfig?.colorHex ? `(${selectedColorConfig.colorHex})` : ''}
+• Quantity: ${quantity}
+
+⚙️ *Selected Options:*
+${Object.entries(selectedDynamicInputs).map(([key, value]) => `• ${key.charAt(0).toUpperCase() + key.slice(1)}: ${value}`).join('\n')}
+
+💰 *Pricing Breakdown:*
+• Base Price: ৳${basePriceNumber.toFixed(2)}
+• Additional Charges: ৳${getAdditionalPrice.toFixed(2)}
+• Unit Price: ৳{(totalPrice / quantity).toFixed(2)}
+• Quantity: ${quantity}
+• *Total Amount: ৳${totalPrice.toFixed(2)}*
+
+📋 *Please provide your details:*
+• Full Name:
+• Phone Number:
+• Delivery Address:
+• Preferred Delivery Date:
+
+Thank you! 🎉
+      `.trim();
+
+      // Encode the message for WhatsApp URL
+      const encodedMessage = encodeURIComponent(orderDetails);
+      
+      // Create WhatsApp URL
+      const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodedMessage}`;
+      
+      // Open WhatsApp in new tab
+      window.open(whatsappUrl, '_blank');
+      
+      // Optional: Track WhatsApp orders
+      console.log('WhatsApp order initiated:', {
+        product: product?.name,
+        storage: selectedStorage,
+        color: selectedColor,
+        quantity: quantity,
+        totalPrice: totalPrice
+      });
+      
+    } catch (error) {
+      console.error('Error preparing WhatsApp order:', error);
+      alert('Failed to open WhatsApp. Please try again.');
+    } finally {
+      setIsWhatsAppOrdering(false);
+    }
+  };
+
+  // Floating chat handlers
+  const handleFloatingWhatsAppClick = () => {
+    const message = encodeURIComponent('Hi! I need help with a product.');
+    window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${message}`, '_blank');
+  };
+
+  // Loading state
+  if (!product && !error) return (
+    <div className="container mx-auto px-4 py-8">
+      <div className="animate-pulse">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* Image skeleton */}
+          <div className="space-y-4">
+            <div className="bg-gray-200 h-96 rounded-lg"></div>
+            <div className="flex gap-3 justify-center">
+              <div className="w-5 h-5 bg-gray-200 rounded-full"></div>
+              <div className="w-5 h-5 bg-gray-200 rounded-full"></div>
+              <div className="w-5 h-5 bg-gray-200 rounded-full"></div>
             </div>
           </div>
-
-          {/* Technical Specifications */}
-          {product.details?.length > 0 && (
-            <div className="mt-8 sm:mt-12 bg-white rounded-lg shadow-lg overflow-hidden">
-              <div className="px-4 sm:px-6 py-4 bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200">
-                <h2 className="text-xl sm:text-2xl font-bold text-gray-900">
-                  Technical Specifications
-                </h2>
-                <p className="text-xs sm:text-sm text-gray-600 mt-1">
-                  Detailed product information and features
-                </p>
-              </div>
-
-              <div className="overflow-x-auto">
-                <table className="w-full border-collapse">
-                  <thead className="hidden sm:table-header-group">
-                    <tr className="bg-gray-50 border-b-2 border-gray-200">
-                      <th className="text-left py-4 px-4 sm:px-6 font-semibold text-gray-800 uppercase tracking-wider w-1/3 text-xs sm:text-sm">
-                        Specification
-                      </th>
-                      <th className="text-left py-4 px-4 sm:px-6 font-semibold text-gray-800 uppercase tracking-wider w-2/3 text-xs sm:text-sm">
-                        Details
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-200">
-                    {product.details.map((detail, index) => (
-                      <tr
-                        key={detail.id || index}
-                        className="hover:bg-gray-50 transition-colors duration-150 block sm:table-row border-b sm:border-b-0"
-                      >
-                        <td className="py-2 sm:py-4 px-4 sm:px-6 font-bold text-gray-700 bg-gray-25 sm:border-r border-gray-200 block sm:table-cell">
-                          <span className="break-words text-sm sm:text-base">
-                            {detail.label.replace(/\t/g, "")}
-                          </span>
-                        </td>
-                        <td className="py-2 sm:py-4 px-4 sm:px-6 text-gray-900 block sm:table-cell">
-                          <span className="break-words leading-relaxed text-sm sm:text-base">
-                            {detail.value}
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-
-              <div className="px-4 sm:px-6 py-3 bg-gray-50 border-t border-gray-200">
-                <p className="text-xs text-gray-500 text-center">
-                  * Specifications may vary by region and are subject to change
-                  without notice
-                </p>
-              </div>
+          
+          {/* Content skeleton */}
+          <div className="space-y-6">
+            <div>
+              <div className="bg-gray-200 h-8 rounded w-3/4 mb-2"></div>
+              <div className="bg-gray-200 h-6 rounded w-1/4"></div>
             </div>
-          )}
+            
+            <div className="bg-gray-200 h-12 rounded"></div>
+            
+            <div className="grid grid-cols-2 gap-2">
+              <div className="bg-gray-200 h-32 rounded"></div>
+              <div className="bg-gray-200 h-32 rounded"></div>
+            </div>
+            
+            <div className="bg-gray-200 h-48 rounded"></div>
+          </div>
         </div>
       </div>
-    </ImageKitProvider>
+    </div>
+  );
+
+  // Error state
+  if (error) return (
+    <div className="container mx-auto px-4 py-8 text-center">
+      <Alert variant="destructive" className="mb-4 max-w-md mx-auto">
+        <AlertDescription>Error: {error}</AlertDescription>
+      </Alert>
+      <Button 
+        onClick={() => { 
+          setError(null); 
+          setRetryCount(prev => prev + 1); 
+        }}
+        className="bg-black hover:bg-gray-800 text-white"
+      >
+        Retry Loading
+      </Button>
+    </div>
+  );
+  
+  if (!product) return (
+    <div className="container mx-auto px-4 py-8 text-center">
+      <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-current border-r-transparent"></div>
+      <p className="mt-4 text-muted-foreground">Loading...</p>
+    </div>
+  );
+
+  return (
+    <div className="container mx-auto px-4 py-8 max-w-7xl">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Product Image Section */}
+        <div className="space-y-4">
+          <Card className="overflow-hidden border-0 shadow-lg">
+            <CardContent className="p-0">
+              <Image
+                src={product.imageConfigs.find(config => config.colorName === selectedColor)?.image || product.imageConfigs[0]?.image || '/placeholder-image.jpg'}
+                alt={product.name}
+                width={600}
+                height={600}
+                className="w-full h-auto object-cover"
+                priority
+              />
+            </CardContent>
+          </Card>
+          
+          {/* Color Selection */}
+          <div className="flex gap-3 justify-center items-center">
+            {product.imageConfigs?.map(config => (
+              <button
+                key={config._id.$oid}
+                className={`relative w-5 h-5 rounded-full border-2 ${
+                  selectedColor === config.colorName 
+                    ? 'border-black ring-2 ring-offset-1 ring-black' 
+                    : 'border-gray-300 hover:border-gray-400'
+                } ${!config.inStock ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}`}
+                style={{ backgroundColor: config.colorHex }}
+                onClick={() => config.inStock && setSelectedColor(config.colorName)}
+                title={config.colorName + (config.inStock ? '' : ' (Out of Stock)')}
+                disabled={!config.inStock}
+                aria-label={`Select ${config.colorName} color${!config.inStock ? ' - Out of Stock' : ''}`}
+                aria-disabled={!config.inStock}
+              >
+                {selectedColor === config.colorName && (
+                  <CheckCircle2 className="absolute -top-1 -right-1 w-2 h-2 text-black bg-white rounded-full" />
+                )}
+              </button>
+            ))}
+          </div>
+          <p className="text-sm text-muted-foreground mt-3 font-medium flex justify-center items-center">
+            {selectedColor}
+            {getStockStatus.color && (
+              <span className="text-red-500 text-xs ml-2">({getStockStatus.color})</span>
+            )}
+          </p>
+        </div>
+
+        {/* Product Details Section */}
+        <div className="space-y-6">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight mb-2">{product.name}</h1>
+            {selectedStorageDetails && (
+              <Badge variant="secondary" className="text-sm">
+                {selectedStorageDetails}
+                {getStockStatus.storage && (
+                  <span className="text-red-500 text-xs ml-2">({getStockStatus.storage})</span>
+                )}
+              </Badge>
+            )}
+          </div>
+
+          {/* Price Breakdown */}
+          <div className="space-y-4 p-4 bg-muted/20 rounded-lg">
+            <PriceBreakdown 
+              product={product}
+              basePrice={basePriceNumber}
+              selectedStorage={selectedStorage}
+              selectedColor={selectedColor}
+              selectedDynamicInputs={selectedDynamicInputs}
+              quantity={quantity}
+            />
+          </div>
+
+          {/* Quantity Selector */}
+          <div className="flex items-center space-x-4">
+            <Label htmlFor="quantity" className="text-sm font-medium">Quantity:</Label>
+            <div className="flex items-center border rounded-md">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => handleQuantityChange(quantity - 1)}
+                disabled={quantity <= 1}
+                className="h-8 w-8 p-0"
+              >
+                <Minus className="h-4 w-4" />
+              </Button>
+              <Input
+                id="quantity"
+                type="number"
+                min="1"
+                max={product.preOrderConfig?.isPreOrder && product.preOrderConfig.maxPreOrderQuantity?.$numberInt !== "0" 
+                  ? parseInt(product.preOrderConfig.maxPreOrderQuantity.$numberInt) 
+                  : 99}
+                value={quantity}
+                onChange={(e) => handleQuantityChange(Math.max(1, parseInt(e.target.value) || 1))}
+                className="w-16 h-8 text-center border-0 focus-visible:ring-0"
+              />
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => handleQuantityChange(quantity + 1)}
+                disabled={product.preOrderConfig?.isPreOrder && 
+                  product.preOrderConfig.maxPreOrderQuantity?.$numberInt !== "0" && 
+                  quantity >= parseInt(product.preOrderConfig.maxPreOrderQuantity.$numberInt)}
+                className="h-8 w-8 p-0"
+              >
+                <Plus className="h-4 w-4" />
+              </Button>
+            </div>
+            {product.preOrderConfig?.isPreOrder && product.preOrderConfig.maxPreOrderQuantity?.$numberInt !== "0" && (
+              <span className="text-xs text-muted-foreground">
+                Max: {product.preOrderConfig.maxPreOrderQuantity.$numberInt}
+              </span>
+            )}
+          </div>
+
+          {/* Action Buttons */}
+          {isAnyItemOutOfStock ? (
+            <Dialog open={isNotifyDialogOpen} onOpenChange={setIsNotifyDialogOpen}>
+              <DialogTrigger asChild>
+                <Button 
+                  size="lg" 
+                  className="w-full bg-black hover:bg-gray-900 text-white"
+                  onClick={notify}
+                >
+                  <Bell className="mr-2 h-5 w-5" />
+                  Notify Me
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[425px]">
+                <DialogHeader>
+                  <DialogTitle>Get Notified When Back in Stock</DialogTitle>
+                </DialogHeader>
+                <div className="grid gap-4 py-4">
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="name" className="text-right">
+                      Name
+                    </Label>
+                    <Input
+                      id="name"
+                      value={notifyName}
+                      onChange={(e) => setNotifyName(e.target.value)}
+                      className="col-span-3"
+                      placeholder="Your full name"
+                    />
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="email" className="text-right">
+                      Email
+                    </Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      value={notifyEmail}
+                      onChange={(e) => setNotifyEmail(e.target.value)}
+                      className="col-span-3"
+                      placeholder="your@email.com"
+                    />
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="number" className="text-right">
+                      Phone
+                    </Label>
+                    <Input
+                      id="number"
+                      type="tel"
+                      value={notifyNumber}
+                      onChange={(e) => setNotifyNumber(e.target.value)}
+                      className="col-span-3"
+                      placeholder="Your phone number"
+                    />
+                  </div>
+                </div>
+                <div className="flex justify-end gap-3">
+                  <Button 
+                    variant="outline" 
+                    onClick={() => setIsNotifyDialogOpen(false)}
+                  >
+                    Cancel
+                  </Button>
+                  <Button 
+                    onClick={handleNotifySubmit}
+                    disabled={!notifyName || !notifyEmail || !notifyNumber}
+                    className="bg-black hover:bg-gray-800 text-white"
+                  >
+                    Submit
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+          ) : product.preOrderConfig?.isPreOrder ? (
+            <div className="grid grid-cols-1 gap-3">
+              <Button 
+                size="lg" 
+                className="w-full bg-black hover:bg-gray-950 text-white"
+                onClick={handleOrderNow}
+                disabled={isOrdering}
+                aria-label={isOrdering ? "Processing pre-order" : "Pre-order now"}
+              >
+                <Calendar className="mr-2 h-5 w-5" />
+                {isOrdering ? 'Processing...' : 'Pre-order Now'}
+              </Button>
+              <Button 
+                size="lg" 
+                variant="outline" 
+                className="w-full"
+                onClick={handleWhatsAppOrder}
+                disabled={isWhatsAppOrdering}
+              >
+                <WhatsAppIcon />
+                {isWhatsAppOrdering ? 'Opening...' : 'Order via WhatsApp'}
+              </Button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 gap-3">
+              <div className="grid grid-cols-2 gap-3">
+                <button onClick={toggleSidebar}>
+                  <Button 
+                  size="lg" 
+                  variant="outline" 
+                  className="w-full"
+                  onClick={handleAddToBag}
+                  disabled={isAddingToBag}
+                  aria-label={isAddingToBag ? "Adding product to bag" : "Add product to bag"}
+                >
+                  <ShoppingBag className="mr-2 h-5 w-5" />
+                  {isAddingToBag ? 'Adding...' : 'Add to Bag'}
+                </Button>
+                </button>
+                
+                <Button 
+                  size="lg" 
+                  className="w-full bg-black text-white border border-gray-300 hover:bg-gray-800"
+                  onClick={handleOrderNow}
+                  disabled={isOrdering}
+                  aria-label={isOrdering ? "Processing order" : "Order now"}
+                >
+                  <CreditCard className="mr-2 h-5 w-5" />
+                  {isOrdering ? 'Processing...' : 'Order Now'}
+                </Button>
+              </div>
+              <Button 
+                size="lg" 
+                variant="outline" 
+                className="w-full"
+                onClick={handleWhatsAppOrder}
+                disabled={isWhatsAppOrdering}
+              >
+                <WhatsAppIcon />
+                {isWhatsAppOrdering ? 'Opening...' : 'Order via WhatsApp'}
+              </Button>
+            </div>
+          )}
+
+          <div className='grid grid-cols-2 gap-2'>
+            {/* Storage Configuration */}
+            {product.storageConfigs && product.storageConfigs.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-[15px] mt-[-16px]">
+                    {product.accessoriesType}
+                    {getStockStatus.storage && (
+                      <span className="text-red-500 text-[10px] mt-2 ml-2">({getStockStatus.storage})</span>
+                    )}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-2 mt-[-14px] gap-2 flex-wrap max-sm:mt-[-24px]">
+                    {product.storageConfigs.map(config => (
+                      <Button
+                        key={config._id.$oid}
+                        variant={selectedStorage === config.shortDetails ? 'default' : 'outline'} 
+                        onClick={() => handleStorageSelect(config)}
+                      >
+                        {config.name} 
+                      </Button>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Dynamic Inputs */}
+            {product.dynamicInputs && product.dynamicInputs.map((group) => (
+              <Card key={group.type}>
+                <CardHeader>
+                  <CardTitle className="text-[15px] capitalize mt-[-16px]">
+                    {group.type}
+                    {getStockStatus[group.type] && (
+                      <span className="text-red-500 text-[10px] mt-2 ml-2">({getStockStatus[group.type]})</span>
+                    )}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-2 mt-[-14px] gap-2 max-sm:mt-[-24px]">
+                    {group.items.map((item, index) => (
+                      <Button
+                        key={index}
+                        variant={selectedDynamicInputs[group.type] === item.label ? 'default' : 'outline'}
+                        onClick={() => handleDynamicInputSelect(group.type, item.label, item.inStock)}
+                      >
+                        {item.label} 
+                      </Button>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          {/* Specifications */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Specifications</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {product.details.map((detail, index) => (
+                  <div key={detail._id?.$oid || index} className="flex justify-between py-2 border-b last:border-0">
+                    <span className="text-sm font-medium text-muted-foreground">{detail.label}</span>
+                    <span className="text-sm font-semibold text-right">{detail.value}</span>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
+      {/* Description */}
+      <Card className="mt-8">
+        <CardHeader>
+          <CardTitle>Product Description</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div dangerouslySetInnerHTML={{ __html: product.description }} className="prose prose-gray max-w-none" />
+        </CardContent>
+      </Card>
+
+      {/* Floating Chat Widget */}
+      <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-3">
+        <button
+          onClick={handleFloatingWhatsAppClick}
+          className="group relative flex items-center gap-3 bg-white rounded-full shadow-lg hover:shadow-xl transition-all duration-300 mb-10 max-sm:mb-30"
+          aria-label="Chat on WhatsApp"
+        >
+          <div className="flex items-center justify-center w-12 h-12 bg-green-500 rounded-full text-white">
+            <WhatsAppIcon />
+          </div>
+        </button>
+      </div>
+    </div>
   );
 }

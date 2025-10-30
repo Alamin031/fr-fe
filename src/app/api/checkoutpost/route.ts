@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import {connect} from '@/dbconfig/dbconfig'
-import Product from "@/models/checkoutmodels";
-
+import Product from '@/models/ProductModels'
 export const POST = async(request : NextRequest) => {
     try{
         connect()

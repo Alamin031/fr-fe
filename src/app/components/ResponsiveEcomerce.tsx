@@ -9,7 +9,10 @@ import {
 } from 'lucide-react';
 import Image from 'next/image';
 import logo from './../../../public/WhatsApp_Image_2025-08-23_at_19.59.58__1_-removebg-preview (1).png';
-
+import { useaddtobagStore } from '../../../store/store';
+console.log("useaddtobagStore", useaddtobagStore);
+import { useSidebarStore } from '../../../store/store';
+import AddTobag from '@/components/utils/Addtobag';
 const accessoriesCategories = [
   { name: 'Mobile Accessories', href: '/category/mobile-accessories' },
   { name: 'Chargers & Cables', href: '/category/chargers-cables' },
@@ -46,6 +49,8 @@ const WhatsAppIcon = ({ className = "w-10 h-10", strokeWidth = 2 }) => (
 );
 
 const AppleNavbar = () => {
+  const { order } = useaddtobagStore();
+  const { toggleSidebar } = useSidebarStore();
   const router = useRouter();
   const pathname = usePathname();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -170,23 +175,24 @@ const AppleNavbar = () => {
             >
               {isMobileSearchOpen ? <X size={20} /> : <Search size={20} />}
             </button>
-            <Link 
+            {/* <Link 
               href="/wishlist" 
               className="hidden sm:inline-flex items-center justify-center h-10 w-10 rounded-md text-sm font-medium ring-offset-white transition-colors hover:bg-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-950 focus-visible:ring-offset-2"
               aria-label="Wishlist"
             >
               <Heart size={20} />
-            </Link>
-            <Link 
-              href="/cart" 
+            </Link> */}
+            <button
+            onClick={toggleSidebar}
+
               className="inline-flex items-center justify-center h-10 w-10 rounded-md text-sm font-medium ring-offset-white transition-colors hover:bg-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-950 focus-visible:ring-offset-2 relative"
               aria-label="Shopping cart"
             >
               <ShoppingBag size={20} />
-              <span className="absolute -top-1 -right-1 inline-flex items-center justify-center rounded-full bg-red-500 px-1.5 py-0.5 text-xs font-semibold leading-none text-white">
-                3
+              <span className="absolute -top-1 -right-1 inline-flex items-center justify-center rounded-full bg-red-500 px-1.5 py-0.5 text-xs mt-[2px]  font-semibold leading-none text-white">
+                {order.length}
               </span>
-            </Link>
+            </button>
             <Link 
               href="/deshboard" 
               className="hidden sm:inline-flex items-center justify-center h-10 w-10 rounded-md text-sm font-medium ring-offset-white transition-colors hover:bg-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-950 focus-visible:ring-offset-2"
@@ -311,6 +317,9 @@ const AppleNavbar = () => {
           })}
         </div>
       </nav>
+      <>
+      <AddTobag></AddTobag>
+      </>
     </nav>
   );
 };

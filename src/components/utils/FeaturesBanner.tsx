@@ -37,7 +37,7 @@ export default function FeaturesBanner() {
   return (
     <>
       {/* Features Grid - Hidden on mobile */}
-      <div className="w-full max-w-7xl mx-auto px-4 py-6 max-sm:hidden">
+      <div className="w-full  mx-auto px-4 py-6 max-sm:hidden">
         <Card className="shadow-sm">
           <CardContent className="">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
@@ -58,8 +58,8 @@ export default function FeaturesBanner() {
 
       {/* Marquee Section */}
       {!loading && items.length > 0 && (
-        <div className="mt-6 overflow-hidden relative bg-muted/50 py-3 mx-16 ">
-          <div className="flex whitespace-nowrap animate-scroll max-w-7xl" >
+        <div className="mt-6 overflow-hidden relative bg-muted/50 py-3  ">
+          <div className="flex whitespace-nowrap animate-scroll " >
             {/* First set of items */}
             {items.map((item) => (
               <Badge 
@@ -75,7 +75,7 @@ export default function FeaturesBanner() {
               <Badge 
                 key={`second-${item.id}`} 
                 variant="secondary"
-                className="mx-[200px] px-4 py-1.5 text-sm font-normal "
+                className=" px-4 py-1.5 text-sm font-normal "
               >
                 {item.text}
               </Badge>
