@@ -84,7 +84,7 @@ const Addtobag = () => {
 
   return (
     <Sheet open={isOpen} onOpenChange={toggleSidebar}>
-      <SheetContent className="w-full sm:max-w-md flex flex-col p-0">
+      <SheetContent className="w-full sm:max-w-md flex flex-col p-0 bg-white">
         {/* Header */}
         <SheetHeader className="p-6 border-b">
           <div className="flex items-center justify-between">
@@ -96,7 +96,7 @@ const Addtobag = () => {
         </SheetHeader>
 
         {/* Cart Items */}
-        <div className="flex-1 overflow-y-auto bg-white">
+        <div className="flex-1 overflow-y-auto ">
           {order.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-64 text-muted-foreground p-6">
               <Package className="h-16 w-16 mb-4 opacity-50" />
