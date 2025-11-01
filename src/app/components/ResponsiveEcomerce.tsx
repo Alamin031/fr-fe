@@ -1,18 +1,33 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { 
-  Menu, X, Search , Heart, User, ChevronDown, Home, Grid, Percent,
-  ShoppingBag,
+  Menu, X, Search, Heart, User, ChevronDown, Home, Grid, Percent,
+  ShoppingBag, Clock, TrendingUp, Smartphone, Laptop, Tablet, Headphones,
+  DollarSign
 } from 'lucide-react';
 import Image from 'next/image';
 import logo from './../../../public/WhatsApp_Image_2025-08-23_at_19.59.58__1_-removebg-preview (1).png';
 import { useaddtobagStore } from '../../../store/store';
-console.log("useaddtobagStore", useaddtobagStore);
 import { useSidebarStore } from '../../../store/store';
 import AddTobag from '@/components/utils/Addtobag';
+import axios from 'axios';
+
+// Shadcn UI Components
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Separator } from '@/components/ui/separator';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+
 const accessoriesCategories = [
   { name: 'Mobile Accessories', href: '/category/mobile-accessories' },
   { name: 'Chargers & Cables', href: '/category/chargers-cables' },
@@ -48,31 +63,318 @@ const WhatsAppIcon = ({ className = "w-10 h-10", strokeWidth = 2 }) => (
   </svg>
 );
 
+// Interfaces based on your MongoDB schema
+interface ImageConfig {
+  colorHex?: string;
+  colorName?: string;
+  id: number;
+  image?: string;
+  inStock?: boolean;
+}
+
+interface StorageConfig {
+  basicPrice?: string;
+  colorStocks?: any[];
+  id: number;
+  inStock?: boolean;
+  name?: string;
+  prices?: any[];
+  shortDetails?: string;
+}
+
+interface Product {
+  _id: string;
+  name: string;
+  basePrice?: number;
+  description?: string;
+  accessories?: string;
+  accessoriesType?: string;
+  storageConfigs: StorageConfig[];
+  imageConfigs: ImageConfig[];
+  dynamicInputs: any[];
+  details: any[];
+  preOrderConfig?: any;
+  productlinkname?: string;
+  type: 'iphone' | 'macbook' | 'ipad' | 'accessory';
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+interface SearchClickData {
+  query: string;
+  timestamp: string;
+  resultsCount?: number;
+  userAgent: string;
+  screenResolution: string;
+  sessionId?: string;
+}
+
+interface SearchSuggestion {
+  id: string;
+  name: string;
+  category?: string;
+  image?: string;
+  price?: number;
+  type: 'product' | 'category' | 'recent' | 'trending';
+  productType?: 'iphone' | 'macbook' | 'ipad' | 'accessory';
+}
+
 const AppleNavbar = () => {
   const { order } = useaddtobagStore();
   const { toggleSidebar } = useSidebarStore();
   const router = useRouter();
   const pathname = usePathname();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [isAccessoriesOpen, setIsAccessoriesOpen] = useState(false);
+  const [searchResults, setSearchResults] = useState<Product[]>([]);
+  const [recentSearches, setRecentSearches] = useState<SearchSuggestion[]>([]);
+  const [trendingSearches, setTrendingSearches] = useState<SearchSuggestion[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [isSearchDialogOpen, setIsSearchDialogOpen] = useState(false);
+  const searchTimeoutRef = useRef<NodeJS.Timeout>();
 
-  const handleSearch = (query: string): void => {
-    if (query.trim()) {
-      router.push(`/search?q=${encodeURIComponent(query.trim())}`);
+  // Load recent searches from localStorage
+  useEffect(() => {
+    const saved = localStorage.getItem('recent-searches');
+    if (saved) {
+      setRecentSearches(JSON.parse(saved));
     }
-    setIsMobileSearchOpen(false);
+
+    // Mock trending searches
+    setTrendingSearches([
+      { id: '1', name: 'iPhone 15 Pro', type: 'trending', productType: 'iphone' },
+      { id: '2', name: 'MacBook Air M2', type: 'trending', productType: 'macbook' },
+      { id: '3', name: 'AirPods Pro', type: 'trending', productType: 'accessory' },
+      { id: '4', name: 'iPad Air', type: 'trending', productType: 'ipad' },
+    ]);
+  }, []);
+
+  // Save to recent searches
+  const saveToRecentSearches = (query: string) => {
+    const newSearch: SearchSuggestion = {
+      id: `recent-${Date.now()}`,
+      name: query,
+      type: 'recent'
+    };
+
+    const updated = [newSearch, ...recentSearches.filter(s => s.name !== query)].slice(0, 5);
+    setRecentSearches(updated);
+    localStorage.setItem('recent-searches', JSON.stringify(updated));
   };
 
-  const navigationLinks = [
+  // Track search click data
+  const trackSearchClick = async (data: SearchClickData) => {
+    try {
+      await fetch('/api/analytics/search-clicks', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      });
+    } catch (error) {
+      console.error('Failed to track search click:', error);
+    }
+  };
+
+  // Search products using your API
+  const searchProducts = async (query: string): Promise<Product[]> => {
+    try {
+      const response = await axios.get(`${process.env.NEXT_PUBLIC_BASE_URI}/search?query=${encodeURIComponent(query)}`);
+      return response.data;
+    } catch (error) {
+      console.error('Search API error:', error);
+      return [];
+    }
+  };
+
+  // Get product image - uses first available image from imageConfigs
+  const getProductImage = (product: Product): string | undefined => {
+    if (product.imageConfigs && product.imageConfigs.length > 0) {
+      return product.imageConfigs[0].image;
+    }
+    return undefined;
+  };
+
+  // Get product price - uses basePrice or first storage config price
+  const getProductPrice = (product: Product): number | undefined => {
+    if (product.basePrice) {
+      return product.basePrice;
+    }
+    if (product.storageConfigs && product.storageConfigs.length > 0) {
+      const firstConfig = product.storageConfigs[0];
+      if (firstConfig.basicPrice) {
+        return parseFloat(firstConfig.basicPrice);
+      }
+    }
+    return undefined;
+  };
+
+  // Check if product is in stock
+  const isProductInStock = (product: Product): boolean => {
+    // Check image configs for stock
+    if (product.imageConfigs && product.imageConfigs.length > 0) {
+      const inStockImage = product.imageConfigs.find(config => config.inStock === true);
+      if (inStockImage) return true;
+    }
+    
+    // Check storage configs for stock
+    if (product.storageConfigs && product.storageConfigs.length > 0) {
+      const inStockStorage = product.storageConfigs.find(config => config.inStock === true);
+      if (inStockStorage) return true;
+    }
+    
+    return false;
+  };
+
+  // Enhanced search handler with click tracking
+  const handleSearch = async (query: string, source: 'enter' | 'click' | 'suggestion' = 'enter'): Promise<void> => {
+    const trimmedQuery = query.trim();
+    
+    if (!trimmedQuery) {
+      setIsSearchDialogOpen(false);
+      return;
+    }
+
+    try {
+      setLoading(true);
+      
+      // Save to recent searches
+      saveToRecentSearches(trimmedQuery);
+
+      const results = await searchProducts(trimmedQuery);
+      
+      // Track search click data
+      const searchData: SearchClickData = {
+        query: trimmedQuery,
+        timestamp: new Date().toISOString(),
+        resultsCount: results.length,
+        userAgent: navigator.userAgent,
+        screenResolution: `${window.screen.width}x${window.screen.height}`,
+        sessionId: sessionStorage.getItem('sessionId') || generateSessionId(),
+      };
+
+      await trackSearchClick(searchData);
+
+      // Navigate to search results page with the query
+      router.push(`/search?q=${encodeURIComponent(trimmedQuery)}`);
+      setIsSearchDialogOpen(false);
+      setSearchQuery('');
+
+    } catch (error) {
+      console.error('Search error:', error);
+      // Fallback: still navigate to search page even if tracking fails
+      router.push(`/search?q=${encodeURIComponent(trimmedQuery)}`);
+      setIsSearchDialogOpen(false);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Generate session ID for tracking
+  const generateSessionId = (): string => {
+    const sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    sessionStorage.setItem('sessionId', sessionId);
+    return sessionId;
+  };
+
+  // Handle input change with debounced search suggestions
+  const handleInputChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setSearchQuery(value);
+
+    // Clear previous timeout
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+
+    if (value.trim().length > 1) {
+      searchTimeoutRef.current = setTimeout(async () => {
+        try {
+          setLoading(true);
+          const results = await searchProducts(value);
+          setSearchResults(results);
+        } catch (error) {
+          console.error('Search suggestion error:', error);
+          setSearchResults([]);
+        } finally {
+          setLoading(false);
+        }
+      }, 300); // 300ms debounce
+    } else {
+      setSearchResults([]);
+    }
+  };
+
+  // Handle search suggestion click
+  const handleSuggestionClick = (product: Product | SearchSuggestion) => {
+    if ('_id' in product) {
+      // It's a Product from API - navigate to product detail page
+      if (product.productlinkname) {
+        router.push(`/category/product/${product.productlinkname}`);
+        setIsSearchDialogOpen(false);
+      } else {
+        // Fallback to search if no product link name
+        setSearchQuery(product.name);
+        handleSearch(product.name, 'suggestion');
+      }
+    } else {
+      // It's a SearchSuggestion
+      setSearchQuery(product.name);
+      handleSearch(product.name, 'suggestion');
+    }
+  };
+
+  // Clear recent searches
+  const clearRecentSearches = () => {
+    setRecentSearches([]);
+    localStorage.removeItem('recent-searches');
+  };
+
+  // Get icon for product type
+  const getProductTypeIcon = (type: string) => {
+    switch (type) {
+      case 'iphone': return Smartphone;
+      case 'macbook': return Laptop;
+      case 'ipad': return Tablet;
+      case 'accessory': return Headphones;
+      default: return Search;
+    }
+  };
+
+  // Format price
+  const formatPrice = (price?: number) => {
+    if (!price) return 'Price not available';
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD'
+    }).format(price);
+  };
+
+  // Get product display name
+  const getProductDisplayName = (product: Product) => {
+    return product.name;
+  };
+
+  interface NavChild {
+    name: string;
+    href: string;
+  }
+
+  interface NavLink {
+    name: string;
+    href: string;
+    children?: NavChild[];
+  }
+
+  const navigationLinks: NavLink[] = [
     { name: 'iPhone', href: '/category/iphone' },
     { name: 'Mac', href: '/category/macbook' },
     { name: 'iPad', href: '/category/ipad' },
-    { 
-      name: 'Accessories', 
+    {
+      name: 'Accessories',
       href: '/category/accessories',
-      children: accessoriesCategories
+      children: accessoriesCategories.map((c) => ({ name: c.name, href: c.href })),
     }
   ];
 
@@ -96,13 +398,48 @@ const AppleNavbar = () => {
       <div className="px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Mobile menu button */}
-          <button
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="lg:hidden inline-flex items-center justify-center h-10 w-10 -ml-2 rounded-md text-sm font-medium ring-offset-white transition-colors hover:bg-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-950 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50"
-            aria-label="Toggle menu"
-          >
-            {isMobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
-          </button>
+          <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
+            <SheetTrigger asChild>
+              <Button variant="ghost" size="icon" className="lg:hidden">
+                <Menu size={20} />
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="left" className="w-[280px] sm:w-[340px]">
+              <SheetHeader>
+                <SheetTitle>Menu</SheetTitle>
+              </SheetHeader>
+              <ScrollArea className="h-full py-6">
+                <div className="space-y-4">
+                  {navigationLinks.map((item) => (
+                    <div key={item.name} className="space-y-2">
+                      <Link
+                        href={item.href}
+                        className="flex items-center justify-between w-full text-sm font-medium py-2 hover:text-primary transition-colors"
+                        onClick={() => !item.children && setIsMobileMenuOpen(false)}
+                      >
+                        {item.name}
+                        {item.children && <ChevronDown size={16} />}
+                      </Link>
+                      {item.children && (
+                        <div className="ml-4 space-y-1 border-l-2 border-muted pl-4">
+                          {item.children.map((child) => (
+                            <Link
+                              key={child.name}
+                              href={child.href}
+                              className="block text-sm text-muted-foreground py-1 hover:text-primary transition-colors"
+                              onClick={() => setIsMobileMenuOpen(false)}
+                            >
+                              {child.name}
+                            </Link>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </ScrollArea>
+            </SheetContent>
+          </Sheet>
 
           {/* Logo */}
           <div className="flex-shrink-0 lg:mr-8">
@@ -115,38 +452,29 @@ const AppleNavbar = () => {
           <div className="hidden lg:flex items-center space-x-1 mr-8">
             {navigationLinks.map((link) => (
               link.children ? (
-                <div key={link.name} className="relative group">
-                  <Link
-                    href={link.href}
-                    className="inline-flex items-center justify-center h-10 px-4 py-2 text-sm font-medium text-gray-700 rounded-md ring-offset-white transition-colors hover:bg-gray-100 hover:text-gray-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-950 focus-visible:ring-offset-2"
-                  >
-                    {link.name}
-                    <ChevronDown size={16} className="ml-1 transition-transform group-hover:rotate-180" />
-                  </Link>
-                  <div className="absolute left-0 hidden group-hover:block pt-2">
-                    <div className="bg-white rounded-md shadow-lg border p-2 w-64 animate-in fade-in-0 zoom-in-95">
-                      <div className="grid gap-1">
-                        {link.children.map((child) => (
-                          <Link
-                            key={child.name}
-                            href={child.href}
-                            className="block select-none rounded-sm px-3 py-2 text-sm text-gray-700 outline-none transition-colors hover:bg-gray-100 hover:text-gray-900 focus:bg-gray-100 focus:text-gray-900"
-                          >
-                            {child.name}
-                          </Link>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                <DropdownMenu key={link.name}>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="inline-flex items-center justify-center h-10 px-4 py-2 text-sm font-medium">
+                      {link.name}
+                      <ChevronDown size={16} className="ml-1" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start" className="w-64">
+                    {link.children.map((child) => (
+                      <DropdownMenuItem key={child.name} asChild>
+                        <Link href={child.href} className="cursor-pointer">
+                          {child.name}
+                        </Link>
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
               ) : (
-                <Link
-                  key={link.name}
-                  href={link.href}
-                  className="inline-flex font-medium  items-center justify-center h-10 px-4 py-2 text-sm  text-gray-700 rounded-md ring-offset-white transition-colors hover:bg-gray-100 hover:text-gray-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-950 focus-visible:ring-offset-2"
-                >
-                  {link.name}
-                </Link>
+                <Button key={link.name} variant="ghost" asChild>
+                  <Link href={link.href} className="font-medium">
+                    {link.name}
+                  </Link>
+                </Button>
               )
             ))}
           </div>
@@ -154,172 +482,283 @@ const AppleNavbar = () => {
           {/* Search bar */}
           <div className="hidden md:flex flex-1 max-w-md">
             <div className="relative w-full">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" size={18} />
-              <input
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" size={18} />
+              <Input
                 type="text"
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleSearch(searchQuery)}
+                onChange={handleInputChange}
+                onFocus={() => setIsSearchDialogOpen(true)}
                 placeholder="Search for iPhone, Mac, iPad..."
-                className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 pl-10 text-sm ring-offset-white file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-gray-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-950 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                className="pl-10 pr-4 cursor-pointer"
               />
             </div>
           </div>
 
           {/* Action buttons */}
           <div className="flex items-center space-x-1 sm:space-x-2">
-            <button 
-              onClick={() => setIsMobileSearchOpen(!isMobileSearchOpen)}
-              className="md:hidden inline-flex items-center justify-center h-10 w-10 rounded-md text-sm font-medium ring-offset-white transition-colors hover:bg-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-950 focus-visible:ring-offset-2"
-              aria-label="Toggle search"
+            <Button 
+              variant="ghost" 
+              size="icon"
+              onClick={() => setIsSearchDialogOpen(true)}
+              className="md:hidden"
             >
-              {isMobileSearchOpen ? <X size={20} /> : <Search size={20} />}
-            </button>
-            {/* <Link 
-              href="/wishlist" 
-              className="hidden sm:inline-flex items-center justify-center h-10 w-10 rounded-md text-sm font-medium ring-offset-white transition-colors hover:bg-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-950 focus-visible:ring-offset-2"
-              aria-label="Wishlist"
-            >
-              <Heart size={20} />
-            </Link> */}
-            <button
-            onClick={toggleSidebar}
-
-              className="inline-flex items-center justify-center h-10 w-10 rounded-md text-sm font-medium ring-offset-white transition-colors hover:bg-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-950 focus-visible:ring-offset-2 relative"
-              aria-label="Shopping cart"
+              <Search size={20} />
+            </Button>
+            
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={toggleSidebar}
+              className="relative"
             >
               <ShoppingBag size={20} />
-              <span className="absolute -top-1 -right-1 inline-flex items-center justify-center rounded-full bg-red-500 px-1.5 py-0.5 text-xs mt-[2px]  font-semibold leading-none text-white">
-                {order.length}
-              </span>
-            </button>
-            <Link 
-              href="/deshboard" 
-              className="hidden sm:inline-flex items-center justify-center h-10 w-10 rounded-md text-sm font-medium ring-offset-white transition-colors hover:bg-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-950 focus-visible:ring-offset-2"
-              aria-label="User account"
-            >
-              <User size={20} />
-            </Link>
+              {order.length > 0 && (
+                <Badge 
+                  variant="destructive" 
+                  className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs"
+                >
+                  {order.length}
+                </Badge>
+              )}
+            </Button>
+            
+            <Button variant="ghost" size="icon" asChild className="hidden sm:inline-flex">
+              <Link href="/deshboard">
+                <User size={20} />
+              </Link>
+            </Button>
           </div>
         </div>
       </div>
 
-      {/* Mobile side menu */}
-      {isMobileMenuOpen && (
-        <>
-          <div 
-            className="fixed inset-0 z-40 bg-black/50 lg:hidden animate-in fade-in-0"
-            onClick={() => setIsMobileMenuOpen(false)}
-          />
-          <div className="fixed inset-y-0 left-0 z-50 w-[280px] bg-white shadow-xl lg:hidden animate-in slide-in-from-left duration-300">
-            <div className="flex items-center justify-between p-4 border-b">
-              <h2 className="text-lg font-semibold">Menu</h2>
-              <button
-                onClick={() => setIsMobileMenuOpen(false)}
-                className="inline-flex items-center justify-center mt-[-8px] h-10 w-10 rounded-md text-sm font-medium ring-offset-white transition-colors hover:bg-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-950 focus-visible:ring-offset-2"
-                aria-label="Close menu"
-              >
-                <X size={20} />
-              </button>
+      {/* Search Dialog */}
+      <Dialog open={isSearchDialogOpen} onOpenChange={setIsSearchDialogOpen}>
+        <DialogContent className="sm:max-w-[600px] p-0 gap-0 bg-white">
+          <DialogHeader className="px-6 pt-6 pb-4 border-b">
+            <DialogTitle className="flex items-center gap-2">
+              <Search size={20} />
+              Search Products
+            </DialogTitle>
+          </DialogHeader>
+          
+          {/* Search Input */}
+          <div className="px-6 py-4">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
+              <Input
+                type="text"
+                value={searchQuery}
+                onChange={handleInputChange}
+                onKeyDown={(e) => e.key === 'Enter' && handleSearch(searchQuery, 'enter')}
+                placeholder="Search for iPhone, Mac, iPad, Accessories..."
+                className="pl-10 pr-4 text-base h-12"
+                autoFocus
+              />
             </div>
-            <div className="overflow-y-auto p-4">
-              {navigationLinks.map((item) => (
-                <div key={item.name} className="mb-2">
-                  <div className="flex items-center">
-                    <Link
-                      href={item.href}
-                      className="flex-1 rounded-md px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 hover:text-gray-900"
-                      onClick={() => !item.children && setIsMobileMenuOpen(false)}
-                    >
-                      {item.name}
-                    </Link>
-                    {item.children && (
-                      <button
-                        onClick={() => setIsAccessoriesOpen(!isAccessoriesOpen)}
-                        className="inline-flex items-center justify-center h-10 w-10 rounded-md text-sm font-medium ring-offset-white transition-colors hover:bg-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-950 focus-visible:ring-offset-2"
-                      >
-                        <ChevronDown 
-                          size={16} 
-                          className={`transition-transform ${isAccessoriesOpen ? 'rotate-180' : ''}`}
-                        />
-                      </button>
-                    )}
-                  </div>
+          </div>
 
-                  {item.children && isAccessoriesOpen && (
-                    <div className="ml-4 mt-1 space-y-1 animate-in fade-in-0 slide-in-from-top-2">
-                      {item.children.map((child) => (
-                        <Link
-                          key={child.name}
-                          href={child.href}
-                          className="block rounded-md px-3 py-2 text-sm text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-900"
-                          onClick={() => setIsMobileMenuOpen(false)}
-                        >
-                          {child.name}
-                        </Link>
-                      ))}
+          <ScrollArea className="max-h-[400px] px-6 pb-6">
+            {/* Loading State */}
+            {loading && (
+              <div className="space-y-3">
+                {[...Array(4)].map((_, i) => (
+                  <div key={i} className="flex items-center space-x-3 p-2">
+                    <Skeleton className="w-10 h-10 rounded" />
+                    <div className="space-y-2 flex-1">
+                      <Skeleton className="h-4 w-3/4" />
+                      <Skeleton className="h-3 w-1/2" />
                     </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-        </>
-      )}
+                  </div>
+                ))}
+              </div>
+            )}
 
-      {/* Mobile search overlay */}
-      {isMobileSearchOpen && (
-        <div className="md:hidden border-t px-4 py-3 animate-in fade-in-0 slide-in-from-top-2">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" size={18} />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleSearch(searchQuery)}
-              placeholder="Search for iPhone, Mac, iPad..."
-              className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 pl-10 text-sm ring-offset-white file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-gray-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-950 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-              autoFocus
-            />
-          </div>
-        </div>
-      )}
+            {/* Search Results */}
+            {!loading && searchQuery && searchResults.length > 0 && (
+              <div className="space-y-2">
+                <h4 className="text-sm font-medium text-muted-foreground">
+                  Found {searchResults.length} results
+                </h4>
+                {searchResults.map((product) => {
+                  const ProductIcon = getProductTypeIcon(product.type);
+                  const productImage = getProductImage(product);
+                  const productPrice = getProductPrice(product);
+                  const inStock = isProductInStock(product);
+                  
+                  return (
+                    <div
+                      key={product._id}
+                      className="flex items-center space-x-3 p-3 rounded-lg border hover:bg-accent cursor-pointer transition-colors"
+                      onClick={() => handleSuggestionClick(product)}
+                    >
+                      <Avatar className="w-12 h-12">
+                        <AvatarImage src={productImage} />
+                        <AvatarFallback className="bg-muted">
+                          <ProductIcon size={20} />
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate">{getProductDisplayName(product)}</p>
+                        <div className="flex items-center gap-2 mt-1">
+                        
+                          {!inStock && (
+                            <Badge variant="outline" className="text-xs">
+                              Out of Stock
+                            </Badge>
+                          )}
+                        </div>
+                       
+                      </div>
+                      <Search size={16} className="text-muted-foreground" />
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* No Results */}
+            {!loading && searchQuery && searchResults.length === 0 && (
+              <div className="text-center py-8">
+                <Search size={48} className="mx-auto text-muted-foreground mb-4" />
+                <p className="text-muted-foreground">No results found for "{searchQuery}"</p>
+                <Button 
+                  variant="outline" 
+                  className="mt-4"
+                  onClick={() => handleSearch(searchQuery, 'enter')}
+                >
+                  Search Anyway
+                </Button>
+              </div>
+            )}
+
+            {/* Recent Searches */}
+            {!loading && !searchQuery && recentSearches.length > 0 && (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-sm font-medium text-muted-foreground">Recent Searches</h4>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={clearRecentSearches}
+                    className="h-auto p-0 text-xs text-muted-foreground hover:text-foreground"
+                  >
+                    Clear All
+                  </Button>
+                </div>
+                {recentSearches.map((search) => (
+                  <div
+                    key={search.id}
+                    className="flex items-center space-x-3 p-2 rounded-lg hover:bg-accent cursor-pointer transition-colors"
+                    onClick={() => handleSuggestionClick(search)}
+                  >
+                    <Clock size={16} className="text-muted-foreground" />
+                    <span className="text-sm flex-1">{search.name}</span>
+                    <Button variant="ghost" size="icon" className="h-6 w-6">
+                      <Search size={12} />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Trending Searches */}
+            {!loading && !searchQuery && (
+              <div className="space-y-3 mt-6">
+                <h4 className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                  <TrendingUp size={16} />
+                  Trending Searches
+                </h4>
+                <div className="flex flex-wrap gap-2">
+                  {trendingSearches.map((trend) => {
+                    const TrendIcon = getProductTypeIcon(trend.productType || '');
+                    return (
+                      <Badge
+                        key={trend.id}
+                        variant="secondary"
+                        className="px-3 py-1.5 cursor-pointer hover:bg-primary hover:text-primary-foreground transition-colors flex items-center gap-1"
+                        onClick={() => handleSuggestionClick(trend)}
+                      >
+                        <TrendIcon size={12} />
+                        {trend.name}
+                      </Badge>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Quick Categories */}
+            {!loading && !searchQuery && (
+              <div className="space-y-3 mt-6">
+                <h4 className="text-sm font-medium text-muted-foreground">Quick Categories</h4>
+                <div className="grid grid-cols-2 gap-2">
+                  {[
+                    { name: 'iPhone', icon: Smartphone, type: 'iphone' },
+                    { name: 'MacBook', icon: Laptop, type: 'macbook' },
+                    { name: 'iPad', icon: Tablet, type: 'ipad' },
+                    { name: 'Accessories', icon: Headphones, type: 'accessory' },
+                  ].map((category) => (
+                    <Button
+                      key={category.name}
+                      variant="outline"
+                      className="justify-start h-auto py-2 px-3 text-sm"
+                      onClick={() => handleSuggestionClick({
+                        id: category.type,
+                        name: category.name,
+                        type: 'category',
+                        productType: category.type as any
+                      })}
+                    >
+                      <category.icon size={14} className="mr-2" />
+                      {category.name}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </ScrollArea>
+        </DialogContent>
+      </Dialog>
 
       {/* Mobile Bottom Nav */}
-      <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t shadow-lg z-50">
-        <div className="flex justify-around items-center h-16 sm:h-20">
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            const active = isActive(item.href);
-            
-            return (
-              <Link
-                key={item.id}
-                href={item.href}
-                {...(item.id === 'whatsapp' && { target: '_blank', rel: 'noopener noreferrer' })}
-                className="flex flex-col items-center justify-center w-full h-full transition-all duration-200 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-950 focus-visible:ring-inset"
-              >
-                <Icon 
-                  className={`w-5 h-5 sm:w-6 sm:h-6 mb-0.5 sm:mb-1 transition-colors ${
-                    active ? 'text-orange-500' : item.id === 'whatsapp' ? 'text-green-500' : 'text-gray-500'
-                  }`}
-                  strokeWidth={active ? 2.5 : 2}
-                />
-                <span 
-                  className={`text-[10px] sm:text-xs font-medium ${
-                    active ? 'text-orange-500' : item.id === 'whatsapp' ? 'text-green-500' : 'text-gray-500'
+      <Card className="lg:hidden fixed bottom-4 left-4 right-4 z-40 shadow-lg">
+        <CardContent className="p-2">
+          <div className="flex justify-around items-center">
+            {navItems.map((item) => {
+              const Icon = item.icon;
+              const active = isActive(item.href);
+              
+              return (
+                <Button
+                  key={item.id}
+                  variant="ghost"
+                  size="sm"
+                  asChild
+                  className={`flex flex-col h-auto p-2 ${
+                    active ? 'text-primary' : item.id === 'whatsapp' ? 'text-green-500' : 'text-muted-foreground'
                   }`}
                 >
-                  {item.label}
-                </span>
-              </Link>
-            );
-          })}
-        </div>
-      </nav>
-      <>
-      <AddTobag></AddTobag>
-      </>
+                  <Link
+                    href={item.href}
+                    {...(item.id === 'whatsapp' && { target: '_blank', rel: 'noopener noreferrer' })}
+                  >
+                    <Icon 
+                      className={`w-4 h-4 mb-1 ${
+                        active ? 'text-primary' : item.id === 'whatsapp' ? 'text-green-500' : 'text-muted-foreground'
+                      }`}
+                    />
+                    <span className="text-[10px] font-medium">
+                      {item.label}
+                    </span>
+                  </Link>
+                </Button>
+              );
+            })}
+          </div>
+        </CardContent>
+      </Card>
+      
+      <AddTobag />
     </nav>
   );
 };
