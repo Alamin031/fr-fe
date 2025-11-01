@@ -265,7 +265,7 @@ const PriceBreakdown = ({
   );
 };
 
-export default function Page() {
+export default function IpadDetails() {
   const { addOrder , clearOrder} = useOrderStore();
     const { toggleSidebar } = useSidebarStore();
   
@@ -450,7 +450,7 @@ export default function Page() {
 
     const fetchProduct = async () => {
       try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URI}/accessories/getBySlug/${productName}`);
+        const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URI}/ipadlist/getBySlug/${productName}`);
         console.log('Fetch response:', response);
         if (!response.ok) {
           throw new Error('Failed to fetch product');
@@ -819,13 +819,13 @@ Thank you! 🎉
         {/* Product Image Section */}
         <div className="space-y-4">
           <Card className="overflow-hidden border-0 shadow-lg">
-            <CardContent className="p-0">
+            <CardContent className="p-10">
               <Image
                 src={product.imageConfigs.find(config => config.colorName === selectedColor)?.image || product.imageConfigs[0]?.image || '/placeholder-image.jpg'}
                 alt={product.name}
-                width={600}
-                height={600}
-                className="w-full h-auto object-cover"
+                width={400}
+                height={400}
+                className="w-full  object-cover"
                 priority
               />
             </CardContent>
@@ -1088,6 +1088,8 @@ Thank you! 🎉
                         key={config._id.$oid}
                         variant={selectedStorage === config.shortDetails ? 'default' : 'outline'} 
                         onClick={() => handleStorageSelect(config)}
+                                                className='max-sm:text-[10px]'
+
                       >
                         {config.name} 
                       </Button>
@@ -1101,7 +1103,7 @@ Thank you! 🎉
             {product.dynamicInputs && product.dynamicInputs.map((group) => (
               <Card key={group.type}>
                 <CardHeader>
-                  <CardTitle className="text-[15px] capitalize mt-[-16px]">
+                  <CardTitle className="text-[15px] capitalize mt-[-16px] ">
                     {group.type}
                     {getStockStatus[group.type] && (
                       <span className="text-red-500 text-[10px] mt-2 ml-2">({getStockStatus[group.type]})</span>
@@ -1109,12 +1111,13 @@ Thank you! 🎉
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="grid grid-cols-2 mt-[-14px] gap-2 max-sm:mt-[-24px]">
+                  <div className="grid grid-cols-2 mt-[-14px] gap-2 max-sm:mt-[-24px]  ">
                     {group.items.map((item, index) => (
                       <Button
                         key={index}
                         variant={selectedDynamicInputs[group.type] === item.label ? 'default' : 'outline'}
                         onClick={() => handleDynamicInputSelect(group.type, item.label, item.inStock)}
+                        className='max-sm:text-[10px]'
                       >
                         {item.label} 
                       </Button>

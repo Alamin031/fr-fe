@@ -9,6 +9,8 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sh
 import { Separator } from '@/components/ui/separator';
 import { Package, Trash2, Home, ShoppingBag } from 'lucide-react';
 import Image from 'next/image';
+import Link from 'next/link';
+
 
 const Addtobag = () => {
   const { isOpen, toggleSidebar, closeSidebar } = useSidebarStore() as {
@@ -20,7 +22,9 @@ const Addtobag = () => {
 
   console.log(order);
 
-
+ const off = () => {
+  closeSidebar()
+ }
   // Remove product by ID
   const handleRemoveItem = (productId: number) => {
     removeOrder(productId);
@@ -190,11 +194,19 @@ const Addtobag = () => {
             </div>
 
             {/* Checkout Button */}
-            <Button className="w-full" size="lg">
-              Proceed to Checkout
-            </Button>
+         
 
             {/* Continue Shopping */}
+                        <Link 
+                         href="/checkout/addTobag" 
+                         onClick={off}
+                        >
+                         <Button className="w-full" size="lg">
+                          Proceed to Checkout
+                       </Button>
+                        
+                        </Link>
+
             <Button
               variant="outline"
               className="w-full"

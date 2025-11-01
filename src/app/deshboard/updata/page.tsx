@@ -1,9 +1,10 @@
 import React from 'react';
+import Navbar from './Updatanav';
 
 const page = () => {
     return (
-        <div>
-            
+        <div className='w-full'>
+            <Navbar></Navbar>
         </div>
     );
 };

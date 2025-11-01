@@ -1,11 +1,18 @@
 "use client";
 
 import React, { useEffect, useState, useCallback } from "react";
-import { ShoppingCart, RefreshCw } from "lucide-react";
+import { RefreshCw, ShoppingBag, ChevronLeft, ChevronRight } from "lucide-react";
 import { Image, ImageKitProvider } from "@imagekit/next";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import useOrderStore from "../../../../store/store";
+import { useaddtobagStore } from "../../../../store/store";
+import { useSidebarStore } from "../../../../store/store";
+
+interface StorageConfig {
+  name?: string;
+  [key: string]: unknown;
+}
 
 interface Accessory {
   _id: string;
@@ -16,6 +23,17 @@ interface Accessory {
   details?: Array<{ label: string; value: string }>;
   inStock: boolean;
   productlinkname?: string;
+  dynamicInputs: object;
+  storageConfigs?: Array<StorageConfig>;
+}
+
+interface PaginationInfo {
+  currentPage: number;
+  totalPages: number;
+  totalProducts: number;
+  limit: number;
+  hasNextPage: boolean;
+  hasPrevPage: boolean;
 }
 
 const slugify = (text: string) =>
@@ -27,29 +45,6 @@ const slugify = (text: string) =>
     .trim()
     .replace(/\s+/g, "-")
     .toLowerCase();
-
-// Safe localStorage wrapper
-const safeLocalStorage = {
-  getItem: (key: string): string | null => {
-    try {
-      if (typeof window !== 'undefined') {
-        return localStorage.getItem(key);
-      }
-    } catch (error) {
-      console.warn('localStorage not available:', error);
-    }
-    return null;
-  },
-  setItem: (key: string, value: string): void => {
-    try {
-      if (typeof window !== 'undefined') {
-        localStorage.setItem(key, value);
-      }
-    } catch (error) {
-      console.warn('localStorage not available:', error);
-    }
-  }
-};
 
 // Skeleton Loader Component
 const AccessoryCardSkeleton = () => {
@@ -79,6 +74,8 @@ const AccessoryCardSkeleton = () => {
 
 export default function AccessoriesCard() {
   const { addOrder, clearOrder } = useOrderStore();
+  const { toggleSidebar } = useSidebarStore() as { toggleSidebar: () => void };
+  const { addOrderbag } = useaddtobagStore();
   const router = useRouter();
   const urlEndpoint = process.env.NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT;
 
@@ -91,14 +88,25 @@ export default function AccessoriesCard() {
   const [isError, setIsError] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isFetching, setIsFetching] = useState(false);
+  
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pagination, setPagination] = useState<PaginationInfo>({
+    currentPage: 1,
+    totalPages: 1,
+    totalProducts: 0,
+    limit: 20,
+    hasNextPage: false,
+    hasPrevPage: false
+  });
 
-  const fetchAccessories = useCallback(async (updateCache = false) => {
+  const fetchAccessories = useCallback(async (page: number = 1) => {
     try {
       setIsFetching(true);
       setIsError(false);
       setError(null);
 
-      const url = `${process.env.NEXT_PUBLIC_BASE_URL}/api/getproduct/accessorieslist?ts=${Date.now()}`;
+      const url = `${process.env.NEXT_PUBLIC_BASE_URI}/accessories/getAll?page=${page}&limit=8`;
       const response = await fetch(url, {
         cache: 'no-store',
         headers: {
@@ -111,17 +119,17 @@ export default function AccessoriesCard() {
       }
 
       const data = await response.json();
-      console.log(data)
+      console.log(data);
 
-      if (!Array.isArray(data)) {
-        throw new Error('Invalid response format: expected an array');
-      }
-
-      setAccessories(data);
-
-      if (updateCache) {
-        safeLocalStorage.setItem('accessoriesCache', JSON.stringify(data));
-        safeLocalStorage.setItem('accessoriesCacheTime', Date.now().toString());
+      // Check if response has pagination structure
+      if (data.products && data.pagination) {
+        setAccessories(data.products);
+        setPagination(data.pagination);
+      } else if (Array.isArray(data)) {
+        // Fallback for old API without pagination
+        setAccessories(data);
+      } else {
+        throw new Error('Invalid response format');
       }
     } catch (err) {
       setIsError(true);
@@ -134,28 +142,15 @@ export default function AccessoriesCard() {
     }
   }, []);
 
-  // Initialize accessories from cache or fetch
+  // Fetch accessories on component mount and page change
   useEffect(() => {
-    const cached = safeLocalStorage.getItem('accessoriesCache');
-    const cacheTime = safeLocalStorage.getItem('accessoriesCacheTime');
-    const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+    fetchAccessories(currentPage);
+  }, [currentPage, fetchAccessories]);
 
-    if (cached && cacheTime) {
-      const age = Date.now() - parseInt(cacheTime, 10);
-      if (age < CACHE_DURATION) {
-        try {
-          const parsedCache = JSON.parse(cached);
-          setAccessories(parsedCache);
-          setIsLoading(false);
-          return;
-        } catch (err) {
-          console.warn('Failed to parse cache:', err);
-        }
-      }
-    }
-
-    fetchAccessories(true);
-  }, [fetchAccessories]);
+  const handlePageChange = (newPage: number) => {
+    setCurrentPage(newPage);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   const getCurrentImage = useCallback((accessory: Accessory) => {
     return accessory?.imageConfigs?.[0]?.image || "";
@@ -167,7 +162,7 @@ export default function AccessoriesCard() {
 
   const calculateOriginalPrice = useCallback((accessory: Accessory) => {
     const currentPrice = parseFloat(accessory.basePrice || "0");
-    return currentPrice + (currentPrice * 0.15); // 15% higher for original price
+    return currentPrice + (currentPrice * 0.15);
   }, []);
 
   const handleShowNow = useCallback((accessory: Accessory) => {
@@ -189,8 +184,37 @@ export default function AccessoriesCard() {
 
   const handleAddToCart = useCallback((accessory: Accessory) => {
     console.log("Adding to cart:", accessory);
-    // TODO: Implement cart functionality
-  }, []);
+
+    const regionObj =
+      Array.isArray(accessory.dynamicInputs) && accessory.dynamicInputs.length > 0
+        ? accessory.dynamicInputs.reduce((acc, group) => {
+            if (group?.type && Array.isArray(group.items) && group.items.length > 0) {
+              acc[group.type] = group.items[0].label;
+            }
+            return acc;
+          }, {} as Record<string, string>)
+        : {};
+
+    const storage = accessory?.storageConfigs?.[0]?.name || "N/A";
+    const price = calculateTotalPrice(accessory);
+    const date = new Date();
+    const dateTimeStr = date.toISOString().replace(/[-:T.Z]/g, "").slice(0, 14);
+    const randomPart = Math.random().toString(36).substring(2, 8).toUpperCase();
+    const randomId = `${dateTimeStr}-${randomPart}`;
+    const id = parseInt(randomId);
+
+    addOrderbag({
+      productName: accessory.name,
+      image: getCurrentImage(accessory),
+      price,
+      quantity: 1,
+      storage: storage,
+      dynamicInputs: regionObj,
+      productId: id
+    });
+    
+    toggleSidebar();
+  }, [calculateTotalPrice, addOrderbag, getCurrentImage, toggleSidebar]);
 
   if (isError) {
     return (
@@ -200,7 +224,7 @@ export default function AccessoriesCard() {
             Error loading accessories: {error}
           </p>
           <button
-            onClick={() => fetchAccessories(true)}
+            onClick={() => fetchAccessories(currentPage)}
             disabled={isFetching}
             className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition text-sm sm:text-base disabled:opacity-50 disabled:cursor-not-allowed"
           >
@@ -217,7 +241,7 @@ export default function AccessoriesCard() {
         <div className="text-center">
           <p className="text-gray-500 mb-3 text-sm sm:text-base">No accessories found.</p>
           <button
-            onClick={() => fetchAccessories(true)}
+            onClick={() => fetchAccessories(currentPage)}
             disabled={isFetching}
             className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition text-sm sm:text-base disabled:opacity-50 disabled:cursor-not-allowed"
           >
@@ -230,7 +254,7 @@ export default function AccessoriesCard() {
 
   return (
     <ImageKitProvider urlEndpoint={urlEndpoint}>
-      {isFetching && !isLoading && (
+      {isFetching && (
         <div className="fixed top-3 right-3 sm:top-4 sm:right-4 bg-blue-500 text-white px-3 py-1.5 rounded-full text-xs sm:text-sm z-50 flex items-center gap-2 shadow-lg">
           <RefreshCw size={14} className="animate-spin" />
           <span>Updating...</span>
@@ -239,15 +263,18 @@ export default function AccessoriesCard() {
 
       <div className="w-full px-3 sm:px-4 lg:px-6 mt-4">
         <div className="max-w-7xl mx-auto">
-          {/* Refresh Button */}
-          <div className="flex justify-end mb-4">
+          {/* Header with Refresh Button and Info */}
+          <div className="flex justify-between items-center mb-4">
+            <div className="text-sm text-gray-600">
+              Showing {accessories.length} of {pagination.totalProducts} products
+            </div>
             <button
-              onClick={() => fetchAccessories(true)}
+              onClick={() => fetchAccessories(currentPage)}
               disabled={isFetching}
               className="flex items-center gap-2 px-4 py-2 text-sm bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <RefreshCw size={16} className={isFetching ? 'animate-spin' : ''} />
-              <span>{isFetching ? 'Refreshing...' : 'Refresh Accessories'}</span>
+              <span>{isFetching ? 'Refreshing...' : 'Refresh'}</span>
             </button>
           </div>
 
@@ -269,10 +296,9 @@ export default function AccessoriesCard() {
                   key={accessory._id}
                   className="bg-white rounded-lg sm:rounded-xl shadow-sm hover:shadow-md transition-all duration-300 p-3 sm:p-4 flex flex-col items-center text-center border border-gray-100 hover:border-gray-200"
                 >
-                  {/* Accessory Image */}
                   {currentImage && (
-                    <Link href={`/category/accessories/${productSlug}`} className="block w-full">
-                      <div className="relative w-full aspect-square max-w-[140px] sm:max-w-[160px] md:max-w-[180px] lg:max-w-[200px] mx-auto ">
+                    <Link href={`/category/iphone/${productSlug}`} className="block w-full">
+                      <div className="relative w-full aspect-square max-w-[140px] sm:max-w-[160px] md:max-w-[180px] lg:max-w-[200px] mx-auto">
                         <Image
                           src={currentImage}
                           alt={accessory.name}
@@ -287,18 +313,13 @@ export default function AccessoriesCard() {
                     </Link>
                   )}
 
-                  {/* Accessory Name */}
-                  <Link href={`/category/accessories/${productSlug}`} className="block w-full ">
+                  <Link href={`/category/accessories/${productSlug}`} className="block w-full">
                     <h3 className="text-sm sm:text-base font-semibold text-gray-900 hover:text-amber-600 transition-colors duration-200 line-clamp-2 leading-tight min-h-[2.5rem] sm:min-h-[3rem] mb-[-12]">
                       {accessory.name}
                     </h3>
                   </Link>
 
-                  {/* Accessory Type */}
-                 
-
-                  {/* Price Section */}
-                  <div className=" sm:mb-4 w-full">
+                  <div className="sm:mb-4 w-full">
                     <p className="text-base sm:text-lg font-bold text-gray-900 mb-1 max-sm:text-[13px]">
                       ৳ {totalPrice.toLocaleString()}
                     </p>
@@ -317,12 +338,11 @@ export default function AccessoriesCard() {
                     )}
                   </div>
 
-                  {/* Action Buttons */}
                   <div className="flex flex-row gap-2 w-full mt-auto">
                     <button
                       onClick={() => handleShowNow(accessory)}
                       disabled={accessory.inStock}
-                      className="flex-1 flex items-center justify-center gap-1 rounded-full bg-white text-black border border-black px-2 py-1.5 sm:py-2 hover:bg-gray-50 transition-colors duration-200 font-medium text-xs sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="flex-1 flex items-center justify-center gap-1 rounded-full bg-white text-black border border-gray-200 px-2 py-1.5 sm:py-2 hover:bg-gray-50 transition-colors duration-200 font-medium text-xs sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       <span>{!accessory.inStock ? 'Order Now' : 'Out of Stock'}</span>
                     </button>
@@ -333,13 +353,80 @@ export default function AccessoriesCard() {
                       className="flex items-center justify-center rounded-full bg-white border border-gray-300 text-gray-600 px-2 py-1.5 sm:py-2 hover:bg-amber-500 hover:text-white hover:border-amber-500 transition-all duration-200 min-w-[36px] sm:min-w-[40px] disabled:opacity-50 disabled:cursor-not-allowed"
                       title={accessory.inStock ? "Add to cart" : "Out of stock"}
                     >
-                      <ShoppingCart size={14} className="sm:w-4 sm:h-4" />
+                      <ShoppingBag size={14} className="sm:w-4 sm:h-4" />
                     </button>
                   </div>
                 </div>
               );
             })}
           </div>
+
+          {/* Pagination Controls */}
+          {pagination.totalPages > 1 && (
+            <div className="mt-8 flex items-center justify-center gap-2">
+              <button
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={!pagination.hasPrevPage || isFetching}
+                className="flex items-center gap-1 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                <ChevronLeft size={16} />
+                <span className="hidden sm:inline">Previous</span>
+              </button>
+
+              <div className="flex items-center gap-2">
+                {[...Array(pagination.totalPages)].map((_, index) => {
+                  const pageNumber = index + 1;
+                  // Show only current page and 2 pages around it on mobile
+                  if (
+                    pageNumber === 1 ||
+                    pageNumber === pagination.totalPages ||
+                    (pageNumber >= currentPage - 1 && pageNumber <= currentPage + 1)
+                  ) {
+                    return (
+                      <button
+                        key={pageNumber}
+                        onClick={() => handlePageChange(pageNumber)}
+                        disabled={isFetching}
+                        className={`px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
+                          currentPage === pageNumber
+                            ? 'bg-black text-white'
+                            : 'text-gray-700 bg-white border border-gray-300 hover:bg-gray-50'
+                        } disabled:opacity-50 disabled:cursor-not-allowed`}
+                      >
+                        {pageNumber}
+                      </button>
+                    );
+                  } else if (
+                    pageNumber === currentPage - 2 ||
+                    pageNumber === currentPage + 2
+                  ) {
+                    return (
+                      <span key={pageNumber} className="px-2 text-gray-500">
+                        ...
+                      </span>
+                    );
+                  }
+                  return null;
+                })}
+              </div>
+
+              <button
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={!pagination.hasNextPage || isFetching}
+                className="flex items-center gap-1 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                <span className="hidden sm:inline">Next</span>
+                <ChevronRight size={16} />
+              </button>
+            </div>
+          )}
+
+          {/* Page Info */}
+          {pagination.totalPages > 1 && (
+            <div className="mt-4 text-center text-sm text-gray-600">
+              Page {pagination.currentPage} of {pagination.totalPages}
+            </div>
+          )}
         </div>
       </div>
     </ImageKitProvider>

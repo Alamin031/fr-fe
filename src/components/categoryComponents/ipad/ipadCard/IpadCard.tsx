@@ -106,7 +106,7 @@ export default function AccessoriesCard() {
       setIsError(false);
       setError(null);
 
-      const url = `${process.env.NEXT_PUBLIC_BASE_URI}/iphone/getAll?page=${page}&limit=8`;
+      const url = `${process.env.NEXT_PUBLIC_BASE_URI}/ipadlist/getAll?page=${page}&limit=8`;
       const response = await fetch(url, {
         cache: 'no-store',
         headers: {
@@ -297,7 +297,7 @@ export default function AccessoriesCard() {
                   className="bg-white rounded-lg sm:rounded-xl shadow-sm hover:shadow-md transition-all duration-300 p-3 sm:p-4 flex flex-col items-center text-center border border-gray-100 hover:border-gray-200"
                 >
                   {currentImage && (
-                    <Link href={`/category/iphone/${productSlug}`} className="block w-full">
+                    <Link href={`/category/ipad/${productSlug}`} className="block w-full">
                       <div className="relative w-full aspect-square max-w-[140px] sm:max-w-[160px] md:max-w-[180px] lg:max-w-[200px] mx-auto">
                         <Image
                           src={currentImage}
@@ -313,7 +313,7 @@ export default function AccessoriesCard() {
                     </Link>
                   )}
 
-                  <Link href={`/category/iphone/${productSlug}`} className="block w-full">
+                  <Link href={`/category/ipad/${productSlug}`} className="block w-full">
                     <h3 className="text-sm sm:text-base font-semibold text-gray-900 hover:text-amber-600 transition-colors duration-200 line-clamp-2 leading-tight min-h-[2.5rem] sm:min-h-[3rem] mb-[-12]">
                       {accessory.name}
                     </h3>

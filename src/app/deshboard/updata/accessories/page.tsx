@@ -85,7 +85,7 @@ export default function ProductsTable() {
 
   const fetchProducts = async () => {
     try {
-      const res = await axios.get(`${process.env.NEXT_PUBLIC_BASE_URI}/iphone/all`);
+      const res = await axios.get(`${process.env.NEXT_PUBLIC_BASE_URI}/accessories/all`);
       console.log('API Response:', res.data);
       
       if (res.data && Array.isArray(res.data.products)) {
@@ -105,7 +105,7 @@ export default function ProductsTable() {
   const handleDelete = async (id: string) => {
     if (!confirm("Are you sure you want to delete this product?")) return;
     try {
-      await axios.delete(`${process.env.NEXT_PUBLIC_BASE_URI}/iphone/delete/${id}`);
+      await axios.delete(`${process.env.NEXT_PUBLIC_BASE_URI}/accessories/delete/${id}`);
       setProducts(products.filter((p) => p._id !== id));
       alert("Product deleted successfully!");
     } catch (err) {
@@ -118,7 +118,7 @@ export default function ProductsTable() {
     try {
       setIsLoading(true);
       const response = await axios.get(
-        `${process.env.NEXT_PUBLIC_BASE_URI}/iphone/getBySlug/${productLinkName}`
+        `${process.env.NEXT_PUBLIC_BASE_URI}/accessories/getBySlug/${productLinkName}`
       );
       console.log('Product data for editing:', response.data);
       const productData = response.data.product || response.data;
@@ -139,7 +139,7 @@ export default function ProductsTable() {
     try {
       setIsLoading(true);
       const response = await axios.put(
-        `${process.env.NEXT_PUBLIC_BASE_URI}/iphone/update/${editingProduct.productlinkname}`,
+        `${process.env.NEXT_PUBLIC_BASE_URI}/accessories/update/${editingProduct.productlinkname}`,
         editingProduct
       );
       
@@ -396,8 +396,8 @@ export default function ProductsTable() {
   return (
     <>
       <Card className="shadow-lg rounded-2xl w-full mt-4">
-            <Navbar></Navbar>
-
+                    <Navbar></Navbar>
+        
         <CardContent>
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-2xl font-bold">Products List</h2>
@@ -483,7 +483,7 @@ export default function ProductsTable() {
 
       {/* Edit Product Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="max-w-6xl max-h-[95vh] overflow-y-auto bg-white text-black">
+        <DialogContent className="max-w-6xl max-h-[95vh] overflow-y-auto bg-white">
           <DialogHeader>
             <DialogTitle>Edit Product - {editingProduct?.name}</DialogTitle>
             <DialogDescription>
@@ -523,7 +523,15 @@ export default function ProductsTable() {
                     placeholder="e.g., iphone, macbook"
                   />
                 </div>
-                
+                <div className="space-y-2">
+                  <Label htmlFor="accessoriesType">Accessories Type</Label>
+                  <Input
+                    id="accessoriesType"
+                    value={editingProduct.accessoriesType}
+                    onChange={(e) => handleInputChange('accessoriesType', e.target.value)}
+                    placeholder="e.g., Storage, Region"
+                  />
+                </div>
               </div>
 
               {/* Description */}
@@ -575,31 +583,18 @@ export default function ProductsTable() {
               {/* Storage Configurations */}
               <div className="space-y-4">
                 <div className="flex justify-between items-center">
-                    <div>
-                         <Label className="text-lg font-semibold">Storage Configurations</Label>
-                  <div className="space-y-2">
-                  <Input
-                    id="accessoriesType"
-                    value={editingProduct.accessoriesType}
-                    onChange={(e) => handleInputChange('accessoriesType', e.target.value)}
-                    placeholder="e.g., Storage, Region"
-                  />
-                </div>
-                    </div>
-                 
-                  
+                  <Label className="text-lg font-semibold">Storage Configurations</Label>
                   <Button type="button" onClick={addStorageConfig} variant="outline" size="sm">
                     Add Storage
                   </Button>
                 </div>
                 {editingProduct.storageConfigs.map((storage, index) => (
-                    
-                  <div key={index} className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 border rounded-md relative text-black">
+                  <div key={index} className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 border rounded-md relative">
                     <Button
                       type="button"
                       variant="destructive"
                       size="sm"
-                      className="absolute top-2 right-2 w-6 h-6 p-0 text-black"
+                      className="absolute top-2 right-2 w-6 h-6 p-0"
                       onClick={() => removeStorageConfig(index)}
                     >
                       ×
@@ -739,12 +734,12 @@ export default function ProductsTable() {
                         </Button>
                       </div>
                       {input.items.map((item, itemIndex) => (
-                        <div key={itemIndex} className="grid grid-cols-1 md:grid-cols-3 gap-4 p-3 border rounded relative text-black">
+                        <div key={itemIndex} className="grid grid-cols-1 md:grid-cols-3 gap-4 p-3 border rounded relative">
                           <Button
                             type="button"
                             variant="destructive"
                             size="sm"
-                            className="absolute top-1 right-1 w-5 h-5 p-0 text-xs text-black"
+                            className="absolute top-1 right-1 w-5 h-5 p-0 text-xs"
                             onClick={() => removeDynamicItem(inputIndex, itemIndex)}
                           >
                             ×
@@ -791,7 +786,7 @@ export default function ProductsTable() {
                   </Button>
                 </div>
                 {editingProduct.details.map((detail, index) => (
-                  <div key={index} className="grid grid-cols-1 md:grid-cols-2 gap-4 p-3 border rounded relative ">
+                  <div key={index} className="grid grid-cols-1 md:grid-cols-2 gap-4 p-3 border rounded relative">
                     <Button
                       type="button"
                       variant="destructive"
@@ -835,7 +830,7 @@ export default function ProductsTable() {
                 >
                   Cancel
                 </Button>
-                <Button type="submit" disabled={isLoading} className="bg-black text-white">
+                <Button type="submit" disabled={isLoading}>
                   {isLoading ? "Saving..." : "Save Changes"}
                 </Button>
               </div>

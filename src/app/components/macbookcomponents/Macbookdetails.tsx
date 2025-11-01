@@ -1,810 +1,1171 @@
-"use client";
+'use client'
 
-import ShopNowLogo from "@/components/ui/ShopNowLogo";
-import WhatsappLogo from "@/components/ui/WhatsappLogo";
-import axios from "axios";
-import { ShoppingCart, Plus, Minus } from "lucide-react";
-import Image from "next/image";
-import { useParams } from "next/navigation";
-import React, { useEffect, useState } from "react";
-import { useQuery } from '@tanstack/react-query';
-import useOrderStore from "../../../../store/store";
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from 'next/navigation';
+import React, { useEffect, useState, useMemo } from 'react';
+import Image from 'next/image';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { CheckCircle2, ShoppingBag, CreditCard, Bell, Calendar, Minus, Plus, MessageCircle, X } from 'lucide-react';
+import useOrderStore from '../../../../store/store';
+import toast, { Toaster } from 'react-hot-toast';
 
+import { useaddtobagStore,useSidebarStore  } from '../../../../store/store';
 
-// Type definitions
-interface OptionConfig {
-  id: string;
-  label: string;
-  price: number;
-}
-
-interface ColorConfig {
-  id: string;
-  color: string;
-  image?: string;
-  price: number;
-}
-
-interface RegionConfig {
+interface StorageConfig {
+  id: { $numberDouble: string };
   name: string;
-  price: number;
+  shortDetails: string;
+  inStock: boolean;
+  basicPrice: string;
+  prices: Array<{ [key: string]: string }>;
+  colorStocks: Array<{ [key: string]: boolean }>;
+  _id: { $oid: string };
+}
+
+interface ImageConfig {
+  colorHex: string;
+  colorName: string;
+  id: { $numberDouble: string };
+  image: string;
+  inStock: boolean;
+  _id: { $oid: string };
 }
 
 interface Detail {
-  id: string;
+  id: { $numberDouble: string };
   label: string;
   value: string;
+  _id?: { $oid: string };
 }
 
-interface SecondDetail {
-  id: string;
-  seconddetails: string;
-  value: string;
+interface DynamicInputItem {
+  label: string;
+  price: string;
+  inStock: boolean;
+}
+
+interface DynamicInput {
+  type: string;
+  items: DynamicInputItem[];
+  _id?: { $oid: string };
+}
+
+interface PreOrderConfig {
+  isPreOrder: boolean;
+  availabilityDate?: string;
+  estimatedShipping?: string;
+  preOrderDiscount?: { $numberInt: string };
+  maxPreOrderQuantity?: { $numberInt: string };
+  _id?: { $oid: string };
 }
 
 interface Product {
+  _id: { $oid: string };
   name: string;
-  basePrice: string;
-  cpuCoreConfigs: OptionConfig[];
-  gpuCoreConfigs: OptionConfig[];
-  storageConfigs: OptionConfig[];
-  ramConfigs: OptionConfig[];
-  displayConfigs: OptionConfig[];
-  colorImageConfigs: ColorConfig[];
-  dynamicRegions: RegionConfig[];
+  basePrice: { $numberInt: string };
+  description: string;
+  accessories: string;
+  accessoriesType: string;
+  storageConfigs: StorageConfig[];
+  imageConfigs: ImageConfig[];
   details: Detail[];
-  secondDetails: SecondDetail[];
+  dynamicInputs: DynamicInput[];
+  preOrderConfig: PreOrderConfig | null;
+  createdAt: { $date: { $numberLong: string } };
+  updatedAt: { $date: { $numberLong: string } };
+  __v: { $numberInt: string };
 }
 
-type SelectedOptions = {
-  cpu: string | null;
-  gpu: string | null;
-  storage: string | null;
-  ram: string | null;
-  display: string | null;
-  color: string | null;
-  region: string | null;
+// WhatsApp Icon Component
+const WhatsAppIcon = () => (
+  <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
+    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/>
+  </svg>
+);
+
+// Custom debounce hook
+function useDebounce<T>(value: T, delay: number): T {
+  const [debouncedValue, setDebouncedValue] = useState<T>(value);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [value, delay]);
+
+  return debouncedValue;
+}
+
+// Type guard for Product
+const isProduct = (data: unknown): data is Product => {
+  return (
+    typeof data === 'object' &&
+    data !== null &&
+    'name' in data &&
+    'basePrice' in data &&
+    'storageConfigs' in data &&
+    'imageConfigs' in data
+  );
 };
 
-const Macbookdetails: React.FC = () => {
-  const { addOrder, clearOrder } = useOrderStore();
-  const router = useRouter();
+// Helper function to safely convert string prices to numbers (supports MongoDB numeric wrappers)
+const parsePrice = (price: unknown): number => {
+  // Handle undefined or null
+  if (price === undefined || price === null) return 0;
 
-  const { productName } = useParams() as { productName: string };
-  const [product, setProduct] = useState<Product | null>(null);
-  const [selectedOptions, setSelectedOptions] = useState<SelectedOptions>({
-    cpu: null,
-    gpu: null,
-    storage: null,
-    ram: null,
-    display: null,
-    color: null,
-    region: null,
-  });
-  const [totalPrice, setTotalPrice] = useState(0);
-  const [activeDetails, setActiveDetails] = useState<"default" | "second">("default");
-  const [addingToCart, setAddingToCart] = useState(false);
-  const [quantity, setQuantity] = useState(1);
+  // If it's already a number, return it
+  if (typeof price === 'number') return Math.max(0, price);
 
-  const { data, isLoading, error: queryError } = useQuery({
-    queryKey: ['macbook', productName],
-    enabled: !!productName,
-    queryFn: async () => {
-      const res = await axios.get<Product>("/api/getproduct/macbookdetails/product", { 
-        params: { name: productName } 
-      });
-      return res.data;
-    },
-    refetchOnWindowFocus: false,
-    staleTime: 5 * 60 * 1000,
-  });
-  
-  const errorMessage = queryError 
-    ? (queryError instanceof Error ? queryError.message : 'Failed to load product. Please try again.')
-    : null;
+  // If it's a string, trim and parse
+  if (typeof price === 'string') {
+    const trimmed = price.trim();
+    if (trimmed === '') return 0;
+    const cleanString = trimmed.replace(/[^\d.-]/g, '');
+    const parsed = parseFloat(cleanString);
+    return isNaN(parsed) ? 0 : Math.max(0, parsed);
+  }
 
-  // Initialize product and default options when data loads
-  useEffect(() => {
-    if (!data) return;
-    
-    setProduct(data);
-    const initialOptions: SelectedOptions = {
-      cpu: data.cpuCoreConfigs[0]?.id || null,
-      gpu: data.gpuCoreConfigs[0]?.id || null,
-      storage: data.storageConfigs[0]?.id || null,
-      ram: data.ramConfigs[0]?.id || null,
-      display: data.displayConfigs[0]?.id || null,
-      color: data.colorImageConfigs[0]?.id || null,
-      region: data.dynamicRegions[0]?.name || null,
-    };
-    setSelectedOptions(initialOptions);
-    
-    // Set initial active details based on default display
-    const defaultDisplay = data.displayConfigs[0];
-    if (defaultDisplay?.label.includes('13.6"')) {
-      setActiveDetails("default");
-    } else if (defaultDisplay?.label.includes('15.3"')) {
-      setActiveDetails("second");
-    }
-  }, [data]);
-
-  // Calculate total price whenever product, selected options, or quantity changes
-  useEffect(() => {
-    if (!product) return;
-
-    let price = parseFloat(product.basePrice);
-
-    const addOptionPrice = (
-      optionId: string | null,
-      options: OptionConfig[] | ColorConfig[] | RegionConfig[],
-      key: keyof SelectedOptions
-    ) => {
-      if (!optionId) return 0;
-      
-      const option = key === "region"
-        ? (options as RegionConfig[]).find((opt) => opt.name === optionId)
-        : (options as OptionConfig[] | ColorConfig[]).find((opt) => opt.id === optionId);
-      
-      return option ? parseFloat(option.price.toString()) : 0;
-    };
-
-    price += addOptionPrice(selectedOptions.cpu, product.cpuCoreConfigs, "cpu");
-    price += addOptionPrice(selectedOptions.gpu, product.gpuCoreConfigs, "gpu");
-    price += addOptionPrice(selectedOptions.storage, product.storageConfigs, "storage");
-    price += addOptionPrice(selectedOptions.ram, product.ramConfigs, "ram");
-    price += addOptionPrice(selectedOptions.display, product.displayConfigs, "display");
-    price += addOptionPrice(selectedOptions.color, product.colorImageConfigs, "color");
-    price += addOptionPrice(selectedOptions.region, product.dynamicRegions, "region");
-
-    // Multiply by quantity
-    price = price * quantity;
-
-    // Update active details based on selected display
-    const displayOption = product.displayConfigs.find((d) => d.id === selectedOptions.display);
-    if (displayOption?.label.includes('13.6"')) {
-      setActiveDetails("default");
-    } else if (displayOption?.label.includes('15.3"')) {
-      setActiveDetails("second");
-    }
-
-    setTotalPrice(price);
-  }, [product, selectedOptions, quantity]);
-
-  const handleOptionChange = (category: keyof SelectedOptions, value: string) => {
-    setSelectedOptions((prev) => ({ ...prev, [category]: value }));
-  };
-
-  // Quantity handlers
-  const increaseQuantity = () => {
-    setQuantity(prev => prev + 1);
-  };
-
-  const decreaseQuantity = () => {
-    setQuantity(prev => prev > 1 ? prev - 1 : 1);
-  };
-
-  const handleQuantityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = parseInt(e.target.value);
-    if (!isNaN(value) && value > 0) {
-      setQuantity(value);
-    }
-  };
-
-  // Helper function to get option label by ID
-  const getOptionLabel = (optionId: string | null, options: OptionConfig[]): string => {
-    if (!optionId) return '';
-    const option = options.find(opt => opt.id === optionId);
-    return option?.label || '';
-  };
-
-  // Helper function to get color name by ID
-  const getColorName = (colorId: string | null): string => {
-    if (!colorId || !product) return '';
-    const color = product.colorImageConfigs.find(c => c.id === colorId);
-    return color?.color || '';
-  };
-
-  const handleAddToCart = async () => {
-    if (!product) return;
-    
-    setAddingToCart(true);
+  // If it's an object, try to unwrap common MongoDB numeric wrappers
+  if (typeof price === 'object') {
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      
-      // Get selected option labels for display
-      const selectedRAM = getOptionLabel(selectedOptions.ram, product.ramConfigs);
-      const selectedStorage = getOptionLabel(selectedOptions.storage, product.storageConfigs);
-      // const selectedCPU = getOptionLabel(selectedOptions.cpu, product.cpuCoreConfigs);
-      // const selectedGPU = getOptionLabel(selectedOptions.gpu, product.gpuCoreConfigs);
-      // const selectedDisplay = getOptionLabel(selectedOptions.display, product.displayConfigs);
-      // const selectedColor = getColorName(selectedOptions.color);
-      // const selectedRegion = product.dynamicRegions.find(region => region.name === selectedOptions.region)?.name || '';
+      const p: any = price;
+      const candidates = [
+        p.$numberInt,
+        p.$numberDouble,
+        p.$numberLong,
+        p.$numberDecimal,
+        p.value,
+      ];
 
-      console.log("Adding to cart:", {
-        product: product.name,
-        options: selectedOptions,
-        totalPrice,
-        quantity,
-        RAM: selectedRAM,
-        storage: selectedStorage,
-      });
-
-      // Here you would typically call your cart API
-      alert(`Added ${quantity} item(s) to cart!`);
-    } catch (error) {
-      console.error("Error adding to cart:", error);
-      alert("Failed to add to cart. Please try again.");
-    } finally {
-      setAddingToCart(false);
+      for (const candidate of candidates) {
+        if (candidate === undefined || candidate === null) continue;
+        if (typeof candidate === 'number') return Math.max(0, candidate);
+        if (typeof candidate === 'string') {
+          const fromCandidate = parsePrice(candidate); // recursive call will handle string parsing
+          if (fromCandidate !== 0) return fromCandidate;
+        }
+      }
+    } catch (err) {
+      // ignore and fall through to return 0
     }
-  };
-
-  const handleShopNow = () => {
-    if (!product) return;
-
-    clearOrder();
-    
-    // Get the actual labels (GB values) for RAM and storage
-    const selectedRAM = getOptionLabel(selectedOptions.ram, product.ramConfigs) || 
-                       getOptionLabel(product.ramConfigs[0]?.id, product.ramConfigs) || 
-                       '';
-    
-    const selectedStorage = getOptionLabel(selectedOptions.storage, product.storageConfigs) || 
-                           getOptionLabel(product.storageConfigs[0]?.id, product.storageConfigs) || 
-                           '';
-    
-    const selectedDisplay = getOptionLabel(selectedOptions.display, product.displayConfigs) || 
-                           getOptionLabel(product.displayConfigs[0]?.id, product.displayConfigs) || 
-                           '';
-    
-    const selectedColor = getColorName(selectedOptions.color) || 
-                         getColorName(product.colorImageConfigs[0]?.id) || 
-                         '';
-    
-    const selectedRegion = selectedOptions.region || product.dynamicRegions[0]?.name || '';
-
-    // Get the selected color config
-    const selectedColorConfig = product.colorImageConfigs.find((opt) => opt.id === selectedOptions.color);
-    
-    // Get the image from selected color config or fallback to first color's image
-    const selectedImage = selectedColorConfig?.image || 
-                         product.colorImageConfigs[0]?.image || 
-                         '/placeholder-product.png';
-
-    addOrder({
-      productName: product.name,
-      image: selectedImage,
-      price: totalPrice,
-      RAM: selectedRAM,
-      quantity: quantity,
-      storage: selectedStorage,
-      display: selectedDisplay,
-      color: selectedColor,
-      region: selectedRegion,
-    });
-    
-    router.push(`/checkout`);
-
-    // Optional: Redirect to checkout or show confirmation
-    console.log("Order added:", {
-      productName: product.name,
-      image: selectedImage,
-      price: totalPrice,
-      quantity: quantity,
-      RAM: selectedRAM,
-      storage: selectedStorage,
-      display: selectedDisplay,
-      color: selectedColor,
-      region: selectedRegion,
-    });
-  };
-
-  const handleWhatApp = () => {
-    if (!product) return;
-
-    // Get the actual labels for better readability in WhatsApp message
-    const selectedRAM = getOptionLabel(selectedOptions.ram, product.ramConfigs);
-    const selectedStorage = getOptionLabel(selectedOptions.storage, product.storageConfigs);
-    const selectedCPU = getOptionLabel(selectedOptions.cpu, product.cpuCoreConfigs);
-    const selectedGPU = getOptionLabel(selectedOptions.gpu, product.gpuCoreConfigs);
-    const selectedDisplay = getOptionLabel(selectedOptions.display, product.displayConfigs);
-    const selectedColor = getColorName(selectedOptions.color);
-    const selectedRegion = product.dynamicRegions.find(region => region.name === selectedOptions.region)?.name || '';
-
-    const message = `Hi! I'm interested in ${product.name} with the following configuration:
-
-Product: ${product.name}
-${selectedCPU ? `Processor: ${selectedCPU}` : ''}
-${selectedGPU ? `Graphics: ${selectedGPU}` : ''}
-${selectedStorage ? `Storage: ${selectedStorage}` : ''}
-${selectedRAM ? `Memory: ${selectedRAM}` : ''}
-${selectedDisplay ? `Display: ${selectedDisplay}` : ''}
-${selectedColor ? `Color: ${selectedColor}` : ''}
-${selectedRegion ? `Region: ${selectedRegion}` : ''}
-Quantity: ${quantity}
-
-Total Price: ৳${totalPrice.toLocaleString()}
-
-Please let me know more details!`;
-    
-    const whatsappUrl = `https://wa.me/01343159931?text=${encodeURIComponent(message)}`;
-    window.open(whatsappUrl, '_blank');
-  };
-
-  // Loading state
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex justify-center items-center w-full">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-4 border-blue-600 border-t-transparent mx-auto mb-6"></div>
-          <h2 className="text-xl font-semibold text-gray-800 mb-2">Loading Product</h2>
-          <p className="text-gray-600">Please wait while we fetch the details...</p>
-        </div>
-      </div>
-    );
   }
 
-  // Error state
-  if (queryError) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex justify-center items-center">
-        <div className="text-center max-w-md mx-auto px-4">
-          <div className="bg-red-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-6">
-            <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
-            </svg>
-          </div>
-          <h2 className="text-xl font-semibold text-gray-800 mb-2">Oops! Something went wrong</h2>
-          <p className="text-gray-600 mb-6">{errorMessage}</p>
-          <button
-            onClick={() => window.location.reload()}
-            className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-          >
-            Try Again
-          </button>
-        </div>
-      </div>
-    );
-  }
+  // Fallback
+  return 0;
+};
 
+// Price Breakdown Component
+const PriceBreakdown = ({ 
+  product, 
+  basePrice, 
+  selectedStorage, 
+  selectedColor, 
+  selectedDynamicInputs, 
+  quantity 
+}: {
+  product: Product | null;
+  basePrice: number;
+  selectedStorage: string;
+  selectedColor: string;
+  selectedDynamicInputs: {[key: string]: string};
+  quantity: number;
+}) => {
   if (!product) return null;
 
-  const selectedColorConfig = product.colorImageConfigs.find((opt) => opt.id === selectedOptions.color);
+  // Calculate individual components
+  const breakdown = {
+    base: basePrice,
+    storage: 0,
+    color: 0,
+    dynamic: 0
+  };
 
-  // Helper component for option selection
-  const OptionButton = ({
-    option,
-    category,
-    isSelected,
-    showPrice = true,
-  }: {
-    option: OptionConfig | RegionConfig;
-    category: keyof SelectedOptions;
-    isSelected: boolean;
-    showPrice?: boolean;
-  }) => (
-    <button
-      type="button"
-      onClick={() => handleOptionChange(category, "id" in option ? option.id : option.name)}
-      className={`w-full p-2 max-sm:text-[12px] font text-left border rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
-        isSelected
-          ? "border-gray-600 bg-gray-50 shadow-md"
-          : "border-gray-200 bg-white hover:border-blue-300 hover:shadow-sm"
-      }`}
-      aria-pressed={isSelected}
-    >
-      <div className="font-medium text-gray-900">{"label" in option ? option.label : option.name}</div>
-      {showPrice && option.price > 0 && (
-        <div className="text-sm text-blue-600 mt-1 font-medium">+${option.price.toLocaleString()}</div>
-      )}
-    </button>
-  );
+  // Storage basic price
+  if (selectedStorage && product.storageConfigs) {
+    const storageConfig = product.storageConfigs.find(config => 
+      config.shortDetails === selectedStorage
+    );
+    if (storageConfig && storageConfig.basicPrice) {
+      breakdown.storage = parsePrice(storageConfig.basicPrice);
+    }
+  }
+
+  // Color-specific price
+  if (selectedStorage && selectedColor && product.storageConfigs && product.imageConfigs) {
+    const storageConfig = product.storageConfigs.find(config => 
+      config.shortDetails === selectedStorage
+    );
+    const colorConfig = product.imageConfigs.find(config => 
+      config.colorName === selectedColor
+    );
+    
+    if (storageConfig && colorConfig && storageConfig.prices) {
+      const colorId = colorConfig.id.$numberDouble;
+      storageConfig.prices.forEach(priceObj => {
+        Object.entries(priceObj).forEach(([key, value]) => {
+          if (key === colorId) {
+            breakdown.color += parsePrice(value);
+          }
+        });
+      });
+    }
+  }
+
+  // Dynamic inputs prices
+  if (product.dynamicInputs) {
+    Object.values(selectedDynamicInputs).forEach(itemLabel => {
+      for (const group of product.dynamicInputs) {
+        const item = group.items.find(item => item.label === itemLabel);
+        if (item) {
+          breakdown.dynamic += parsePrice(item.price);
+          break;
+        }
+      }
+    });
+  }
+
+  const unitPrice = breakdown.base + breakdown.storage + breakdown.color + breakdown.dynamic;
+  const total = unitPrice * quantity;
 
   return (
-    <div className="min-h-screen bg-gray-50 w-full">
-      <div className="container mx-auto px-4 py-8 max-w-7xl">
-        <div className="text-center mb-12 max-sm:mb-0">
-          <h1 className="text-4xl md:text-5xl font-bold mb-2 max-sm:mb-0 max-sm:text-2xl text-gray-900">
-            {product.name}
-          </h1>
-        </div>
+    <div className="space-y-2">
+      {/* Base Price */}
+     
 
-        <div className="grid lg:grid-cols-2 gap-12">
-          {/* Product Image */}
-          <div className="order-1 lg:order-1">
-            <div className="rounded-2xl flex items-center justify-center overflow-hidden">
-              {selectedColorConfig?.image ? (
-                <Image
-                  src={selectedColorConfig.image}
-                  alt={`${product.name} in ${selectedColorConfig.color}`}
-                  className="h-full object-contain transition-opacity duration-300 max-sm:w-[200px] max-sm:h-[200px]"
-                  width={500}
-                  height={500}
-                  priority
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).src = "/placeholder-product.png";
-                  }}
-                />
-              ) : (
-                <div className="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg flex items-center justify-center">
-                  <div className="text-center">
-                    <div className="w-16 h-16 bg-gray-300 rounded-lg mx-auto mb-4 flex items-center justify-center">
-                      <svg className="w-8 h-8 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                      </svg>
-                    </div>
-                    <span className="text-gray-500 text-lg">Image not available</span>
-                  </div>
-                </div>
-              )}
-            </div>
-            
-            {/* Color Selection */}
-            <div className="mb-2">
-              <div className="flex flex-wrap gap-4 mt-4 max-sm:mt-2 justify-center">
-                {product.colorImageConfigs.map((color) => (
-                  <div key={color.id} className="text-center">
-                    <button
-                      type="button"
-                      onClick={() => handleOptionChange("color", color.id)}
-                      className={`relative border-4 rounded-xl transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
-                        selectedOptions.color === color.id 
-                          ? "border-gray-600 shadow-lg transform scale-110" 
-                          : "border-gray-300 hover:border-gray-400 hover:shadow-md hover:scale-105"
-                      }`}
-                      title={color.color}
-                      aria-label={`Select ${color.color} color`}
-                    >
-                      <div
-                        className="w-14 h-14 max-sm:h-10 max-sm:w-10 rounded-lg shadow-inner transition-all duration-200"
-                        style={{ backgroundColor: color.color }}
-                      />
-                      {selectedOptions.color === color.id && (
-                        <div className="absolute inset-0 flex items-center justify-center">
-                          <div className="bg-white bg-opacity-30 rounded-full p-1">
-                            <svg 
-                              className="w-6 h-6 max-sm:w-4 max-sm:h-4 text-white drop-shadow-lg" 
-                              fill="currentColor" 
-                              viewBox="0 0 20 20"
-                            >
-                              <path 
-                                fillRule="evenodd" 
-                                d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" 
-                                clipRule="evenodd" 
-                              />
-                            </svg>
-                          </div>
-                        </div>
-                      )}
-                    </button>
-                    
-                    <div className="text-xs text-gray-600 mt-1 max-w-16 truncate">
-                      {color.color}
-                    </div>
-                    
-                    {color.price > 0 && (
-                      <div className="text-sm text-blue-600 font-medium mt-1">
-                        +৳{color.price.toLocaleString()}
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-          
-          {/* Product Configuration */}
-          <div className="order-2 lg:order-2 max-sm:mt-[-15px]">
-            <div className="border-t border-gray-200">
-              <div className="bg-gray-50 rounded-xl p-4 mb-2">
-                <div className="flex justify-between items-center">
-                  <span className="text-xl font-semibold text-gray-700 max-sm:text-[15px]">Total Price:</span>
-                  <span className="text-xl font-medium text-gray-900 max-sm:text-[15px]">
-                    ৳{totalPrice.toLocaleString()}
-                  </span>
-                </div>
-                <div className="text-sm text-gray-500 mt-2">
-                  Starting at ৳{parseFloat(product.basePrice).toLocaleString()}
-                </div>
-              </div>
+      {/* Storage Price */}
+     
+      
 
-              {/* Quantity Selector */}
-              <div className="bg-white rounded-xl p-4 mb-4 shadow-sm border border-gray-200">
-                <h3 className="text-base font-medium max-sm:text-[12px] mb-3 text-gray-900 flex items-center">
-                  Quantity
-                </h3>
-                <div className="flex items-center justify-between max-w-xs">
-                  <button
-                    onClick={decreaseQuantity}
-                    disabled={quantity <= 1}
-                    className={`p-2 rounded-full border border-gray-300 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
-                      quantity <= 1 
-                        ? "bg-gray-100 text-gray-400 cursor-not-allowed" 
-                        : "bg-white text-gray-700 hover:bg-gray-50 hover:border-gray-400"
-                    }`}
-                    aria-label="Decrease quantity"
-                  >
-                    <Minus className="w-4 h-4" />
-                  </button>
-                  
-                  <input
-                    type="number"
-                    value={quantity}
-                    onChange={handleQuantityChange}
-                    min="1"
-                    max="100"
-                    className="w-16 text-center border-0 text-lg font-medium text-gray-900 focus:outline-none focus:ring-0 bg-transparent"
-                  />
-                  
-                  <button
-                    onClick={increaseQuantity}
-                    className="p-2 rounded-full border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 hover:border-gray-400 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-                    aria-label="Increase quantity"
-                  >
-                    <Plus className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
+      {/* Color Price */}
+     
 
-              {/* Button Group */}
-              <div className="space-y-4">
-                {/* Secondary Action Buttons */}
-                <div className="grid grid-cols-2 gap-4">
-                  {/* Shop Now Button */}
-                  <button
-                    onClick={handleShopNow}
-                    className="py-2 px-6 font-medium text-base rounded-full border border-gray-300 text-black active:transform active:scale-[0.98] shadow-lg hover:shadow-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-                  >
-                    <span className="flex items-center justify-center">
-                      <ShopNowLogo />
-                      <span className="max-sm:text-[12px]">Order Now</span>   
-                    </span>
-                  </button>
-                  
-                  {/* Add to Cart Button */}
-                  <button
-                    onClick={handleAddToCart}
-                    disabled={addingToCart}
-                    className={`w-full py-2 px-6 font-medium border border-gray-300 rounded-full transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
-                      addingToCart
-                        ? "bg-gray-400 text-gray-600 cursor-not-allowed"
-                        : "text-black hover:bg-white active:transform active:scale-[0.98] shadow-lg hover:shadow-xl"
-                    }`}
-                  >
-                    {addingToCart ? (
-                      <span className="flex items-center justify-center">
-                        <div className="animate-spin rounded-full h-5 w-5 border-2 border-gray-600 border-t-transparent mr-3"></div>
-                        Adding to Bag...
-                      </span>
-                    ) : (
-                      <span className="flex items-center justify-center">
-                        <ShoppingCart className="w-4 h-4 mr-2" />
-                        <span className="max-sm:text-[12px]">Add to Bag</span>
-                      </span>
-                    )}
-                  </button>
-                </div>
-                
-                {/* WhatsApp Button */}
-                <button
-                  onClick={handleWhatApp}
-                  className="py-2 px-6 font-semibold text-base w-full rounded-full text-green-600 active:transform active:scale-[0.98] hover:shadow-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-offset-2 mb-4 border-2 border-gray-200"
-                >
-                  <span className="flex items-center justify-center w-full">
-                    <WhatsappLogo />
-                    <span className="max-sm:text-[12px]">WhatsApp</span>   
-                  </span>
-                </button>
-              </div>
-              
-              <div className="bg-white rounded-2xl shadow-xl p-8 mt-4">
-                {/* Display Options */}
-                <div className="mb-2">
-                  <h3 className="text-base font-medium max-sm:text-[12px] mb-2 text-gray-900 flex items-center">
-                    <svg className="w-4 h-4 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                    </svg>
-                    Display
-                  </h3>
-                  <div className="grid grid-cols-2 gap-2">
-                    {product.displayConfigs.map((display) => (
-                      <OptionButton
-                        key={display.id}
-                        option={display}
-                        category="display"
-                        isSelected={selectedOptions.display === display.id}
-                        showPrice={false}
-                      />
-                    ))}
-                  </div>
-                </div>
-                
-                {/* Performance Options */}
-                <div className="grid md:grid-cols-3 gap-6 mb-4">
-                  {/* CPU */}
-                  <div>
-                    <h3 className="text-base font-medium max-sm:text-[12px] mb-2 text-gray-900 flex items-center">
-                      <svg className="w-5 h-5 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                      </svg>
-                      Processor
-                    </h3>
-                    <div className="space-y-2">
-                      {product.cpuCoreConfigs.map((cpu) => (
-                        <OptionButton
-                          key={cpu.id}
-                          option={cpu}
-                          category="cpu"
-                          isSelected={selectedOptions.cpu === cpu.id}
-                          showPrice={false}
-                        />
-                      ))}
-                    </div>
-                  </div>
+      {/* Dynamic Inputs Prices */}
+     
+      {/* Unit Price */}
+     
 
-                  {/* GPU */}
-                  <div>
-                    <h3 className="text-base font-medium max-sm:text-[12px] text-gray-900 flex mb-2 items-center">
-                      <svg className="w-5 h-5 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 4V2a1 1 0 011-1h8a1 1 0 011 1v2m0 0V3a1 1 0 011 1v8a1 1 0 01-1 1M7 4V3a1 1 0 00-1 1v8a1 1 0 001 1m0 0v2a1 1 0 001 1h8a1 1 0 001-1v-2M7 14h10" />
-                      </svg>
-                      Graphics
-                    </h3>
-                    <div className="grid grid-cols-1 max-sm:grid-cols-2 gap-2">
-                      {product.gpuCoreConfigs.map((gpu) => (
-                        <OptionButton
-                          key={gpu.id}
-                          option={gpu}
-                          category="gpu"
-                          isSelected={selectedOptions.gpu === gpu.id}
-                          showPrice={false}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                </div>
+      {/* Quantity and Total */}
+     
 
-                {/* Storage & RAM Options */}
-                <div className="grid md:grid-cols-2 gap-6">
-                  {/* Storage */}
-                  <div>
-                    <h3 className="text-base font-medium max-sm:text-[12px] mb-2 text-gray-900 flex items-center">
-                      <svg className="w-5 h-5 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4" />
-                      </svg>
-                      Storage
-                    </h3>
-                    <div className="grid grid-cols-3 max-sm:grid-cols-3 gap-2">
-                      {product.storageConfigs.map((storage) => (
-                        <OptionButton
-                          key={storage.id}
-                          option={storage}
-                          category="storage"
-                          isSelected={selectedOptions.storage === storage.id}
-                          showPrice={false}
-                        />
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* RAM */}
-                  <div>
-                    <h3 className="text-base font-medium max-sm:text-[12px] mb-2 text-gray-900 flex items-center">
-                      <svg className="w-5 h-5 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                      </svg>
-                      Memory
-                    </h3>
-                    <div className="grid grid-cols-4 gap-2">
-                      {product.ramConfigs.map((ram) => (
-                        <OptionButton
-                          key={ram.id}
-                          option={ram}
-                          category="ram"
-                          isSelected={selectedOptions.ram === ram.id}
-                          showPrice={false}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Region Options */}
-                <div className="mt-4">
-                  <h3 className="text-base font-medium max-sm:text-[12px] mb-2 text-gray-900 flex items-center">
-                    <svg className="w-4 h-4 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                    </svg>
-                    Region
-                  </h3>
-                  <div className="grid grid-cols-2 max-sm:grid-cols-3 gap-2">
-                    {product.dynamicRegions.map((region) => (
-                      <OptionButton
-                        key={region.name}
-                        option={region}
-                        category="region"
-                        isSelected={selectedOptions.region === region.name}
-                        showPrice={false}
-                      />
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Product Details Tabs */}
-        <div className="mt-20">
-          <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
-            <div className="px-8 pt-8">
-              <h2 className="text-3xl max-sm:text-xl font-bold max-sm:font-medium mb-6 text-gray-900">
-                Technical Specifications
-              </h2>
-              <div className="flex border-b border-gray-200">
-                <button
-                  className={`py-4 px-6 font-semibold max-sm:text-[13px] border-b-2 transition-all duration-200 focus:outline-none ${
-                    activeDetails === "default" 
-                      ? "border-black text-black" 
-                      : "border-transparent text-gray-600 hover:text-gray-900 hover:border-gray-300"
-                  }`}
-                  onClick={() => setActiveDetails("default")}
-                >
-                  Model Specifications
-                </button>
-                <button
-                  className={`py-4 px-6 font-semibold max-sm:text-[13px] border-b-2 transition-all duration-200 focus:outline-none ${
-                    activeDetails === "second" 
-                      ? "border-black text-black" 
-                      : "border-transparent text-gray-600 hover:text-gray-900 hover:border-gray-300"
-                  }`}
-                  onClick={() => setActiveDetails("second")}
-                >
-                  Model Specifications
-                </button>
-              </div>
-            </div>
-
-            <div className="p-8">
-              <div className="grid lg:grid-cols-2 gap-8">
-                {activeDetails === "default" ? (
-                  <div className="space-y-1">
-                    {product.details.map((detail, index) => (
-                      <div 
-                        key={detail.id} 
-                        className={`flex py-3 px-4 rounded-lg ${index % 2 === 0 ? 'bg-gray-50' : 'bg-white'}`}
-                      >
-                        <span className="font max-sm:text-[12px] text-gray-600 w-48 flex-shrink-0">
-                          {detail.label}:
-                        </span>
-                        <span className="text-gray-900 max-sm:text-[10px]">{detail.value}</span>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="space-y-1">
-                    {product.secondDetails.map((detail, index) => (
-                      <div 
-                        key={detail.id} 
-                        className={`flex py-3 px-4 rounded-lg ${index % 2 === 0 ? 'bg-gray-50' : 'bg-white'}`}
-                      >
-                        <span className="text-gray-600 w-48 max-sm:text-[12px] flex-shrink-0">
-                          {detail.seconddetails}:
-                        </span>
-                        <span className="text-gray-900 max-sm:text-[10px]">{detail.value}</span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
+      {/* Total Price */}
+      <div className="flex items-baseline justify-between pt-2 border-t">
+        <p className="text-lg font-bold">Total Amount</p>
+        <p className="text-2xl font-bold text-black">৳{total.toFixed(2)}</p>
       </div>
     </div>
   );
 };
 
-export default Macbookdetails;
+export default function Page() {
+  const { addOrder , clearOrder} = useOrderStore();
+    const { toggleSidebar } = useSidebarStore();
+  
+  const { addOrderbag } = useaddtobagStore();
+  const params = useParams();
+  const router = useRouter();
+  const productName = params?.productName as string | undefined;
+  
+  const [product, setProduct] = useState<Product | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [selectedStorage, setSelectedStorage] = useState<string>('');
+  const [selectedStorageDetails, setSelectedStorageDetails] = useState<string>('');
+  const [selectedColor, setSelectedColor] = useState<string>('');
+  const [selectedDynamicInputs, setSelectedDynamicInputs] = useState<{[key: string]: string}>({});
+  const [quantity, setQuantity] = useState<number>(1);
+  const [isAddingToBag, setIsAddingToBag] = useState<boolean>(false);
+  const [isOrdering, setIsOrdering] = useState<boolean>(false);
+  const [isWhatsAppOrdering, setIsWhatsAppOrdering] = useState<boolean>(false);
+  const [stockStatus, setStockStatus] = useState<{[key: string]: string}>({});
+  const [retryCount, setRetryCount] = useState<number>(0);
+  
+  // Notify dialog states
+  const [isNotifyDialogOpen, setIsNotifyDialogOpen] = useState<boolean>(false);
+  const [notifyName, setNotifyName] = useState<string>('');
+  const [notifyEmail, setNotifyEmail] = useState<string>('');
+  const [notifyNumber, setNotifyNumber] = useState<string>('');
+
+  // CONFIGURE YOUR CONTACT DETAILS HERE
+  const WHATSAPP_NUMBER = '8801234567890';
+
+  // Debounce rapid selections
+  const debouncedDynamicInputs = useDebounce(selectedDynamicInputs, 300);
+  const debouncedSelectedStorage = useDebounce(selectedStorage, 300);
+  const debouncedSelectedColor = useDebounce(selectedColor, 300);
+
+  // Get base price as number
+  const basePriceNumber = useMemo(() => {
+      if (!product) return 0;
+  const basePrice = parsePrice(product.basePrice);
+  console.log('Base Price:', basePrice);
+  return basePrice;;
+  }, [product]);
+
+  // Get price for selected storage and color - UPDATED VERSION
+  const getAdditionalPrice = useMemo(() => {
+    if (!product) return 0;
+    
+    let additionalPrice = 0;
+    
+    // Storage basic price
+    if (debouncedSelectedStorage && product.storageConfigs) {
+      const storageConfig = product.storageConfigs.find(config => 
+        config.shortDetails === debouncedSelectedStorage
+      );
+      
+      if (storageConfig?.basicPrice) {
+        additionalPrice += parsePrice(storageConfig.basicPrice);
+      }
+    }
+    
+    // Storage + Color combination price
+    if (debouncedSelectedStorage && selectedColor && product.storageConfigs && product.imageConfigs) {
+      const storageConfig = product.storageConfigs.find(config => 
+        config.shortDetails === debouncedSelectedStorage
+      );
+      
+      const colorConfig = product.imageConfigs.find(config => 
+        config.colorName === selectedColor
+      );
+      
+      if (storageConfig?.prices && colorConfig) {
+        const colorId = colorConfig.id.$numberDouble;
+        
+        // Look through all price objects to find one with our color ID
+        storageConfig.prices.forEach(priceObj => {
+          if (priceObj && typeof priceObj === 'object') {
+            Object.entries(priceObj).forEach(([key, value]) => {
+              // Compare as strings since both are strings
+              if (key === colorId && value !== undefined) {
+                additionalPrice += parsePrice(value);
+              }
+            });
+          }
+        });
+      }
+    }
+    
+    // Dynamic inputs prices
+    if (product.dynamicInputs) {
+      Object.values(debouncedDynamicInputs).forEach(itemLabel => {
+        for (const group of product.dynamicInputs) {
+          const item = group.items?.find(item => item.label === itemLabel);
+          if (item?.price) {
+            additionalPrice += parsePrice(item.price);
+            break;
+          }
+        }
+      });
+    }
+    
+    return additionalPrice;
+  }, [product, debouncedSelectedStorage, selectedColor, debouncedDynamicInputs]);
+
+  // Calculate total price with memoization (including quantity)
+  const totalPrice = useMemo(() => {
+    if (!product) return 0;
+    
+    const basePrice = basePriceNumber;
+    const additionalPrice = getAdditionalPrice;
+    
+    return (basePrice + additionalPrice) * quantity;
+  }, [product, basePriceNumber, getAdditionalPrice, quantity]);
+
+  // Get stock status
+  const getStockStatus = useMemo(() => {
+    if (!product) return {};
+    
+    const status: {[key: string]: string} = {};
+    
+    // Check storage stock
+    if (product.storageConfigs) {
+      const selectedStorageItem = product.storageConfigs.find(config => 
+        config.shortDetails === selectedStorage
+      );
+      if (selectedStorageItem && !selectedStorageItem.inStock) {
+        status.storage = 'Out of Stock';
+      }
+    }
+    
+    // Check color stock
+    if (product.imageConfigs) {
+      const selectedColorItem = product.imageConfigs.find(config => 
+        config.colorName === selectedColor
+      );
+      if (selectedColorItem && !selectedColorItem.inStock) {
+        status.color = 'Out of Stock';
+      }
+    }
+    
+    // Check dynamic inputs stock
+    if (product.dynamicInputs) {
+      Object.entries(selectedDynamicInputs).forEach(([groupType, itemLabel]) => {
+        const group = product.dynamicInputs.find(input => input.type === groupType);
+        if (group) {
+          const item = group.items.find(item => item.label === itemLabel);
+          if (item && !item.inStock) {
+            status[groupType] = 'Out of Stock';
+          }
+        }
+      });
+    }
+    
+    return status;
+  }, [product, selectedStorage, selectedColor, selectedDynamicInputs]);
+
+  // Check if any selected item is out of stock
+  const isAnyItemOutOfStock = useMemo(() => {
+    return Object.values(getStockStatus).some(status => status === 'Out of Stock');
+  }, [getStockStatus]);
+
+  // Check if storage is in stock
+  const isStorageInStock = useMemo(() => {
+    const selectedStorageItem = product?.storageConfigs?.find(config => 
+      config.shortDetails === selectedStorage
+    );
+    return selectedStorageItem?.inStock ?? true;
+  }, [product, selectedStorage]);
+
+  // Handle quantity changes
+  const handleQuantityChange = (newQuantity: number) => {
+    if (newQuantity < 1) return;
+    // Check if there's a max pre-order quantity limit
+    if (product?.preOrderConfig?.isPreOrder && product.preOrderConfig.maxPreOrderQuantity?.$numberInt !== "0") {
+      const maxQty = parseInt(product.preOrderConfig.maxPreOrderQuantity.$numberInt) || 99;
+      if (newQuantity > maxQty) return;
+    }
+    setQuantity(newQuantity);
+  };
+
+  useEffect(() => {
+    if (!productName) return;
+
+    const fetchProduct = async () => {
+      try {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URI}/macbooklist/getBySlug/${productName}`);
+        console.log('Fetch response:', response);
+        if (!response.ok) {
+          throw new Error('Failed to fetch product');
+        }
+        const data = await response.json();
+        console.log('Fetched product data:', data);
+        
+        if (!isProduct(data)) {
+          throw new Error('Invalid product data format');
+        }
+        
+        setProduct(data);
+        setError(null);
+        
+        // Set default selections
+        if (data.storageConfigs?.[0]) {
+          setSelectedStorage(data.storageConfigs[0].shortDetails);
+          setSelectedStorageDetails(data.storageConfigs[0].shortDetails);
+        }
+        if (data.imageConfigs?.[0]) setSelectedColor(data.imageConfigs[0].colorName);
+        
+        // Set default dynamic inputs
+        const defaultSelections: {[key: string]: string} = {};
+        
+        data.dynamicInputs?.forEach((group: DynamicInput) => {
+          if (group.items?.[0]) {
+            defaultSelections[group.type] = group.items[0].label;
+          }
+        });
+        
+        setSelectedDynamicInputs(defaultSelections);
+      } catch (err) {
+        if (err instanceof Error) {
+          setError(err.message);
+        } else {
+          setError('An unknown error occurred');
+        }
+      }
+    };
+
+    fetchProduct();
+  }, [productName, retryCount]);
+
+  const handleStorageSelect = (config: StorageConfig) => {
+    setSelectedStorage(config.shortDetails);
+    setSelectedStorageDetails(config.shortDetails);
+  };
+
+  const notify = () => {
+    setIsNotifyDialogOpen(true);
+  };
+
+  const handleNotifySubmit = async () => {
+    // Prepare the notification data
+    const notifyData = {
+      name: notifyName,
+      email: notifyEmail,
+      phone: notifyNumber,
+      product: product?.name,
+      productId: product?._id.$oid,
+      selectedOptions: {
+        storage: selectedStorage,
+        color: selectedColor,
+        dynamicInputs: selectedDynamicInputs,
+        quantity: quantity
+      },
+      totalPrice: totalPrice,
+      timestamp: new Date().toISOString()
+    };
+
+    try {
+      const response = await fetch('/api/notifypost', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(notifyData),
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to save notification');
+      }
+
+const notify = () => toast('Here is your toast.');
+      
+    } catch (error) {
+      console.error('❌ Error saving notification:', error);
+    }
+
+    // Reset form and close dialog
+    setNotifyName('');
+    setNotifyEmail('');
+    setNotifyNumber('');
+    setIsNotifyDialogOpen(false);
+    
+    alert('Thank you! We will notify you when this product is back in stock!');
+  };
+
+  const handleDynamicInputSelect = (groupType: string, itemLabel: string, inStock: boolean) => {
+    
+    // Update selected item
+    setSelectedDynamicInputs(prev => ({
+      ...prev,
+      [groupType]: itemLabel
+      
+    }));
+  };
+
+  const handleAddToBag = async () => {
+    if (isAnyItemOutOfStock) {
+      alert('Cannot add out of stock items to bag');
+      return;
+    }
+    
+    setIsAddingToBag(true);
+    
+    // Prepare order data
+    const orderData = {
+      productId: product?._id?.$oid,
+      productName: product?.name,
+      storage: selectedStorage,
+      color: selectedColor,
+      dynamicInputs: selectedDynamicInputs,
+      totapricelPrice: totalPrice,
+      quantity: quantity
+    };
+
+    
+
+    // Ensure we use a valid image URL (prefer selected color image, fallback to first image or empty string)
+    const selectedImage = product?.imageConfigs?.find(cfg => cfg.colorName === selectedColor)?.image
+      || product?.imageConfigs?.[0]?.image
+      || '';
+
+      // const id = parseInt(product?._id)
+      
+      const date = new Date();
+
+  // Format date and time: YYYYMMDDTHHMMSS
+  const dateTimeStr = date.toISOString().replace(/[-:T.Z]/g, "").slice(0, 14);
+
+  // Generate random 6-character string
+  const randomPart = Math.random().toString(36).substring(2, 8).toUpperCase();
+
+  // Combine date-time and random string
+  const randomId = `${dateTimeStr}-${randomPart}`;
+  const id = parseInt(randomId)
+    addOrderbag({
+      productId: id,
+      image : selectedImage,
+      productName: product?.name || '',
+      storage: selectedStorage,
+      color: selectedColor,
+      dynamicInputs: selectedDynamicInputs,
+      price: totalPrice || 0,
+      quantity: quantity
+    });
+
+    console.log(selectedStorage)
+
+    try {
+      
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+    } catch (error) {
+      console.error('Error adding to bag:', error);
+      alert('Failed to add to bag. Please try again.');
+    } finally {
+      setIsAddingToBag(false);
+    }
+  };
+
+  
+
+  const handleOrderNow = async () => {
+    if (isAnyItemOutOfStock) {
+      alert('Cannot order out of stock items');
+      return;
+    }
+    
+    setIsOrdering(true);
+  // Prepare order data
+  const orderData = {
+    productId: product?._id.$oid,
+    productName: product?.name,
+    storage: selectedStorage,
+    color: selectedColor,
+    dynamicInputs: selectedDynamicInputs,
+    totalPrice: totalPrice,
+    quantity: quantity
+  };
+
+  // Ensure we use a valid image URL (prefer selected color image, fallback to first image or empty string)
+  const selectedImage = product?.imageConfigs?.find(cfg => cfg.colorName === selectedColor)?.image
+    || product?.imageConfigs?.[0]?.image
+    || '';
+
+  clearOrder();
+  addOrder({
+    productName: product?.name || '',
+    price: totalPrice,
+    color: selectedColor,
+    image: selectedImage,
+    quantity: quantity,
+    storage: selectedStorage,
+    productId: product?._id.$oid || '',
+    dynamicInputs: selectedDynamicInputs
+  });
+  router.push('/checkout');
+        router.push("/checkout");
+
+
+    try {
+      console.log('Creating order:', orderData);
+      
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      alert('Proceeding to checkout...');
+    } catch (error) {
+      console.error('Error creating order:', error);
+      alert('Failed to create order. Please try again.');
+    } finally {
+      setIsOrdering(false);
+    }
+  };
+
+  const handleWhatsAppOrder = async () => {
+    if (isAnyItemOutOfStock) {
+      alert('Cannot order out of stock items');
+      return;
+    }
+    
+    setIsWhatsAppOrdering(true);
+    
+    try {
+      // Get selected color details
+      const selectedColorConfig = product?.imageConfigs.find(config => config.colorName === selectedColor);
+      
+      // Prepare comprehensive order details
+      const orderDetails = `
+🛒 *ORDER REQUEST - ${product?.name}*
+
+📦 *Product Details:*
+• Product: ${product?.name}
+• Storage: ${selectedStorage}
+• Color: ${selectedColor} ${selectedColorConfig?.colorHex ? `(${selectedColorConfig.colorHex})` : ''}
+• Quantity: ${quantity}
+
+⚙️ *Selected Options:*
+${Object.entries(selectedDynamicInputs).map(([key, value]) => `• ${key.charAt(0).toUpperCase() + key.slice(1)}: ${value}`).join('\n')}
+
+💰 *Pricing Breakdown:*
+• Base Price: ৳${basePriceNumber.toFixed(2)}
+• Additional Charges: ৳${getAdditionalPrice.toFixed(2)}
+• Unit Price: ৳{(totalPrice / quantity).toFixed(2)}
+• Quantity: ${quantity}
+• *Total Amount: ৳${totalPrice.toFixed(2)}*
+
+📋 *Please provide your details:*
+• Full Name:
+• Phone Number:
+• Delivery Address:
+• Preferred Delivery Date:
+
+Thank you! 🎉
+      `.trim();
+
+      // Encode the message for WhatsApp URL
+      const encodedMessage = encodeURIComponent(orderDetails);
+      
+      // Create WhatsApp URL
+      const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodedMessage}`;
+      
+      // Open WhatsApp in new tab
+      window.open(whatsappUrl, '_blank');
+      
+      // Optional: Track WhatsApp orders
+      console.log('WhatsApp order initiated:', {
+        product: product?.name,
+        storage: selectedStorage,
+        color: selectedColor,
+        quantity: quantity,
+        totalPrice: totalPrice
+      });
+      
+    } catch (error) {
+      console.error('Error preparing WhatsApp order:', error);
+      alert('Failed to open WhatsApp. Please try again.');
+    } finally {
+      setIsWhatsAppOrdering(false);
+    }
+  };
+
+  // Floating chat handlers
+  const handleFloatingWhatsAppClick = () => {
+    const message = encodeURIComponent('Hi! I need help with a product.');
+    window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${message}`, '_blank');
+  };
+
+  // Loading state
+  if (!product && !error) return (
+    <div className="container mx-auto px-4 py-8">
+      <div className="animate-pulse">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* Image skeleton */}
+          <div className="space-y-4">
+            <div className="bg-gray-200 h-96 rounded-lg"></div>
+            <div className="flex gap-3 justify-center">
+              <div className="w-5 h-5 bg-gray-200 rounded-full"></div>
+              <div className="w-5 h-5 bg-gray-200 rounded-full"></div>
+              <div className="w-5 h-5 bg-gray-200 rounded-full"></div>
+            </div>
+          </div>
+          
+          {/* Content skeleton */}
+          <div className="space-y-6">
+            <div>
+              <div className="bg-gray-200 h-8 rounded w-3/4 mb-2"></div>
+              <div className="bg-gray-200 h-6 rounded w-1/4"></div>
+            </div>
+            
+            <div className="bg-gray-200 h-12 rounded"></div>
+            
+            <div className="grid grid-cols-2 gap-2">
+              <div className="bg-gray-200 h-32 rounded"></div>
+              <div className="bg-gray-200 h-32 rounded"></div>
+            </div>
+            
+            <div className="bg-gray-200 h-48 rounded"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  // Error state
+  if (error) return (
+    <div className="container mx-auto px-4 py-8 text-center">
+      <Alert variant="destructive" className="mb-4 max-w-md mx-auto">
+        <AlertDescription>Error: {error}</AlertDescription>
+      </Alert>
+      <Button 
+        onClick={() => { 
+          setError(null); 
+          setRetryCount(prev => prev + 1); 
+        }}
+        className="bg-black hover:bg-gray-800 text-white"
+      >
+        Retry Loading
+      </Button>
+    </div>
+  );
+  
+  if (!product) return (
+    <div className="container mx-auto px-4 py-8 text-center">
+      <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-current border-r-transparent"></div>
+      <p className="mt-4 text-muted-foreground">Loading...</p>
+    </div>
+  );
+
+  return (
+    <div className="container mx-auto px-4 py-8 max-w-7xl">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Product Image Section */}
+        <div className="space-y-4">
+          <Card className="overflow-hidden border-0 shadow-lg">
+            <CardContent className="p-0">
+              <Image
+                src={product.imageConfigs.find(config => config.colorName === selectedColor)?.image || product.imageConfigs[0]?.image || '/placeholder-image.jpg'}
+                alt={product.name}
+                width={600}
+                height={600}
+                className="w-full h-auto object-cover"
+                priority
+              />
+            </CardContent>
+          </Card>
+          
+          {/* Color Selection */}
+          <div className="flex gap-3 justify-center items-center">
+            {product.imageConfigs?.map(config => (
+              <button
+                key={config._id.$oid}
+                className={`relative w-5 h-5 rounded-full border-2 ${
+                  selectedColor === config.colorName 
+                    ? 'border-black ring-2 ring-offset-1 ring-black' 
+                    : 'border-gray-300 hover:border-gray-400'
+                } ${!config.inStock ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}`}
+                style={{ backgroundColor: config.colorHex }}
+                onClick={() => config.inStock && setSelectedColor(config.colorName)}
+                title={config.colorName + (config.inStock ? '' : ' (Out of Stock)')}
+                disabled={!config.inStock}
+                aria-label={`Select ${config.colorName} color${!config.inStock ? ' - Out of Stock' : ''}`}
+                aria-disabled={!config.inStock}
+              >
+                {selectedColor === config.colorName && (
+                  <CheckCircle2 className="absolute -top-1 -right-1 w-2 h-2 text-black bg-white rounded-full" />
+                )}
+              </button>
+            ))}
+          </div>
+          <p className="text-sm text-muted-foreground mt-3 font-medium flex justify-center items-center">
+            {selectedColor}
+            {getStockStatus.color && (
+              <span className="text-red-500 text-xs ml-2">({getStockStatus.color})</span>
+            )}
+          </p>
+        </div>
+
+        {/* Product Details Section */}
+        <div className="space-y-6">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight mb-2">{product.name}</h1>
+            {selectedStorageDetails && (
+              <Badge variant="secondary" className="text-sm">
+                {selectedStorageDetails}
+                {getStockStatus.storage && (
+                  <span className="text-red-500 text-xs ml-2">({getStockStatus.storage})</span>
+                )}
+              </Badge>
+            )}
+          </div>
+
+          {/* Price Breakdown */}
+          <div className="space-y-4 p-4 bg-muted/20 rounded-lg">
+            <PriceBreakdown 
+              product={product}
+              basePrice={basePriceNumber}
+              selectedStorage={selectedStorage}
+              selectedColor={selectedColor}
+              selectedDynamicInputs={selectedDynamicInputs}
+              quantity={quantity}
+            />
+          </div>
+
+          {/* Quantity Selector */}
+          <div className="flex items-center space-x-4">
+            <Label htmlFor="quantity" className="text-sm font-medium">Quantity:</Label>
+            <div className="flex items-center border rounded-md">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => handleQuantityChange(quantity - 1)}
+                disabled={quantity <= 1}
+                className="h-8 w-8 p-0"
+              >
+                <Minus className="h-4 w-4" />
+              </Button>
+              <Input
+                id="quantity"
+                type="number"
+                min="1"
+                max={product.preOrderConfig?.isPreOrder && product.preOrderConfig.maxPreOrderQuantity?.$numberInt !== "0" 
+                  ? parseInt(product.preOrderConfig.maxPreOrderQuantity.$numberInt) 
+                  : 99}
+                value={quantity}
+                onChange={(e) => handleQuantityChange(Math.max(1, parseInt(e.target.value) || 1))}
+                className="w-16 h-8 text-center border-0 focus-visible:ring-0"
+              />
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => handleQuantityChange(quantity + 1)}
+                disabled={product.preOrderConfig?.isPreOrder && 
+                  product.preOrderConfig.maxPreOrderQuantity?.$numberInt !== "0" && 
+                  quantity >= parseInt(product.preOrderConfig.maxPreOrderQuantity.$numberInt)}
+                className="h-8 w-8 p-0"
+              >
+                <Plus className="h-4 w-4" />
+              </Button>
+            </div>
+            {product.preOrderConfig?.isPreOrder && product.preOrderConfig.maxPreOrderQuantity?.$numberInt !== "0" && (
+              <span className="text-xs text-muted-foreground">
+                Max: {product.preOrderConfig.maxPreOrderQuantity.$numberInt}
+              </span>
+            )}
+          </div>
+
+          {/* Action Buttons */}
+          {isAnyItemOutOfStock ? (
+            <Dialog open={isNotifyDialogOpen} onOpenChange={setIsNotifyDialogOpen}>
+              <DialogTrigger asChild>
+                <Button 
+                  size="lg" 
+                  className="w-full bg-black hover:bg-gray-900 text-white"
+                  onClick={notify}
+                >
+                  <Bell className="mr-2 h-5 w-5" />
+                  Notify Me
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[425px]">
+                <DialogHeader>
+                  <DialogTitle>Get Notified When Back in Stock</DialogTitle>
+                </DialogHeader>
+                <div className="grid gap-4 py-4">
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="name" className="text-right">
+                      Name
+                    </Label>
+                    <Input
+                      id="name"
+                      value={notifyName}
+                      onChange={(e) => setNotifyName(e.target.value)}
+                      className="col-span-3"
+                      placeholder="Your full name"
+                    />
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="email" className="text-right">
+                      Email
+                    </Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      value={notifyEmail}
+                      onChange={(e) => setNotifyEmail(e.target.value)}
+                      className="col-span-3"
+                      placeholder="your@email.com"
+                    />
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="number" className="text-right">
+                      Phone
+                    </Label>
+                    <Input
+                      id="number"
+                      type="tel"
+                      value={notifyNumber}
+                      onChange={(e) => setNotifyNumber(e.target.value)}
+                      className="col-span-3"
+                      placeholder="Your phone number"
+                    />
+                  </div>
+                </div>
+                <div className="flex justify-end gap-3">
+                  <Button 
+                    variant="outline" 
+                    onClick={() => setIsNotifyDialogOpen(false)}
+                  >
+                    Cancel
+                  </Button>
+                  <Button 
+                    onClick={handleNotifySubmit}
+                    disabled={!notifyName || !notifyEmail || !notifyNumber}
+                    className="bg-black hover:bg-gray-800 text-white"
+                  >
+                    Submit
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+          ) : product.preOrderConfig?.isPreOrder ? (
+            <div className="grid grid-cols-1 gap-3">
+              <Button 
+                size="lg" 
+                className="w-full bg-black hover:bg-gray-950 text-white"
+                onClick={handleOrderNow}
+                disabled={isOrdering}
+                aria-label={isOrdering ? "Processing pre-order" : "Pre-order now"}
+              >
+                <Calendar className="mr-2 h-5 w-5" />
+                {isOrdering ? 'Processing...' : 'Pre-order Now'}
+              </Button>
+              <Button 
+                size="lg" 
+                variant="outline" 
+                className="w-full"
+                onClick={handleWhatsAppOrder}
+                disabled={isWhatsAppOrdering}
+              >
+                <WhatsAppIcon />
+                {isWhatsAppOrdering ? 'Opening...' : 'Order via WhatsApp'}
+              </Button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 gap-3">
+              <div className="grid grid-cols-2 gap-3">
+                <button onClick={toggleSidebar}>
+                  <Button 
+                  size="lg" 
+                  variant="outline" 
+                  className="w-full"
+                  onClick={handleAddToBag}
+                  disabled={isAddingToBag}
+                  aria-label={isAddingToBag ? "Adding product to bag" : "Add product to bag"}
+                >
+                  <ShoppingBag className="mr-2 h-5 w-5" />
+                  {isAddingToBag ? 'Adding...' : 'Add to Bag'}
+                </Button>
+                </button>
+                
+                <Button 
+                  size="lg" 
+                  className="w-full bg-black text-white border border-gray-300 hover:bg-gray-800"
+                  onClick={handleOrderNow}
+                  disabled={isOrdering}
+                  aria-label={isOrdering ? "Processing order" : "Order now"}
+                >
+                  <CreditCard className="mr-2 h-5 w-5" />
+                  {isOrdering ? 'Processing...' : 'Order Now'}
+                </Button>
+              </div>
+              <Button 
+                size="lg" 
+                variant="outline" 
+                className="w-full"
+                onClick={handleWhatsAppOrder}
+                disabled={isWhatsAppOrdering}
+              >
+                <WhatsAppIcon />
+                {isWhatsAppOrdering ? 'Opening...' : 'Order via WhatsApp'}
+              </Button>
+            </div>
+          )}
+
+          <div className='grid grid-cols-2 gap-2'>
+            {/* Storage Configuration */}
+            {product.storageConfigs && product.storageConfigs.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-[15px] mt-[-16px]">
+                    {product.accessoriesType}
+                    {getStockStatus.storage && (
+                      <span className="text-red-500 text-[10px] mt-2 ml-2">({getStockStatus.storage})</span>
+                    )}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-2 mt-[-14px] gap-2 flex-wrap max-sm:mt-[-24px]">
+                    {product.storageConfigs.map(config => (
+                      <Button
+                        key={config._id.$oid}
+                        variant={selectedStorage === config.shortDetails ? 'default' : 'outline'} 
+                        onClick={() => handleStorageSelect(config)}
+                      >
+                        {config.name} 
+                      </Button>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Dynamic Inputs */}
+            {product.dynamicInputs && product.dynamicInputs.map((group) => (
+              <Card key={group.type}>
+                <CardHeader>
+                  <CardTitle className="text-[15px] capitalize mt-[-16px]">
+                    {group.type}
+                    {getStockStatus[group.type] && (
+                      <span className="text-red-500 text-[10px] mt-2 ml-2">({getStockStatus[group.type]})</span>
+                    )}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-2 mt-[-14px] gap-2 max-sm:mt-[-24px]">
+                    {group.items.map((item, index) => (
+                      <Button
+                        key={index}
+                        variant={selectedDynamicInputs[group.type] === item.label ? 'default' : 'outline'}
+                        onClick={() => handleDynamicInputSelect(group.type, item.label, item.inStock)}
+                      >
+                        {item.label} 
+                      </Button>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          {/* Specifications */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Specifications</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {product.details.map((detail, index) => (
+                  <div key={detail._id?.$oid || index} className="flex justify-between py-2 border-b last:border-0">
+                    <span className="text-sm font-medium text-muted-foreground">{detail.label}</span>
+                    <span className="text-sm font-semibold text-right">{detail.value}</span>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
+      {/* Description */}
+      <Card className="mt-8">
+        <CardHeader>
+          <CardTitle>Product Description</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div dangerouslySetInnerHTML={{ __html: product.description }} className="prose prose-gray max-w-none" />
+        </CardContent>
+      </Card>
+
+      {/* Floating Chat Widget */}
+      <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-3">
+        <button
+          onClick={handleFloatingWhatsAppClick}
+          className="group relative flex items-center gap-3 bg-white rounded-full shadow-lg hover:shadow-xl transition-all duration-300 mb-10 max-sm:mb-30"
+          aria-label="Chat on WhatsApp"
+        >
+          <div className="flex items-center justify-center w-12 h-12 bg-green-500 rounded-full text-white">
+            <WhatsAppIcon />
+          </div>
+        </button>
+      </div>
+    </div>
+  );
+}

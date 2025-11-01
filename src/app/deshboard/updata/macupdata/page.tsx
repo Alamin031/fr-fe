@@ -1,772 +1,848 @@
-'use client';
-import React, { useState, useEffect } from 'react';
-import { Pencil, Trash2, Plus, X } from 'lucide-react';
-import toast, { Toaster } from 'react-hot-toast';
-import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Button } from "@/components/ui/button"
+'use client'
+import React, { useEffect, useState } from "react";
+import axios from "axios";
+import { Pencil, Trash2, Search } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import Navbar from "../Updatanav";
 
-// Type definitions
-interface ConfigItem {
-  id: string;
+// Types based on your MongoDB schema
+type ImageConfig = {
+  colorHex: string;
+  colorName: string;
+  id: number;
+  image: string;
+  inStock: boolean;
+  _id?: string;
+};
+
+type StorageConfig = {
+  basicPrice: string;
+  colorStocks: any[];
+  id: number;
+  inStock: boolean;
+  name: string;
+  prices: any[];
+  shortDetails: string;
+  _id?: string;
+};
+
+type DynamicInputItem = {
   label: string;
   price: string;
-}
+  inStock: boolean;
+};
 
-interface ColorConfigItem extends ConfigItem {
-  color: string;
-  image: string;
-}
+type DynamicInput = {
+  type: string;
+  items: DynamicInputItem[];
+};
 
-interface Product {
+type Detail = {
+  id: number;
+  label: string;
+  value: string;
+  _id?: string;
+};
+
+type PreOrderConfig = {
+  enabled: boolean;
+  message?: string;
+  date?: string;
+} | null;
+
+type Product = {
   _id: string;
   name: string;
-  basePrice: string;
-  porductlinkname: string;
+  basePrice: number;
+  description: string;
   accessories: string;
-  cpuCoreConfigs: ConfigItem[];
-  gpuCoreConfigs: ConfigItem[];
-  colorImageConfigs: ColorConfigItem[];
-  displayConfigs: ConfigItem[];
-  storageConfigs: ConfigItem[];
-  ramConfigs: ConfigItem[];
+  accessoriesType: string;
+  storageConfigs: StorageConfig[];
+  imageConfigs: ImageConfig[];
+  dynamicInputs: DynamicInput[];
+  details: Detail[];
+  preOrderConfig: PreOrderConfig;
+  productlinkname: string;
   createdAt: string;
-  updatedAt?: string;
-}
+  updatedAt: string;
+  __v: number;
+};
 
-interface EditingProduct extends Omit<Product, '_id'> {
-  _id: string;
-}
-
-const MacBookTable: React.FC = () => {
+export default function ProductsTable() {
   const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [editingProduct, setEditingProduct] = useState<EditingProduct | null>(null);
-  const [isDialogOpen, setIsDialogOpen] = useState<boolean>(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    const fetchProducts = async (): Promise<void> => {
-      try {
-        const res = await fetch('/api/getproduct/macbooklist');
-        const data: Product[] = await res.json();
-        setProducts(data);
-        setLoading(false);
-        toast.success('Products loaded successfully', {
-          duration: 2000,
-          position: 'top-right',
-        });
-      } catch (error) {
-        console.error('Error fetching products:', error);
-        setLoading(false);
-        toast.error('Failed to load products. Please try again.', {
-          duration: 4000,
-          position: 'top-right',
-        });
-      }
-    };
-
     fetchProducts();
   }, []);
 
-  const handleEdit = (product: Product): void => {
-    setEditingProduct({
-      ...product,
-      cpuCoreConfigs: [...product.cpuCoreConfigs],
-      gpuCoreConfigs: [...product.gpuCoreConfigs],
-      colorImageConfigs: [...product.colorImageConfigs],
-      displayConfigs: [...product.displayConfigs],
-      storageConfigs: [...product.storageConfigs],
-      ramConfigs: [...product.ramConfigs],
-    });
-    setIsDialogOpen(true);
-  };
-
-  const handleSaveEdit = async (): Promise<void> => {
-    if (!editingProduct) return;
-
-    const savePromise = (async () => {
-      const res = await fetch(`/api/upadataApi/macbookupdata/${editingProduct._id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(editingProduct),
-      });
-
-      if (!res.ok) {
-        throw new Error('Failed to update product');
+  const fetchProducts = async () => {
+    try {
+      const res = await axios.get(`${process.env.NEXT_PUBLIC_BASE_URI}/macbooklist/all`);
+      console.log('API Response:', res.data);
+      
+      if (res.data && Array.isArray(res.data.products)) {
+        setProducts(res.data.products);
+      } else if (Array.isArray(res.data)) {
+        setProducts(res.data);
+      } else {
+        console.warn('Unexpected API response structure:', res.data);
+        setProducts([]);
       }
-
-      const updatedProduct: Product = await res.json();
-      setProducts(products.map(p => p._id === updatedProduct._id ? updatedProduct : p));
-      setIsDialogOpen(false);
-      setEditingProduct(null);
-      return updatedProduct;
-    })();
-
-    toast.promise(
-      savePromise,
-      {
-        loading: 'Saving changes...',
-        success: 'Product updated successfully!',
-        error: 'Failed to update product. Please try again.',
-      },
-      {
-        position: 'top-right',
-        success: {
-          duration: 3000,
-          icon: '✅',
-        },
-        error: {
-          duration: 4000,
-          icon: '❌',
-        },
-      }
-    );
-  };
-
-  const handleDelete = async (id: string): Promise<void> => {
-    const productToDelete = products.find(p => p._id === id);
-    
-    if (window.confirm(`Are you sure you want to delete "${productToDelete?.name}"?`)) {
-      const deletePromise = (async () => {
-        const res = await fetch(`/api/deleteapi/macbookdelete/${id}`, {
-          method: 'DELETE',
-        });
-        
-        if (!res.ok) {
-          throw new Error('Failed to delete product');
-        }
-
-        setProducts(products.filter(p => p._id !== id));
-        return productToDelete;
-      })();
-
-      toast.promise(
-        deletePromise,
-        {
-          loading: 'Deleting product...',
-          success: (product) => `"${product?.name}" deleted successfully`,
-          error: 'Failed to delete product. Please try again.',
-        },
-        {
-          position: 'top-right',
-          success: {
-            duration: 3000,
-            icon: '🗑️',
-          },
-          error: {
-            duration: 4000,
-            icon: '❌',
-          },
-        }
-      );
+    } catch (err) {
+      console.error("Error fetching products:", err);
+      setProducts([]);
     }
   };
 
-  const formatPrice = (price: string): string => {
-    const numericPrice = parseFloat(price);
-    if (isNaN(numericPrice)) return '৳ 0';
-    
-    return new Intl.NumberFormat('en-BD', {
-      style: 'currency',
-      currency: 'BDT',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(numericPrice);
+  const handleDelete = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this product?")) return;
+    try {
+      await axios.delete(`${process.env.NEXT_PUBLIC_BASE_URI}/accessories/delete/${id}`);
+      setProducts(products.filter((p) => p._id !== id));
+      alert("Product deleted successfully!");
+    } catch (err) {
+      console.error("Error deleting:", err);
+      alert("Failed to delete product");
+    }
   };
 
-  const formatDate = (dateString: string): string => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    });
+  const openEditDialog = async (productLinkName: string) => {
+    try {
+      setIsLoading(true);
+      const response = await axios.get(
+        `${process.env.NEXT_PUBLIC_BASE_URI}/macbooklist/getBySlug/${productLinkName}`
+      );
+      console.log('Product data for editing:', response.data);
+      const productData = response.data.product || response.data;
+      setEditingProduct(productData);
+      setIsEditDialogOpen(true);
+    } catch (err) {
+      console.error("Error fetching product details:", err);
+      alert("Failed to load product data");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const updateEditingField = (field: keyof EditingProduct, value: string): void => {
-    setEditingProduct(prev => prev ? {
-      ...prev,
-      [field]: value
-    } : null);
-  };
-
-  const addConfigItem = (configType: keyof Pick<EditingProduct, 
-    'cpuCoreConfigs' | 'gpuCoreConfigs' | 'colorImageConfigs' | 'displayConfigs' | 'storageConfigs' | 'ramConfigs'
-  >): void => {
+  const handleEditSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
     if (!editingProduct) return;
 
-    const newItem: ConfigItem | ColorConfigItem = configType === 'colorImageConfigs' 
-      ? {
-          id: Date.now().toString(),
-          label: '',
-          price: '0',
-          color: '',
-          image: ''
-        }
-      : {
-          id: Date.now().toString(),
-          label: '',
-          price: '0'
-        };
-    
-    setEditingProduct(prev => prev ? {
-      ...prev,
-      [configType]: [...prev[configType], newItem]
-    } : null);
-
-    toast.success('Option added', {
-      duration: 2000,
-      position: 'bottom-right',
-      icon: '➕',
-    });
-  };
-
-  const removeConfigItem = (
-    configType: keyof Pick<EditingProduct, 
-      'cpuCoreConfigs' | 'gpuCoreConfigs' | 'colorImageConfigs' | 'displayConfigs' | 'storageConfigs' | 'ramConfigs'
-    >, 
-    index: number
-  ): void => {
-    if (!editingProduct) return;
-
-    setEditingProduct(prev => prev ? {
-      ...prev,
-      [configType]: prev[configType].filter((_, idx) => idx !== index)
-    } : null);
-
-    toast.success('Option removed', {
-      duration: 2000,
-      position: 'bottom-right',
-      icon: '➖',
-    });
-  };
-
-  const updateConfigItem = (
-    configType: keyof Pick<EditingProduct, 
-      'cpuCoreConfigs' | 'gpuCoreConfigs' | 'colorImageConfigs' | 'displayConfigs' | 'storageConfigs' | 'ramConfigs'
-    >,
-    index: number, 
-    field: string, 
-    value: string
-  ): void => {
-    if (!editingProduct) return;
-
-    setEditingProduct(prev => {
-      if (!prev) return null;
+    try {
+      setIsLoading(true);
+      const response = await axios.put(
+        `${process.env.NEXT_PUBLIC_BASE_URI}/macbooklist/update/${editingProduct.productlinkname}`,
+        editingProduct
+      );
       
-      const updated = [...prev[configType]];
-      updated[index] = { ...updated[index], [field]: value };
-      return { ...prev, [configType]: updated };
+      console.log('Update response:', response.data);
+      
+      setIsEditDialogOpen(false);
+      setEditingProduct(null);
+      fetchProducts();
+      alert("Product updated successfully!");
+    } catch (err) {
+      console.error("Error updating product:", err);
+      alert("Failed to update product");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Basic input handlers
+  const handleInputChange = (field: keyof Product, value: any) => {
+    if (editingProduct) {
+      setEditingProduct({
+        ...editingProduct,
+        [field]: value
+      });
+    }
+  };
+
+  // Image Config handlers
+  const handleImageConfigChange = (index: number, field: keyof ImageConfig, value: any) => {
+    if (!editingProduct) return;
+
+    const updatedImageConfigs = [...editingProduct.imageConfigs];
+    updatedImageConfigs[index] = {
+      ...updatedImageConfigs[index],
+      [field]: value
+    };
+
+    setEditingProduct({
+      ...editingProduct,
+      imageConfigs: updatedImageConfigs
     });
   };
 
-  if (loading) {
+  // Storage Config handlers
+  const handleStorageConfigChange = (index: number, field: keyof StorageConfig, value: any) => {
+    if (!editingProduct) return;
+
+    const updatedStorageConfigs = [...editingProduct.storageConfigs];
+    updatedStorageConfigs[index] = {
+      ...updatedStorageConfigs[index],
+      [field]: value
+    };
+
+    setEditingProduct({
+      ...editingProduct,
+      storageConfigs: updatedStorageConfigs
+    });
+  };
+
+  // Dynamic Input handlers
+  const handleDynamicInputChange = (index: number, field: keyof DynamicInput, value: any) => {
+    if (!editingProduct) return;
+
+    const updatedDynamicInputs = [...editingProduct.dynamicInputs];
+    updatedDynamicInputs[index] = {
+      ...updatedDynamicInputs[index],
+      [field]: value
+    };
+
+    setEditingProduct({
+      ...editingProduct,
+      dynamicInputs: updatedDynamicInputs
+    });
+  };
+
+  const handleDynamicItemChange = (inputIndex: number, itemIndex: number, field: keyof DynamicInputItem, value: any) => {
+    if (!editingProduct) return;
+
+    const updatedDynamicInputs = [...editingProduct.dynamicInputs];
+    const updatedItems = [...updatedDynamicInputs[inputIndex].items];
+    
+    updatedItems[itemIndex] = {
+      ...updatedItems[itemIndex],
+      [field]: value
+    };
+
+    updatedDynamicInputs[inputIndex] = {
+      ...updatedDynamicInputs[inputIndex],
+      items: updatedItems
+    };
+
+    setEditingProduct({
+      ...editingProduct,
+      dynamicInputs: updatedDynamicInputs
+    });
+  };
+
+  // Detail handlers
+  const handleDetailChange = (index: number, field: keyof Detail, value: any) => {
+    if (!editingProduct) return;
+
+    const updatedDetails = [...editingProduct.details];
+    updatedDetails[index] = {
+      ...updatedDetails[index],
+      [field]: value
+    };
+
+    setEditingProduct({
+      ...editingProduct,
+      details: updatedDetails
+    });
+  };
+
+  // Pre-order Config handlers
+  const handlePreOrderConfigChange = (field: keyof NonNullable<PreOrderConfig>, value: any) => {
+    if (!editingProduct) return;
+
+    const currentPreOrderConfig = editingProduct.preOrderConfig || { enabled: false };
+    
+    setEditingProduct({
+      ...editingProduct,
+      preOrderConfig: {
+        ...currentPreOrderConfig,
+        [field]: value
+      }
+    });
+  };
+
+  // Add new items functions
+  const addImageConfig = () => {
+    if (!editingProduct) return;
+
+    const newImageConfig: ImageConfig = {
+      colorHex: "#ffffff",
+      colorName: "",
+      id: Date.now(),
+      image: "",
+      inStock: true
+    };
+
+    setEditingProduct({
+      ...editingProduct,
+      imageConfigs: [...editingProduct.imageConfigs, newImageConfig]
+    });
+  };
+
+  const addStorageConfig = () => {
+    if (!editingProduct) return;
+
+    const newStorageConfig: StorageConfig = {
+      basicPrice: "0",
+      colorStocks: [],
+      id: Date.now(),
+      inStock: true,
+      name: "",
+      prices: [],
+      shortDetails: ""
+    };
+
+    setEditingProduct({
+      ...editingProduct,
+      storageConfigs: [...editingProduct.storageConfigs, newStorageConfig]
+    });
+  };
+
+  const addDynamicInput = () => {
+    if (!editingProduct) return;
+
+    const newDynamicInput: DynamicInput = {
+      type: "",
+      items: [{ label: "", price: "0", inStock: true }]
+    };
+
+    setEditingProduct({
+      ...editingProduct,
+      dynamicInputs: [...editingProduct.dynamicInputs, newDynamicInput]
+    });
+  };
+
+  const addDetail = () => {
+    if (!editingProduct) return;
+
+    const newDetail: Detail = {
+      id: Date.now(),
+      label: "",
+      value: ""
+    };
+
+    setEditingProduct({
+      ...editingProduct,
+      details: [...editingProduct.details, newDetail]
+    });
+  };
+
+  const addDynamicItem = (inputIndex: number) => {
+    if (!editingProduct) return;
+
+    const updatedDynamicInputs = [...editingProduct.dynamicInputs];
+    const newItem: DynamicInputItem = {
+      label: "",
+      price: "0",
+      inStock: true
+    };
+
+    updatedDynamicInputs[inputIndex].items.push(newItem);
+    
+    setEditingProduct({
+      ...editingProduct,
+      dynamicInputs: updatedDynamicInputs
+    });
+  };
+
+  // Remove items functions
+  const removeImageConfig = (index: number) => {
+    if (!editingProduct) return;
+    const updated = editingProduct.imageConfigs.filter((_, i) => i !== index);
+    setEditingProduct({ ...editingProduct, imageConfigs: updated });
+  };
+
+  const removeStorageConfig = (index: number) => {
+    if (!editingProduct) return;
+    const updated = editingProduct.storageConfigs.filter((_, i) => i !== index);
+    setEditingProduct({ ...editingProduct, storageConfigs: updated });
+  };
+
+  const removeDynamicInput = (index: number) => {
+    if (!editingProduct) return;
+    const updated = editingProduct.dynamicInputs.filter((_, i) => i !== index);
+    setEditingProduct({ ...editingProduct, dynamicInputs: updated });
+  };
+
+  const removeDetail = (index: number) => {
+    if (!editingProduct) return;
+    const updated = editingProduct.details.filter((_, i) => i !== index);
+    setEditingProduct({ ...editingProduct, details: updated });
+  };
+
+  const removeDynamicItem = (inputIndex: number, itemIndex: number) => {
+    if (!editingProduct) return;
+    const updatedDynamicInputs = [...editingProduct.dynamicInputs];
+    updatedDynamicInputs[inputIndex].items = updatedDynamicInputs[inputIndex].items.filter((_, i) => i !== itemIndex);
+    setEditingProduct({ ...editingProduct, dynamicInputs: updatedDynamicInputs });
+  };
+
+  const filteredProducts = (products || []).filter((product) => {
+    const query = searchQuery.toLowerCase();
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-50">
-        <div className="text-center">
-          <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <div className="text-lg text-gray-600">Loading products...</div>
-        </div>
-      </div>
+      product.name?.toLowerCase().includes(query) ||
+      product.accessories?.toLowerCase().includes(query) ||
+      product.basePrice?.toString().includes(query)
     );
-  }
+  });
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Toaster />
-      
-      <div className="container mx-auto px-4 py-6 md:py-8">
-        <div className="mb-6 md:mb-8">
-          <h1 className="text-3xl md:text-4xl font-bold text-gray-900">MacBook Products</h1>
-          <p className="text-base md:text-lg text-gray-600 mt-2">Manage your MacBook inventory</p>
-        </div>
+    <>
+      <Card className="shadow-lg rounded-2xl w-full mt-4">
+            <Navbar></Navbar>
 
-        {/* Edit Dialog */}
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogContent className="max-w-4xl max-h-[95vh] overflow-hidden flex flex-col p-0">
-            <DialogHeader className="px-6 py-4 border-b bg-white sticky top-0 z-10">
-              <DialogTitle className="text-xl flex items-center gap-2">
-                <Pencil size={20} />
-                Edit Product
-              </DialogTitle>
-              <DialogDescription>
-                Make changes to your product here. Click save when you're done.
-              </DialogDescription>
-            </DialogHeader>
+        <CardContent>
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-2xl font-bold">Products List</h2>
             
-            <div className="flex-1 overflow-y-auto px-6 py-4 bg-gray-50/50">
-              {editingProduct && (
-                <div className="space-y-6">
-                  {/* Basic Info Section */}
-                  <div className="bg-white rounded-lg border border-gray-200 p-6">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                      <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
-                      Basic Information
-                    </h3>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="name" className="text-sm font-medium">Product Name</Label>
-                        <Input
-                          id="name"
-                          value={editingProduct.name}
-                          onChange={(e) => updateEditingField('name', e.target.value)}
-                          className="h-10"
-                          placeholder="Enter product name"
-                        />
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label htmlFor="basePrice" className="text-sm font-medium">Base Price (৳)</Label>
-                        <Input
-                          id="basePrice"
-                          type="number"
-                          step="1"
-                          min="0"
-                          value={editingProduct.basePrice}
-                          onChange={(e) => updateEditingField('basePrice', e.target.value)}
-                          className="h-10"
-                          placeholder="0"
-                        />
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label htmlFor="porductlinkname" className="text-sm font-medium">Product Link Name</Label>
-                        <Input
-                          id="porductlinkname"
-                          value={editingProduct.porductlinkname}
-                          onChange={(e) => updateEditingField('porductlinkname', e.target.value)}
-                          className="h-10"
-                          placeholder="product-link-name"
-                        />
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label htmlFor="accessories" className="text-sm font-medium">Accessories</Label>
-                        <Input
-                          id="accessories"
-                          value={editingProduct.accessories}
-                          onChange={(e) => updateEditingField('accessories', e.target.value)}
-                          className="h-10"
-                          placeholder="Included accessories"
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Configuration Sections */}
-                  {[
-                    { key: 'cpuCoreConfigs' as const, title: 'CPU Core Configurations', description: 'Configure CPU options and their prices' },
-                    { key: 'gpuCoreConfigs' as const, title: 'GPU Core Configurations', description: 'Configure GPU options and their prices' },
-                    { key: 'storageConfigs' as const, title: 'Storage Configurations', description: 'Configure storage options and their prices' },
-                    { key: 'ramConfigs' as const, title: 'RAM Configurations', description: 'Configure RAM options and their prices' },
-                  ].map(({ key, title, description }) => (
-                    <div key={key} className="bg-white rounded-lg border border-gray-200 p-6">
-                      <div className="flex items-center justify-between mb-4">
-                        <div>
-                          <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                            <div className="w-2 h-2 bg-green-600 rounded-full"></div>
-                            {title}
-                          </h3>
-                          <p className="text-sm text-gray-500 mt-1">{description}</p>
-                        </div>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => addConfigItem(key)}
-                          className="h-9"
-                        >
-                          <Plus size={16} className="mr-2" />
-                          Add Option
-                        </Button>
-                      </div>
-                      
-                      <div className="space-y-3">
-                        {editingProduct[key].map((item, idx) => (
-                          <div key={item.id} className="flex gap-3 items-start bg-gray-50 p-4 rounded-lg border border-gray-200">
-                            <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4">
-                              <div className="space-y-2">
-                                <Label htmlFor={`${key}-label-${idx}`} className="text-xs font-medium text-gray-700">
-                                  Option Label
-                                </Label>
-                                <Input
-                                  id={`${key}-label-${idx}`}
-                                  value={item.label}
-                                  onChange={(e) => updateConfigItem(key, idx, 'label', e.target.value)}
-                                  className="h-9"
-                                  placeholder={`e.g., 8-core CPU, 16GB RAM, etc.`}
-                                />
-                              </div>
-                              <div className="space-y-2">
-                                <Label htmlFor={`${key}-price-${idx}`} className="text-xs font-medium text-gray-700">
-                                  Additional Price (৳)
-                                </Label>
-                                <Input
-                                  id={`${key}-price-${idx}`}
-                                  type="number"
-                                  step="1"
-                                  min="0"
-                                  value={item.price}
-                                  onChange={(e) => updateConfigItem(key, idx, 'price', e.target.value)}
-                                  className="h-9"
-                                  placeholder="0"
-                                />
-                              </div>
-                            </div>
-                            <button
-                              type="button"
-                              onClick={() => removeConfigItem(key, idx)}
-                              className="text-red-600 hover:text-red-800 p-2 hover:bg-red-50 rounded-lg transition-colors mt-6"
-                              title="Remove option"
-                            >
-                              <X size={18} />
-                            </button>
-                          </div>
-                        ))}
-                        
-                        {editingProduct[key].length === 0 && (
-                          <div className="text-center py-8 text-gray-500 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
-                            <div className="text-3xl mb-2">⚙️</div>
-                            <p className="text-sm font-medium">No {title.toLowerCase()} added yet</p>
-                            <p className="text-xs mt-1">Click "Add Option" to get started</p>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-
-                  {/* Color Configuration */}
-                  <div className="bg-white rounded-lg border border-gray-200 p-6">
-                    <div className="flex items-center justify-between mb-4">
-                      <div>
-                        <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                          <div className="w-2 h-2 bg-purple-600 rounded-full"></div>
-                          Color Configurations
-                        </h3>
-                        <p className="text-sm text-gray-500 mt-1">Manage available colors and their images</p>
-                      </div>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => addConfigItem('colorImageConfigs')}
-                        className="h-9"
-                      >
-                        <Plus size={16} className="mr-2" />
-                        Add Color
-                      </Button>
-                    </div>
-                    
-                    <div className="space-y-4">
-                      {editingProduct.colorImageConfigs.map((color, idx) => (
-                        <div key={color.id} className="flex gap-4 items-start bg-gray-50 p-4 rounded-lg border border-gray-200">
-                          <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                              <Label htmlFor={`color-${idx}`} className="text-xs font-medium text-gray-700">
-                                Color Name/Value
-                              </Label>
-                              <Input
-                                id={`color-${idx}`}
-                                value={color.color}
-                                onChange={(e) => updateConfigItem('colorImageConfigs', idx, 'color', e.target.value)}
-                                className="h-9"
-                                placeholder="e.g., Space Gray, #8B8B8B"
-                              />
-                            </div>
-                            <div className="space-y-2">
-                              <Label htmlFor={`color-image-${idx}`} className="text-xs font-medium text-gray-700">
-                                Image URL
-                              </Label>
-                              <Input
-                                id={`color-image-${idx}`}
-                                value={color.image}
-                                onChange={(e) => updateConfigItem('colorImageConfigs', idx, 'image', e.target.value)}
-                                className="h-9"
-                                placeholder="https://example.com/image.jpg"
-                              />
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-3 mt-6">
-                            {color.color && (
-                              <div
-                                className="w-8 h-8 rounded-full border-2 border-gray-300 shadow-sm"
-                                style={{ backgroundColor: color.color }}
-                                title={color.color}
-                              />
-                            )}
-                            <button
-                              type="button"
-                              onClick={() => removeConfigItem('colorImageConfigs', idx)}
-                              className="text-red-600 hover:text-red-800 p-2 hover:bg-red-50 rounded-lg transition-colors"
-                              title="Remove color"
-                            >
-                              <X size={18} />
-                            </button>
-                          </div>
-                        </div>
-                      ))}
-                      
-                      {editingProduct.colorImageConfigs.length === 0 && (
-                        <div className="text-center py-8 text-gray-500 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
-                          <div className="text-3xl mb-2">🎨</div>
-                          <p className="text-sm font-medium">No colors configured yet</p>
-                          <p className="text-xs mt-1">Click "Add Color" to get started</p>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              )}
+            <div className="relative w-64">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Input
+                type="text"
+                placeholder="Search products..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10"
+              />
             </div>
+          </div>
 
-            <DialogFooter className="px-6 py-4 border-t bg-white sticky bottom-0">
-              <div className="flex items-center justify-between w-full">
-                <div className="text-sm text-gray-500">
-                  {editingProduct && (
-                    <>Last updated: {formatDate(editingProduct.updatedAt || editingProduct.createdAt)}</>
-                  )}
-                </div>
-                <div className="flex gap-3">
-                  <DialogClose asChild>
-                    <Button variant="outline" className="min-w-24">Cancel</Button>
-                  </DialogClose>
-                  <Button 
-                    onClick={handleSaveEdit} 
-                    className="min-w-24 bg-blue-600 hover:bg-blue-700"
-                  >
-                    Save Changes
-                  </Button>
-                </div>
-              </div>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-
-        {/* Desktop Table View */}
-        <div className="hidden lg:block bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                    Product Name
-                  </th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                    Base Price
-                  </th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                    CPU Options
-                  </th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                    GPU Options
-                  </th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                    Colors
-                  </th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                    Created At
-                  </th>
-                  <th className="px-6 py-4 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                    Actions
-                  </th>
+            <table className="min-w-full text-sm border">
+              <thead>
+                <tr className="bg-gray-100 text-left">
+                  <th className="p-3">Type</th>
+                  <th className="p-3">Name</th>
+                  <th className="p-3">Price</th>
+                  <th className="p-3 text-center">Actions</th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-100">
-                {products.map((product) => (
-                  <tr key={product._id} className="hover:bg-gray-50 transition-colors duration-150">
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-semibold text-gray-900">
-                        {product.name}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-bold text-blue-600">
-                        {formatPrice(product.basePrice)}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="text-sm text-gray-600 space-y-1">
-                        {product.cpuCoreConfigs.slice(0, 2).map((cpu, idx) => (
-                          <div key={idx} className="truncate max-w-xs">
-                            {cpu.label}
-                          </div>
-                        ))}
-                        {product.cpuCoreConfigs.length > 2 && (
-                          <div className="text-xs text-gray-500">
-                            +{product.cpuCoreConfigs.length - 2} more
-                          </div>
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="text-sm text-gray-600 space-y-1">
-                        {product.gpuCoreConfigs.slice(0, 2).map((gpu, idx) => (
-                          <div key={idx} className="truncate max-w-xs">
-                            {gpu.label}
-                          </div>
-                        ))}
-                        {product.gpuCoreConfigs.length > 2 && (
-                          <div className="text-xs text-gray-500">
-                            +{product.gpuCoreConfigs.length - 2} more
-                          </div>
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex gap-1.5 flex-wrap max-w-[120px]">
-                        {product.colorImageConfigs.map((config, idx) => (
-                          <div
-                            key={idx}
-                            className="w-7 h-7 rounded-full border-2 border-gray-300 shadow-sm"
-                            style={{ backgroundColor: config.color }}
-                            title={config.color}
-                          />
-                        ))}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-600">
-                        {formatDate(product.createdAt)}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right">
-                      <div className="flex gap-2 justify-end">
-                        <button
-                          onClick={() => handleEdit(product)}
-                          className="text-blue-600 hover:text-blue-800 p-2 rounded-lg hover:bg-blue-50 transition-all duration-150"
-                          title="Edit product"
-                        >
-                          <Pencil size={18} />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(product._id)}
-                          className="text-red-600 hover:text-red-800 p-2 rounded-lg hover:bg-red-50 transition-all duration-150"
-                          title="Delete product"
-                        >
-                          <Trash2 size={18} />
-                        </button>
-                      </div>
+              <tbody>
+                {filteredProducts.length === 0 ? (
+                  <tr>
+                    <td colSpan={4} className="p-6 text-center text-gray-500">
+                      {searchQuery ? "No products match your search" : "No products found"}
                     </td>
                   </tr>
-                ))}
+                ) : (
+                  filteredProducts.map((product) => (
+                    <tr
+                      key={product._id}
+                      className="border-b hover:bg-gray-50 transition"
+                    >
+                      <td className="p-3 capitalize">{product.accessories || "-"}</td>
+                      <td className="p-3 flex items-center gap-3">
+                        {product.imageConfigs?.[0]?.image && (
+                          <img
+                            src={product.imageConfigs[0].image}
+                            alt={product.name}
+                            className="w-10 h-10 rounded object-cover"
+                          />
+                        )}
+                        {product.name}
+                      </td>
+                      <td className="p-3 font-medium">৳{product.basePrice}</td>
+                      <td className="p-3 text-center flex justify-center gap-3">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => openEditDialog(product.productlinkname)}
+                          disabled={isLoading}
+                        >
+                          <Pencil className="w-4 h-4 text-blue-500" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleDelete(product._id)}
+                        >
+                          <Trash2 className="w-4 h-4 text-red-500" />
+                        </Button>
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
 
-          {products.length === 0 && (
-            <div className="text-center py-16 text-gray-500">
-              <div className="text-4xl mb-4">📦</div>
-              <div className="text-lg font-medium">No products found</div>
-              <div className="text-sm mt-1">Start by adding your first MacBook product</div>
-            </div>
+          {searchQuery && (
+            <p className="mt-4 text-sm text-gray-600">
+              Found {filteredProducts.length} of {products.length} products
+            </p>
           )}
-        </div>
+        </CardContent>
+      </Card>
 
-        {/* Mobile/Tablet Card View */}
-        <div className="lg:hidden space-y-4">
-          {products.map((product) => (
-            <div key={product._id} className="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
-              <div className="flex justify-between items-start mb-4">
-                <div className="flex-1 min-w-0">
-                  <h3 className="text-lg font-bold text-gray-900 mb-2 truncate">
-                    {product.name}
-                  </h3>
-                  <p className="text-2xl font-bold text-blue-600">
-                    {formatPrice(product.basePrice)}
-                  </p>
+      {/* Edit Product Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="max-w-6xl max-h-[95vh] overflow-y-auto bg-white text-black">
+          <DialogHeader>
+            <DialogTitle>Edit Product - {editingProduct?.name}</DialogTitle>
+            <DialogDescription>
+              Make changes to your product here. Click save when you're done.
+            </DialogDescription>
+          </DialogHeader>
+          
+          {editingProduct && (
+            <form onSubmit={handleEditSubmit} className="space-y-6">
+              {/* Basic Information */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="name">Product Name *</Label>
+                  <Input
+                    id="name"
+                    value={editingProduct.name}
+                    onChange={(e) => handleInputChange('name', e.target.value)}
+                    required
+                  />
                 </div>
-                <div className="flex gap-2 ml-4 flex-shrink-0">
-                  <button
-                    onClick={() => handleEdit(product)}
-                    className="text-blue-600 hover:text-blue-800 p-2.5 rounded-lg hover:bg-blue-50 transition-all duration-150"
-                    title="Edit product"
-                  >
-                    <Pencil size={20} />
-                  </button>
-                  <button
-                    onClick={() => handleDelete(product._id)}
-                    className="text-red-600 hover:text-red-800 p-2.5 rounded-lg hover:bg-red-50 transition-all duration-150"
-                    title="Delete product"
-                  >
-                    <Trash2 size={20} />
-                  </button>
+                <div className="space-y-2">
+                  <Label htmlFor="basePrice">Base Price *</Label>
+                  <Input
+                    id="basePrice"
+                    type="number"
+                    value={editingProduct.basePrice}
+                    onChange={(e) => handleInputChange('basePrice', Number(e.target.value))}
+                    required
+                  />
                 </div>
+                <div className="space-y-2">
+                  <Label htmlFor="accessories">Accessories Category</Label>
+                  <Input
+                    id="accessories"
+                    value={editingProduct.accessories}
+                    onChange={(e) => handleInputChange('accessories', e.target.value)}
+                    placeholder="e.g., iphone, macbook"
+                  />
+                </div>
+                
               </div>
 
-              <div className="space-y-4">
-                <div>
-                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
-                    CPU Options
-                  </p>
-                  <div className="text-sm text-gray-700 space-y-1">
-                    {product.cpuCoreConfigs.map((cpu, idx) => (
-                      <div key={idx} className="py-1">
-                        {cpu.label}
-                      </div>
-                    ))}
-                  </div>
-                </div>
+              {/* Description */}
+              <div className="space-y-2">
+                <Label htmlFor="description">Description (HTML supported)</Label>
+                <textarea
+                  id="description"
+                  className="w-full p-2 border rounded-md min-h-[100px] font-mono text-sm"
+                  value={editingProduct.description}
+                  onChange={(e) => handleInputChange('description', e.target.value)}
+                  placeholder="You can use HTML tags like <h3>, <p>, etc."
+                />
+              </div>
 
-                <div>
-                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
-                    GPU Options
-                  </p>
-                  <div className="text-sm text-gray-700 space-y-1">
-                    {product.gpuCoreConfigs.map((gpu, idx) => (
-                      <div key={idx} className="py-1">
-                        {gpu.label}
-                      </div>
-                    ))}
-                  </div>
+              {/* Pre-order Configuration */}
+              <div className="space-y-4 p-4 border rounded-md">
+                <Label className="text-lg font-semibold">Pre-order Configuration</Label>
+                <div className="flex items-center space-x-2 mb-4">
+                  <input
+                    type="checkbox"
+                    checked={editingProduct.preOrderConfig?.enabled || false}
+                    onChange={(e) => handlePreOrderConfigChange('enabled', e.target.checked)}
+                    className="w-4 h-4"
+                  />
+                  <Label>Enable Pre-order</Label>
                 </div>
-
-                <div>
-                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
-                    Available Colors
-                  </p>
-                  <div className="flex gap-2 flex-wrap">
-                    {product.colorImageConfigs.map((config, idx) => (
-                      <div
-                        key={idx}
-                        className="w-9 h-9 rounded-full border-2 border-gray-300 shadow-sm"
-                        style={{ backgroundColor: config.color }}
-                        title={config.color}
+                {editingProduct.preOrderConfig?.enabled && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>Pre-order Message</Label>
+                      <Input
+                        value={editingProduct.preOrderConfig?.message || ""}
+                        onChange={(e) => handlePreOrderConfigChange('message', e.target.value)}
+                        placeholder="e.g., Available for pre-order"
                       />
-                    ))}
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Pre-order Date</Label>
+                      <Input
+                        type="date"
+                        value={editingProduct.preOrderConfig?.date || ""}
+                        onChange={(e) => handlePreOrderConfigChange('date', e.target.value)}
+                      />
+                    </div>
                   </div>
-                </div>
-
-                <div className="pt-3 border-t border-gray-200">
-                  <p className="text-xs text-gray-500">
-                    Created: <span className="text-gray-700 font-medium">{formatDate(product.createdAt)}</span>
-                  </p>
-                </div>
+                )}
               </div>
-            </div>
-          ))}
 
-          {products.length === 0 && (
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-16 text-center text-gray-500">
-              <div className="text-5xl mb-4">📦</div>
-              <div className="text-lg font-medium">No products found</div>
-              <div className="text-sm mt-2">Start by adding your first MacBook product</div>
-            </div>
+              {/* Storage Configurations */}
+              <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                    <div>
+                         <Label className="text-lg font-semibold">Storage Configurations</Label>
+                  <div className="space-y-2">
+                  <Input
+                    id="accessoriesType"
+                    value={editingProduct.accessoriesType}
+                    onChange={(e) => handleInputChange('accessoriesType', e.target.value)}
+                    placeholder="e.g., Storage, Region"
+                  />
+                </div>
+                    </div>
+                 
+                  
+                  <Button type="button" onClick={addStorageConfig} variant="outline" size="sm">
+                    Add Storage
+                  </Button>
+                </div>
+                {editingProduct.storageConfigs.map((storage, index) => (
+                    
+                  <div key={index} className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 border rounded-md relative text-black">
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="sm"
+                      className="absolute top-2 right-2 w-6 h-6 p-0 text-black"
+                      onClick={() => removeStorageConfig(index)}
+                    >
+                      ×
+                    </Button>
+                    <div className="space-y-2">
+                      <Label>Storage Name *</Label>
+                      <Input
+                        value={storage.name}
+                        onChange={(e) => handleStorageConfigChange(index, 'name', e.target.value)}
+                        placeholder="e.g., 128GB, 256GB"
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Basic Price</Label>
+                      <Input
+                        value={storage.basicPrice}
+                        onChange={(e) => handleStorageConfigChange(index, 'basicPrice', e.target.value)}
+                        placeholder="0"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Short Details</Label>
+                      <Input
+                        value={storage.shortDetails}
+                        onChange={(e) => handleStorageConfigChange(index, 'shortDetails', e.target.value)}
+                        placeholder="e.g., 128GB storage"
+                      />
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="checkbox"
+                        checked={storage.inStock}
+                        onChange={(e) => handleStorageConfigChange(index, 'inStock', e.target.checked)}
+                        className="w-4 h-4"
+                      />
+                      <Label>In Stock</Label>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Image Configurations */}
+              <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <Label className="text-lg font-semibold">Image Configurations</Label>
+                  <Button type="button" onClick={addImageConfig} variant="outline" size="sm">
+                    Add Image Config
+                  </Button>
+                </div>
+                {editingProduct.imageConfigs.map((config, index) => (
+                  <div key={index} className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 border rounded-md relative">
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="sm"
+                      className="absolute top-2 right-2 w-6 h-6 p-0"
+                      onClick={() => removeImageConfig(index)}
+                    >
+                      ×
+                    </Button>
+                    <div className="space-y-2">
+                      <Label>Color Name *</Label>
+                      <Input
+                        value={config.colorName}
+                        onChange={(e) => handleImageConfigChange(index, 'colorName', e.target.value)}
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Color Hex</Label>
+                      <Input
+                        value={config.colorHex}
+                        onChange={(e) => handleImageConfigChange(index, 'colorHex', e.target.value)}
+                      />
+                    </div>
+                    <div className="space-y-2 md:col-span-2">
+                      <Label>Image URL *</Label>
+                      <Input
+                        value={config.image}
+                        onChange={(e) => handleImageConfigChange(index, 'image', e.target.value)}
+                        required
+                      />
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="checkbox"
+                        checked={config.inStock}
+                        onChange={(e) => handleImageConfigChange(index, 'inStock', e.target.checked)}
+                        className="w-4 h-4"
+                      />
+                      <Label>In Stock</Label>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Dynamic Inputs */}
+              <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <Label className="text-lg font-semibold">Dynamic Inputs</Label>
+                  <Button type="button" onClick={addDynamicInput} variant="outline" size="sm">
+                    Add Dynamic Input
+                  </Button>
+                </div>
+                {editingProduct.dynamicInputs.map((input, inputIndex) => (
+                  <div key={inputIndex} className="p-4 border rounded-md space-y-4 relative">
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="sm"
+                      className="absolute top-2 right-2 w-6 h-6 p-0"
+                      onClick={() => removeDynamicInput(inputIndex)}
+                    >
+                      ×
+                    </Button>
+                    <div className="space-y-2">
+                      <Label>Type *</Label>
+                      <Input
+                        value={input.type}
+                        onChange={(e) => handleDynamicInputChange(inputIndex, 'type', e.target.value)}
+                        placeholder="e.g., Region, Cable, etc."
+                        required
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <div className="flex justify-between items-center">
+                        <Label>Items</Label>
+                        <Button 
+                          type="button" 
+                          onClick={() => addDynamicItem(inputIndex)} 
+                          variant="outline" 
+                          size="sm"
+                        >
+                          Add Item
+                        </Button>
+                      </div>
+                      {input.items.map((item, itemIndex) => (
+                        <div key={itemIndex} className="grid grid-cols-1 md:grid-cols-3 gap-4 p-3 border rounded relative text-black">
+                          <Button
+                            type="button"
+                            variant="destructive"
+                            size="sm"
+                            className="absolute top-1 right-1 w-5 h-5 p-0 text-xs text-black"
+                            onClick={() => removeDynamicItem(inputIndex, itemIndex)}
+                          >
+                            ×
+                          </Button>
+                          <div className="space-y-1">
+                            <Label className="text-xs">Label *</Label>
+                            <Input
+                              placeholder="e.g., USA, SG/AUS"
+                              value={item.label}
+                              onChange={(e) => handleDynamicItemChange(inputIndex, itemIndex, 'label', e.target.value)}
+                              required
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <Label className="text-xs">Price</Label>
+                            <Input
+                              placeholder="0"
+                              value={item.price}
+                              onChange={(e) => handleDynamicItemChange(inputIndex, itemIndex, 'price', e.target.value)}
+                            />
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <input
+                              type="checkbox"
+                              checked={item.inStock}
+                              onChange={(e) => handleDynamicItemChange(inputIndex, itemIndex, 'inStock', e.target.checked)}
+                              className="w-4 h-4"
+                            />
+                            <Label className="text-xs">In Stock</Label>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Product Details */}
+              <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <Label className="text-lg font-semibold">Product Details</Label>
+                  <Button type="button" onClick={addDetail} variant="outline" size="sm">
+                    Add Detail
+                  </Button>
+                </div>
+                {editingProduct.details.map((detail, index) => (
+                  <div key={index} className="grid grid-cols-1 md:grid-cols-2 gap-4 p-3 border rounded relative ">
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="sm"
+                      className="absolute top-1 right-1 w-5 h-5 p-0 text-xs"
+                      onClick={() => removeDetail(index)}
+                    >
+                      ×
+                    </Button>
+                    <div className="space-y-1">
+                      <Label className="text-xs">Label *</Label>
+                      <Input
+                        placeholder="e.g., Model, Dimensions"
+                        value={detail.label}
+                        onChange={(e) => handleDetailChange(index, 'label', e.target.value)}
+                        required
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs">Value *</Label>
+                      <Input
+                        placeholder="e.g., iPhone 16 Pro, 149.6 x 71.5 x 8.3 mm"
+                        value={detail.value}
+                        onChange={(e) => handleDetailChange(index, 'value', e.target.value)}
+                        required
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex justify-end space-x-4 pt-4 border-t">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    setIsEditDialogOpen(false);
+                    setEditingProduct(null);
+                  }}
+                >
+                  Cancel
+                </Button>
+                <Button type="submit" disabled={isLoading} className="bg-black text-white">
+                  {isLoading ? "Saving..." : "Save Changes"}
+                </Button>
+              </div>
+            </form>
           )}
-        </div>
-      </div>
-    </div>
+        </DialogContent>
+      </Dialog>
+    </>
   );
-};
-
-export default MacBookTable;
+}
