@@ -4,9 +4,9 @@ import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { 
-  Menu, X, Search, Heart, User, ChevronDown, Home, Grid, Percent,
+  Menu,  Search, User, ChevronDown, Home, Grid, Percent,
   ShoppingBag, Clock, TrendingUp, Smartphone, Laptop, Tablet, Headphones,
-  DollarSign
+  
 } from 'lucide-react';
 import Image from 'next/image';
 import logo from './../../../public/WhatsApp_Image_2025-08-23_at_19.59.58__1_-removebg-preview (1).png';
@@ -28,16 +28,7 @@ import { Separator } from '@/components/ui/separator';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
-const accessoriesCategories = [
-  { name: 'Mobile Accessories', href: '/category/mobile-accessories' },
-  { name: 'Chargers & Cables', href: '/category/chargers-cables' },
-  { name: 'Cases & Protection', href: '/category/cases-protection' },
-  { name: 'Audio & Headphones', href: '/category/audio-headphones' },
-  { name: 'Stands & Mounts', href: '/category/stands-mounts' },
-  { name: 'Screen Protection', href: '/category/screen-protection' },
-  { name: 'Power Banks', href: '/category/power-banks' },
-  { name: 'Wireless Accessories', href: '/category/wireless-accessories' }
-];
+
 
 // Custom WhatsApp Icon Component
 const WhatsAppIcon = ({ className = "w-10 h-10", strokeWidth = 2 }) => (
@@ -374,7 +365,6 @@ const AppleNavbar = () => {
     {
       name: 'Accessories',
       href: '/category/accessories',
-      children: accessoriesCategories.map((c) => ({ name: c.name, href: c.href })),
     }
   ];
 
@@ -709,8 +699,7 @@ const AppleNavbar = () => {
                         productType: category.type as any
                       })}
                     >
-                      <category.icon size={14} className="mr-2" />
-                      {category.name}
+                      
                     </Button>
                   ))}
                 </div>
