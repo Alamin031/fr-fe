@@ -27,6 +27,7 @@ import Highlight from '@tiptap/extension-highlight';
 import Link from '@tiptap/extension-link';
 import ImageExtension from '@tiptap/extension-image';
 import axios from 'axios';
+import AdminManagementProvider from '@/providers/AdminManagementProvider';
 
 type StorageConfig = {
   id: number;
@@ -898,7 +899,8 @@ const ProductManager = () => {
   }
 
   return (
-    <div className="min-h-screen w-full p-4 md:p-6 lg:p-8 text-black">
+    <AdminManagementProvider>
+       <div className="min-h-screen w-full p-4 md:p-6 lg:p-8 text-black">
       <YouTubeStyles />
       <div className="max-w-7xl mx-auto">
         <Card className="border-0 shadow-xl">
@@ -1428,6 +1430,9 @@ const ProductManager = () => {
         </Card>
       </div>
     </div>
+
+    </AdminManagementProvider>
+   
   );
 };
 

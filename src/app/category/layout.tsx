@@ -1,7 +1,7 @@
 
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import ResponsiveEcomerce from "../components/ResponsiveEcomerce";
+import ResponsiveEcomerce from "../../components/components/ResponsiveEcomerce";
 import './category.css';
 import { Suspense } from "react";
 import ReactQueryProvider from "@/providers/QueryProvider";

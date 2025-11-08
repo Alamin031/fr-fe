@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./checkout.css";
 import { Suspense } from "react";
-import ResponsiveEcommerce from "../components/ResponsiveEcomerce";
+import ResponsiveEcommerce from "../../components/components/ResponsiveEcomerce";
 
 
 const geistSans = Geist({

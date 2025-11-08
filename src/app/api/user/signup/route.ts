@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { connect } from "@/dbconfig/dbconfig";
-import User from "@/models/UserModels";
+import User from "../../../../models/UserModels";
 
 // Define a type for Mongoose errors
 interface MongooseError extends Error {

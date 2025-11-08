@@ -1,6 +1,11 @@
 import mongoose from "mongoose";
 
 const userSchema = new mongoose.Schema({
+  image : {
+    type : String,
+    
+
+  },
   username: {
     type: String, // ✅ Capital S
     required: [true, "Please provide a username"],
@@ -13,8 +18,14 @@ const userSchema = new mongoose.Schema({
   },
   password: {
     type: String, // ✅ Capital S
-    required: [true, "Please provide a password"],
   },
+  id :{
+      type : String,
+  },
+  role : {
+        type : String,
+        default : 'user',
+    },
   isVerified: {
     type: Boolean,
     default: false,
@@ -28,5 +39,5 @@ const userSchema = new mongoose.Schema({
   verifyToken: String,         // ✅ Capital S
 });
 
-const User = mongoose.models.User || mongoose.model("User", userSchema);
+const User = mongoose.models.UserAuth || mongoose.model("UserAuth", userSchema);
 export default User;

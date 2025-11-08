@@ -1,4 +1,4 @@
-import Mabookcard from '@/app/components/macbookcomponents/macbookcardcomponts/Macbookcard';
+import Mabookcard from '@/components/components/macbookcomponents/macbookcardcomponts/Macbookcard';
 import React from 'react';
 
 const page = () => {

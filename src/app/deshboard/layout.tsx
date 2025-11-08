@@ -6,7 +6,7 @@ import './deshboard.css';
 
 import NextDeshboardProvider from "@/providers/NextDeshboardProvider";
 import  Deshboard from '@/components/DeshboardNavber/Deshboard';
-import MobileBottomNav from "../components/MobileBottomNav";
+import MobileBottomNav from "../../components/components/MobileBottomNav";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",

@@ -1,5 +1,6 @@
 import React from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import AdminManagementProvider from '@/providers/AdminManagementProvider';
 
 const Page = async () => {
   let orders = [];
@@ -22,7 +23,8 @@ const Page = async () => {
   }
 
   return (
-    <div className="container mx-auto py-8">
+    <AdminManagementProvider>
+      <div className="container mx-auto py-8">
       <div className="bg-white rounded-lg border shadow-sm overflow-hidden">
         <div className="px-6 py-4 border-b">
           <h1 className="text-2xl font-bold text-gray-800">Product notify</h1>
@@ -123,6 +125,9 @@ const Page = async () => {
         </div>
       </div>
     </div>
+
+    </AdminManagementProvider>
+    
   );
 };
 

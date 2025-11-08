@@ -1,5 +1,6 @@
-import Macbookdetails from '@/app/components/macbookcomponents/Macbookdetails';
+import Macbookdetails from '@/components/components/macbookcomponents/Macbookdetails';
 import React from 'react';
+
 
 const page = () => {
   return (

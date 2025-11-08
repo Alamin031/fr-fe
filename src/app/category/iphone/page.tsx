@@ -1,4 +1,4 @@
-import IphoneAll from '@/app/components/iphonecomponents/iphonecardcomponents/Iphoncardcomponents';
+import IphoneAll from '@/components/components/iphonecomponents/iphonecardcomponents/Iphoncardcomponents';
 import React from 'react';
 
 const page = () => {

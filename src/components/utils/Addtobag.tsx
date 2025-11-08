@@ -20,7 +20,7 @@ const Addtobag = () => {
   };
   const { order, removeOrder ,clearOrder } = useaddtobagStore();
 
-  console.log(order);
+  // console.log(order);
 
  const off = () => {
   closeSidebar()

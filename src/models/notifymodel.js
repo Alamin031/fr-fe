@@ -11,7 +11,6 @@ const notifyschema = new mongoose.Schema({
     timestamp : {}
 })
 
-const Product =
-  mongoose.models.notify || mongoose.model("notify", notifyschema);
+const Product = mongoose.models.notify || mongoose.model("notify", notifyschema);
 
 export default Product;

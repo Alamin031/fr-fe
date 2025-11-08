@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import Navbar from "../Updatanav";
+import AdminManagementProvider from "@/providers/AdminManagementProvider";
 
 // Types based on your MongoDB schema
 type ImageConfig = {
@@ -395,7 +396,8 @@ export default function ProductsTable() {
 
   return (
     <>
-      <Card className="shadow-lg rounded-2xl w-full mt-4">
+    <AdminManagementProvider>
+       <Card className="shadow-lg rounded-2xl w-full mt-4">
             <Navbar></Navbar>
 
         <CardContent>
@@ -843,6 +845,9 @@ export default function ProductsTable() {
           )}
         </DialogContent>
       </Dialog>
+      
+    </AdminManagementProvider>
+     
     </>
   );
 }

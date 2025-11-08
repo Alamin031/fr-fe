@@ -11,6 +11,7 @@ interface NextDashboardProviderProps {
 const NextDashboardProvider: React.FC<NextDashboardProviderProps> = ({ children }) => {
   const { data: session, status } = useSession();
   const router = useRouter();
+  // console.log(session)
 
   useEffect(() => {
     if (status === "unauthenticated") {

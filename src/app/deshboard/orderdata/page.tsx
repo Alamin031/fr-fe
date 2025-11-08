@@ -10,6 +10,7 @@ import {
   ChevronUp,
   Trash2,
 } from 'lucide-react';
+import AdminManagementProvider from '@/providers/AdminManagementProvider';
 
 type Customer = {
   firstName: string;
@@ -142,7 +143,8 @@ const OrderCheckoutUI: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8 px-4 w-full">
+    <AdminManagementProvider>
+       <div className="min-h-screen bg-gray-50 py-8 px-4 w-full">
       <div className="max-w-7xl mx-auto">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-800 mb-2">
@@ -407,6 +409,9 @@ const OrderCheckoutUI: React.FC = () => {
         )}
       </div>
     </div>
+
+    </AdminManagementProvider>
+   
   );
 };
 
