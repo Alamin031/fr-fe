@@ -15,7 +15,7 @@ const page = () => {
 
        <Banner/>
        <FeaturesBanner></FeaturesBanner>
-       <Macbook></Macbook>
+       {/* <Macbook></Macbook> */}
 
       <AppleProduct></AppleProduct>
       <Footer></Footer>

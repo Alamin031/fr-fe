@@ -1,7 +1,5 @@
 'use client'
 import React, { useEffect, useState } from 'react';
-import { CreditCard, Truck, RefreshCw, Tag, Headphones } from 'lucide-react';
-import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 
 export default function FeaturesBanner() {
@@ -26,36 +24,10 @@ export default function FeaturesBanner() {
     fetchItems();
   }, []);
 
-  const features = [
-    { icon: CreditCard, title: '36 Months EMI', color: 'text-purple-600', bgColor: 'bg-purple-50' },
-    { icon: Truck, title: 'Fastest Home Delivery', color: 'text-yellow-600', bgColor: 'bg-yellow-50' },
-    { icon: RefreshCw, title: 'Exchange Facility', color: 'text-green-600', bgColor: 'bg-green-50' },
-    { icon: Tag, title: 'Best Price Deals', color: 'text-pink-600', bgColor: 'bg-pink-50' },
-    { icon: Headphones, title: 'After Sell Service', color: 'text-orange-600', bgColor: 'bg-orange-50' },
-  ];
-
+  
   return (
-    <>
-      {/* Features Grid - Hidden on mobile */}
-      <div className="w-full  mx-auto px-4 py-6 max-sm:hidden">
-        <Card className="shadow-sm">
-          <CardContent className="">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
-              {features.map((feature, index) => (
-                <div key={index} className="flex items-center gap-4 justify-center lg:justify-start">
-                  <div className={` p-3 rounded-xl flex-shrink-0`}>
-                    <feature.icon className={`w-8 h-8 ${feature.color}`} strokeWidth={1.5} />
-                  </div>
-                  <h3 className="text-foreground font-medium text-base leading-tight">
-                    {feature.title}
-                  </h3>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
+    <div className='mx-25 max-sm:mx-4' >
+     
       {/* Marquee Section */}
       {!loading && items.length > 0 && (
         <div className="mt-6 overflow-hidden relative bg-muted/50 py-3  ">
@@ -100,6 +72,6 @@ export default function FeaturesBanner() {
           animation-play-state: paused;
         }
       `}</style>
-    </>
+    </div>
   );
 }

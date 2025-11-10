@@ -1,235 +1,298 @@
 'use client'
 import Image from 'next/image';
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 
+// Types
 interface BannerData {
-  section1?: string[];
-  section2?: string[];
-  [key: string]: unknown;
+  section1?: string[]; // Sidebar products
+  section2?: string[]; // Main slider
 }
 
+const AUTO_SLIDE_INTERVAL = 5000;
+
 const HeroBannerSlider: React.FC = () => {
+  // Data State
   const [bannerData, setBannerData] = useState<BannerData | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Carousel State
   const [currentSlide, setCurrentSlide] = useState<number>(0);
   const [isPaused, setIsPaused] = useState<boolean>(false);
+  const [touchStart, setTouchStart] = useState<number | null>(null);
+  const [touchEnd, setTouchEnd] = useState<number | null>(null);
+  
+  // Refs for managing intervals without triggering re-renders
+  const slideInterval = useRef<NodeJS.Timeout | null>(null);
+  const interactionTimeout = useRef<NodeJS.Timeout | null>(null);
 
-  // Fetch banner data from API
+  // --- Data Fetching ---
   useEffect(() => {
+    let isMounted = true;
     const fetchBannerData = async () => {
       try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URI}/lendingbenar`, {
+        // Ensure URI is defined, fallback gracefully if env is missing during dev
+        const baseUri = process.env.NEXT_PUBLIC_BASE_URI || '';
+        const res = await fetch(`${baseUri}/lendingbenar`, {
           method: "GET",
           headers: { "Content-Type": "application/json" },
-          cache: 'no-store'
+          next: { revalidate: 60 } // Optional: revalidate every minute if using App router server components elsewhere
         });
 
-        if (!res.ok) {
-          throw new Error(`Failed to fetch: ${res.status}`);
-        }
-
+        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
         const data = await res.json();
         
-        if (!data || !Array.isArray(data) || data.length === 0) {
-          throw new Error("No banner data received");
+        if (isMounted) {
+            if (!Array.isArray(data) || data.length === 0) {
+             throw new Error("Banner data is empty");
+            }
+            setBannerData(data[0]);
         }
-        
-        setBannerData(data[0]);
       } catch (err) {
-        console.error('Banner fetch error:', err);
-        setError(err instanceof Error ? err.message : "Failed to load banner");
+        if (isMounted) {
+          console.error('Banner fetch error:', err);
+          setError(err instanceof Error ? err.message : "Failed to load banner");
+        }
       } finally {
-        setLoading(false);
+        if (isMounted) setLoading(false);
       }
     };
 
     fetchBannerData();
+    return () => { isMounted = false; };
   }, []);
 
-  const sliderImages = useMemo(() => bannerData?.section2 || [], [bannerData?.section2]);
-  const sidebarProducts = useMemo(() => bannerData?.section1 || [], [bannerData?.section1]);
+  // Memoized data for cleaner render logic
+  const sliderImages = useMemo(() => bannerData?.section2 || [], [bannerData]);
+  const sidebarProducts = useMemo(() => bannerData?.section1 || [], [bannerData]);
+  const hasMultipleSlides = sliderImages.length > 1;
 
-  // Navigation handlers with useCallback
+  // --- Carousel Navigation Logic ---
   const nextSlide = useCallback(() => {
-    if (sliderImages.length === 0) return;
     setCurrentSlide((prev) => (prev + 1) % sliderImages.length);
   }, [sliderImages.length]);
 
   const prevSlide = useCallback(() => {
-    if (sliderImages.length === 0) return;
     setCurrentSlide((prev) => (prev === 0 ? sliderImages.length - 1 : prev - 1));
   }, [sliderImages.length]);
 
-  const goToSlide = useCallback((index: number) => {
+  const goToSlide = (index: number) => {
     setCurrentSlide(index);
+    handleManualInteraction();
+  };
+
+  // Temporarily pause auto-slide on manual interaction (clicks/swipes)
+  const handleManualInteraction = useCallback(() => {
+    // Clear existing Interaction timeout if user clicks rapidly
+    if (interactionTimeout.current) clearTimeout(interactionTimeout.current);
+    // Pause
+    setIsPaused(true);
+    // Resume after delay
+    interactionTimeout.current = setTimeout(() => {
+      setIsPaused(false);
+    }, AUTO_SLIDE_INTERVAL); // Wait one full interval before resuming
   }, []);
 
-  // Auto-slide with pause functionality
+  const onNextClick = () => {
+    nextSlide();
+    handleManualInteraction();
+  };
+
+  const onPrevClick = () => {
+    prevSlide();
+    handleManualInteraction();
+  };
+
+  // --- Auto Slide Effect ---
   useEffect(() => {
-    if (sliderImages.length <= 1 || isPaused) return;
+    if (!hasMultipleSlides || isPaused) return;
 
-    const interval = setInterval(nextSlide, 5000);
-    return () => clearInterval(interval);
-  }, [sliderImages.length, isPaused, nextSlide]);
+    slideInterval.current = setInterval(nextSlide, AUTO_SLIDE_INTERVAL);
 
-  // Keyboard navigation
+    return () => {
+      if (slideInterval.current) clearInterval(slideInterval.current);
+    };
+  }, [hasMultipleSlides, isPaused, nextSlide]);
+
+  // --- Keyboard & Touch Support ---
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'ArrowLeft') prevSlide();
-      if (e.key === 'ArrowRight') nextSlide();
+        // Only listen if the user might be interacting with the slider to avoid hijacking page scroll
+        if (sliderImages.length <= 1) return;
+        if (e.key === 'ArrowLeft') {
+            onPrevClick();
+        } else if (e.key === 'ArrowRight') {
+            onNextClick();
+        }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [prevSlide, nextSlide]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sliderImages.length]); // Dep intentionally missing click handlers to avoid re-binding
 
-  // Loading state
+  // Touch handlers
+  const minSwipeDistance = 50;
+  const onTouchStart = (e: React.TouchEvent) => {
+    setTouchEnd(null); // Reset touch end on new touch
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+  const onTouchMove = (e: React.TouchEvent) => setTouchEnd(e.targetTouches[0].clientX);
+  const onTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+    const distance = touchStart - touchEnd;
+    const isLeftSwipe = distance > minSwipeDistance;
+    const isRightSwipe = distance < -minSwipeDistance;
+
+    if (isLeftSwipe) onNextClick();
+    if (isRightSwipe) onPrevClick();
+  };
+
+  // --- Render States ---
+
   if (loading) {
-    return (
-      <div className="w-full max-w-7xl mx-auto p-4">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          <div className="lg:col-span-2 h-60 sm:h-80 lg:h-[300px] bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 animate-pulse rounded-[10px]" />
-          <div className="lg:col-span-1 flex gap-4 lg:flex-col">
-            <div className="flex-1 h-48 lg:h-[142px] bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 animate-pulse rounded-[10px]" />
-            <div className="flex-1 h-48 lg:h-[142px] bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 animate-pulse rounded-[10px]" />
-          </div>
-        </div>
-      </div>
-    );
+    return <BannerSkeleton />;
   }
 
-  // Error state
-  if (error) {
-    return (
-      <div className="w-full max-w-7xl mx-auto p-4">
-        <div className="bg-red-50 border-2 border-red-200 rounded-[10px] p-6 sm:p-8 text-center">
-          <svg className="w-12 h-12 text-red-400 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          <p className="text-red-700 font-semibold text-lg mb-2">Unable to Load Banner</p>
-          <p className="text-red-600 text-sm">{error}</p>
-        </div>
-      </div>
-    );
-  }
-
-  // No data state
-  if (!bannerData || (sliderImages.length === 0 && sidebarProducts.length === 0)) {
-    return (
-      <div className="w-full max-w-7xl mx-auto p-4">
-        <div className="bg-gray-50 border-2 border-gray-200 rounded-[10px] p-8 text-center">
-          <p className="text-gray-600 font-medium">No banner content available</p>
-        </div>
-      </div>
-    );
+  if (error || (!sliderImages.length && !sidebarProducts.length)) {
+    return null; // Or return a specific error component if preferred, but often better to just collapse the section if it fails.
   }
 
   return (
-    <div className="w-full max-w-7xl mx-auto p-4">
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        {/* Main Slider */}
-        {sliderImages.length > 0 && (
-          <div 
-            className="lg:col-span-2 relative overflow-hidden rounded-[10px] shadow-2xl bg-gray-900 group"
-            onMouseEnter={() => setIsPaused(true)}
-            onMouseLeave={() => setIsPaused(false)}
-            role="region"
-            aria-label="Image carousel"
-          >
-            {/* Slides */}
-            <div className="relative h-60 sm:h-80 lg:h-[300px]">
-              {sliderImages.map((imageUrl, index) => (
+    <section 
+        className="w-full max-w-7xl mx-auto p-4" 
+        aria-label="Promotional Banner"
+    >
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+        
+        {/* MAIN SLIDER AREA (Takes up 8/12 columns on large screens) */}
+        <div 
+          className={`relative overflow-hidden rounded-2xl shadow-2xl bg-gray-900 group ${sidebarProducts.length > 0 ? 'lg:col-span-8' : 'lg:col-span-12'}`}
+          onMouseEnter={() => setIsPaused(true)}
+          onMouseLeave={() => setIsPaused(false)}
+          onTouchStart={onTouchStart}
+          onTouchMove={onTouchMove}
+          onTouchEnd={onTouchEnd}
+          role="region"
+          aria-roledescription="carousel"
+          aria-label="Featured Offers"
+        >
+          {/* Aspect Ratio Container */}
+          <div className="relative aspect-[16/8] sm:aspect-[16/7] lg:aspect-auto lg:h-[400px]">
+            {sliderImages.length > 0 ? (
+                sliderImages.map((imageUrl, index) => (
                 <div
-                  key={`${imageUrl}-${index}`}
-                  className={`absolute inset-0 transition-opacity duration-700 ease-in-out ${
+                    key={`${imageUrl}-${index}`}
+                    role="group"
+                    aria-roledescription="slide"
+                    aria-label={`${index + 1} of ${sliderImages.length}`}
+                    aria-hidden={index !== currentSlide}
+                    className={`absolute inset-0 will-change-[opacity] transition-opacity duration-700 ease-in-out ${
                     index === currentSlide ? 'opacity-100 z-10' : 'opacity-0 z-0'
-                  }`}
-                  aria-hidden={index !== currentSlide}
+                    }`}
                 >
-                  <Image
-                    src={imageUrl}
-                    alt={`Banner slide ${index + 1} of ${sliderImages.length}`}
-                    fill
-                    className="object-cover object-center"
-                    priority={index === 0}
-                    quality={90}
-                    sizes="(max-width: 768px) 100vw, (max-width: 1024px) 66vw, 66vw"
-                  />
-                </div>
-              ))}
-            </div>
-
-            {/* Navigation Arrows - Show only if more than 1 slide */}
-            {sliderImages.length > 1 && (
-              <>
-                <button
-                  onClick={prevSlide}
-                  className="absolute left-3 sm:left-4 lg:left-6 top-1/2 -translate-y-1/2 bg-white/95 hover:bg-white text-gray-900 rounded-full p-2 sm:p-3 shadow-xl transition-all duration-300 hover:scale-110 active:scale-95 opacity-0 group-hover:opacity-100 z-20 focus:opacity-100 focus:outline-none focus:ring-2 focus:ring-orange-500"
-                  aria-label="Previous slide"
-                >
-                  <svg className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
-                  </svg>
-                </button>
-                
-                <button
-                  onClick={nextSlide}
-                  className="absolute right-3 sm:right-4 lg:right-6 top-1/2 -translate-y-1/2 bg-white/95 hover:bg-white text-gray-900 rounded-full p-2 sm:p-3 shadow-xl transition-all duration-300 hover:scale-110 active:scale-95 opacity-0 group-hover:opacity-100 z-20 focus:opacity-100 focus:outline-none focus:ring-2 focus:ring-orange-500"
-                  aria-label="Next slide"
-                >
-                  <svg className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
-                  </svg>
-                </button>
-
-                {/* Dots Indicator */}
-                <div className="absolute bottom-4 sm:bottom-6 left-1/2 -translate-x-1/2 flex space-x-2 sm:space-x-3 z-20">
-                  {sliderImages.map((_, index) => (
-                    <button
-                      key={index}
-                      onClick={() => goToSlide(index)}
-                      className={`transition-all duration-300 rounded-full focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 ${
-                        index === currentSlide 
-                          ? 'bg-orange-500 w-8 sm:w-10 h-2.5 sm:h-3' 
-                          : 'bg-white/70 hover:bg-white w-2.5 sm:w-3 h-2.5 sm:h-3'
-                      }`}
-                      aria-label={`Go to slide ${index + 1}`}
-                      aria-current={index === currentSlide}
+                    <Image
+                        src={imageUrl}
+                        alt="" // Decorative unless data provides specific alt text
+                        fill
+                        className="object-cover object-center"
+                        priority={index === 0}
+                        sizes="(max-width: 1024px) 100vw, 66vw"
                     />
-                  ))}
                 </div>
-              </>
+                ))
+            ) : (
+                 // Fallback if no images in section 2 but data loaded
+                <div className="absolute inset-0 flex items-center justify-center bg-gray-100 text-gray-400">
+                    No images available
+                </div>
             )}
           </div>
-        )}
 
-        {/* Sidebar Product Tiles */}
+          {/* Controls Overlay */}
+          {hasMultipleSlides && (
+            <>
+              {/* Gradient overlays for better text/arrow visibility */}
+              <div className="absolute inset-0 pointer-events-none z-20 bg-gradient-to-t from-black/20 via-transparent to-transparent" />
+
+              {/* Arrows - Visible on mobile, show-on-hover on desktop */}
+              <button
+                onClick={onPrevClick}
+                className="absolute left-4 top-1/2 -translate-y-1/2 z-30 p-2 rounded-full bg-white/90 text-gray-900 shadow-lg transition-all duration-200 hover:scale-110 hover:bg-white active:scale-95 lg:opacity-0 lg:group-hover:opacity-100 focus:opacity-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-500"
+                aria-label="Previous slide"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-5 h-5">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+                </svg>
+              </button>
+              <button
+                onClick={onNextClick}
+                className="absolute right-4 top-1/2 -translate-y-1/2 z-30 p-2 rounded-full bg-white/90 text-gray-900 shadow-lg transition-all duration-200 hover:scale-110 hover:bg-white active:scale-95 lg:opacity-0 lg:group-hover:opacity-100 focus:opacity-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-500"
+                aria-label="Next slide"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-5 h-5">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                </svg>
+              </button>
+
+              {/* Pagination Dots */}
+              <div className="absolute bottom-4 left-0 right-0 flex justify-center space-x-2 z-30">
+                {sliderImages.map((_, index) => (
+                  <button
+                    key={index}
+                    onClick={() => goToSlide(index)}
+                    className={`h-2 rounded-full transition-all duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 ${
+                      index === currentSlide 
+                        ? 'w-8 bg-orange-500' 
+                        : 'w-2 bg-white/60 hover:bg-white'
+                    }`}
+                    aria-label={`Go to slide ${index + 1}`}
+                    aria-current={index === currentSlide}
+                  />
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+
+        {/* SIDEBAR PRODUCTS (Takes up 4/12 columns on large screens) */}
         {sidebarProducts.length > 0 && (
-          <div className="lg:col-span-1 flex gap-4 lg:flex-col overflow-x-auto lg:overflow-visible scrollbar-hide pb-2 lg:pb-0">
-            {sidebarProducts.map((imageUrl, index) => (
+          <div className="lg:col-span-4 grid grid-cols-2 lg:grid-cols-1 lg:grid-rows-2 gap-4 h-full">
+            {sidebarProducts.slice(0, 2).map((imageUrl, index) => (
               <div
-                key={`${imageUrl}-${index}`}
-                className="relative overflow-hidden rounded-[10px] shadow-xl min-w-[200px] sm:min-w-[250px] lg:min-w-0 h-48 sm:h-56 lg:h-[142px] group cursor-pointer transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl active:scale-95 bg-gray-900"
+                key={`sidebar-${index}`}
+                className="relative overflow-hidden rounded-2xl shadow-md bg-gray-100 group/card h-40 sm:h-48 lg:h-auto"
               >
                 <Image
                   src={imageUrl}
-                  alt={`Featured product ${index + 1}`}
+                  alt="Featured product"
                   fill
-                  className="object-cover transition-transform duration-500 group-hover:scale-110"
-                  quality={85}
-                  sizes="(max-width: 1024px) 250px, 33vw"
+                  className="object-cover transition-transform duration-500 group-hover/card:scale-105"
+                  sizes="(max-width: 1024px) 50vw, 33vw"
                 />
-                
-                {/* Overlay on hover */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                {/* Subtle hover overlay */}
+                <div className="absolute inset-0 bg-black/0 group-hover/card:bg-black/10 transition-colors duration-300" />
               </div>
             ))}
           </div>
         )}
+
       </div>
-    </div>
+    </section>
   );
 };
+
+// Separated Skeleton for cleaner main component
+const BannerSkeleton = () => (
+  <div className="w-full max-w-7xl mx-auto p-4 animate-pulse" aria-busy="true">
+    <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+      <div className="lg:col-span-8 bg-gray-200 rounded-2xl h-[200px] sm:h-[300px] lg:h-[400px]" />
+      <div className="lg:col-span-4 grid grid-cols-2 lg:grid-cols-1 gap-4">
+        <div className="bg-gray-200 rounded-2xl h-40 lg:h-auto" />
+        <div className="bg-gray-200 rounded-2xl h-40 lg:h-auto" />
+      </div>
+    </div>
+  </div>
+);
 
 export default HeroBannerSlider;
