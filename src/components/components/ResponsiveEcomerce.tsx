@@ -100,14 +100,19 @@ const AppleNavbar = () => {
   const [recentSearches, setRecentSearches] = useState<SearchSuggestion[]>([]);
   const [loading, setLoading] = useState(false);
   const [isSearchDialogOpen, setIsSearchDialogOpen] = useState(false);
-  const [sessionId, setSessionId] = useState<string>('');
+  const [isClient, setIsClient] = useState(false);
   
   // --- Refs ---
   const searchTimeoutRef = useRef<NodeJS.Timeout>();
+  const sessionIdRef = useRef<string>('');
 
-  // Initialize session ID on client side only
+  // Set client-side flag and initialize session ID
   useEffect(() => {
+    setIsClient(true);
+    
     const generateSessionId = (): string => {
+      if (typeof window === 'undefined') return '';
+      
       let sessionId = sessionStorage.getItem('sessionId');
       if (!sessionId) {
         sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -116,7 +121,7 @@ const AppleNavbar = () => {
       return sessionId;
     };
 
-    setSessionId(generateSessionId());
+    sessionIdRef.current = generateSessionId();
   }, []);
 
   // --- Static Data ---
@@ -182,8 +187,7 @@ const AppleNavbar = () => {
 
   // Load recent searches from localStorage
   useEffect(() => {
-    // Only run on client side
-    if (typeof window === 'undefined') return;
+    if (!isClient) return;
 
     try {
       const saved = localStorage.getItem('recent-searches');
@@ -194,7 +198,7 @@ const AppleNavbar = () => {
       console.error('Error loading recent searches:', e);
       localStorage.removeItem('recent-searches');
     }
-  }, []);
+  }, [isClient]);
 
   // API Call: Search products
   const searchProducts = useCallback(async (query: string): Promise<Product[]> => {
@@ -213,10 +217,12 @@ const AppleNavbar = () => {
 
   // API Call: Track search click data
   const trackSearchClick = useCallback(async (data: Omit<SearchClickData, 'sessionId'> & { sessionId?: string }) => {
-    // Only track if we have a sessionId (client-side)
-    if (!sessionId) return;
+    if (!isClient || !sessionIdRef.current) return;
     
-    const payload: SearchClickData = { ...data, sessionId };
+    const payload: SearchClickData = { 
+      ...data, 
+      sessionId: sessionIdRef.current
+    };
     
     try {
       await fetch('/api/analytics/search-clicks', {
@@ -227,12 +233,11 @@ const AppleNavbar = () => {
     } catch (error) {
       console.error('Failed to track search click:', error);
     }
-  }, [sessionId]);
+  }, [isClient]);
 
   // Update recent searches in state and localStorage
   const saveToRecentSearches = useCallback((query: string) => {
-    // Only run on client side
-    if (typeof window === 'undefined') return;
+    if (!isClient) return;
 
     const newSearch: SearchSuggestion = {
       id: `recent-${Date.now()}`,
@@ -247,11 +252,10 @@ const AppleNavbar = () => {
     } catch (e) {
       console.error('Error saving recent searches:', e);
     }
-  }, [recentSearches]);
+  }, [recentSearches, isClient]);
 
   const clearRecentSearches = () => {
-    // Only run on client side
-    if (typeof window === 'undefined') return;
+    if (!isClient) return;
     
     setRecentSearches([]);
     localStorage.removeItem('recent-searches');
@@ -268,17 +272,20 @@ const AppleNavbar = () => {
     try {
       saveToRecentSearches(trimmedQuery);
       
-      // Track search click data
-      const searchData: Omit<SearchClickData, 'sessionId'> = {
-        query: trimmedQuery,
-        timestamp: new Date().toISOString(),
-        resultsCount: results?.length,
-        userAgent: navigator.userAgent,
-        screenResolution: `${window.screen.width}x${window.screen.height}`,
-        source: source,
-      };
+      // Only track if we're on client side
+      if (isClient) {
+        // Track search click data
+        const searchData: Omit<SearchClickData, 'sessionId'> = {
+          query: trimmedQuery,
+          timestamp: new Date().toISOString(),
+          resultsCount: results?.length,
+          userAgent: isClient ? navigator.userAgent : '',
+          screenResolution: isClient ? `${window.screen.width}x${window.screen.height}` : '0x0',
+          source: source,
+        };
 
-      await trackSearchClick(searchData);
+        await trackSearchClick(searchData);
+      }
 
       // Navigate to search results page
       router.push(`/search?q=${encodeURIComponent(trimmedQuery)}`);
@@ -289,7 +296,7 @@ const AppleNavbar = () => {
       router.push(`/search?q=${encodeURIComponent(trimmedQuery)}`);
       setIsSearchDialogOpen(false);
     }
-  }, [router, saveToRecentSearches, trackSearchClick]);
+  }, [router, saveToRecentSearches, trackSearchClick, isClient]);
 
   // Debounced input handler for suggestions
   const handleInputChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -314,6 +321,8 @@ const AppleNavbar = () => {
 
   // Handle suggestion/result click
   const handleSuggestionClick = (item: Product | SearchSuggestion, source: SearchSource = 'suggestion') => {
+    if (!isClient) return;
+
     if ('_id' in item) {
       // It's a Product from API - navigate to product detail page
       if (item.productlinkname) {
@@ -425,17 +434,14 @@ const AppleNavbar = () => {
                         {item.name}
                       </Link>
                     ))}
-                    <div className="pt-4">
-                      {/* <h3 className="text-sm font-semibold text-muted-foreground px-2">Account</h3> */}
+                    {/* <div className="pt-4">
                       <Link
                         href="/deshboard"
                         className="flex items-center w-full text-base font-medium py-3 px-2 rounded-md hover:bg-accent transition-colors"
                         onClick={() => setIsMobileMenuOpen(false)}
                       >
-                        {/* <User size={20} className="mr-3" />
-                        My Account */}
                       </Link>
-                    </div>
+                    </div> */}
                   </div>
                 </ScrollArea>
               </SheetContent>
@@ -634,7 +640,7 @@ const AppleNavbar = () => {
                         <div
                           key={search.id}
                           className="flex items-center space-x-3 p-2 rounded-lg hover:bg-accent cursor-pointer transition-colors"
-                          onClick={() => handleSuggestionClick(search, 'recent-click')}
+                          onClick={() => handleSuggestionClick(search)}
                         >
                           <Clock size={16} className="text-muted-foreground" />
                           <span className="text-sm flex-1">{search.name}</span>
@@ -660,7 +666,7 @@ const AppleNavbar = () => {
                           key={trend.id}
                           variant="secondary"
                           className="px-3 py-1.5 cursor-pointer hover:bg-primary hover:text-primary-foreground transition-colors flex items-center gap-1"
-                          onClick={() => handleSuggestionClick(trend, 'trending-click')}
+                          onClick={() => handleSuggestionClick(trend)}
                         >
                           <TrendIcon size={12} aria-hidden="true" />
                           {trend.name}
@@ -706,48 +712,50 @@ const AppleNavbar = () => {
       </Dialog>
 
       {/* --- Mobile Bottom Nav --- */}
-      <Card className="lg:hidden fixed bottom-0 left-0 right-0 z-40 shadow-2xl rounded-t-xl border-none bg-white ">
-        <CardContent className="p-2 ">
-          <div className="flex justify-around items-center">
-            {navItems.map((item) => {
-              const Icon = item.icon;
-              const active = isActive(item.href);
-              const isWhatsapp = item.id === 'whatsapp';
-              
-              const baseClasses = 'flex flex-col h-auto p-2 transition-colors duration-200';
-              const activeColor = 'text-primary';
-              const inactiveColor = 'text-muted-foreground hover:text-foreground';
-              const whatsappColor = 'text-green-600 hover:text-green-700';
+      {isClient && (
+        <Card className="lg:hidden fixed bottom-0 left-0 right-0 z-40 shadow-2xl rounded-t-xl border-none bg-white ">
+          <CardContent className="p-2 ">
+            <div className="flex justify-around items-center">
+              {navItems.map((item) => {
+                const Icon = item.icon;
+                const active = isActive(item.href);
+                const isWhatsapp = item.id === 'whatsapp';
+                
+                const baseClasses = 'flex flex-col h-auto p-2 transition-colors duration-200';
+                const activeColor = 'text-primary';
+                const inactiveColor = 'text-muted-foreground hover:text-foreground';
+                const whatsappColor = 'text-green-600 hover:text-green-700';
 
-              return (
-                <Button
-                  key={item.id}
-                  variant="ghost"
-                  size="sm"
-                  asChild
-                  className={`${baseClasses} ${
-                    active ? activeColor : isWhatsapp ? whatsappColor : inactiveColor
-                  }`}
-                  aria-current={active ? 'page' : undefined}
-                >
-                  <Link
-                    href={item.href}
-                    {...(isWhatsapp && { target: '_blank', rel: 'noopener noreferrer' })}
+                return (
+                  <Button
+                    key={item.id}
+                    variant="ghost"
+                    size="sm"
+                    asChild
+                    className={`${baseClasses} ${
+                      active ? activeColor : isWhatsapp ? whatsappColor : inactiveColor
+                    }`}
+                    aria-current={active ? 'page' : undefined}
                   >
-                    <Icon 
-                      className="w-5 h-5 mb-0.5 mx-auto"
-                      color={isWhatsapp ? 'currentColor' : undefined}
-                    />
-                    <span className="text-[10px] font-medium mt-0.5">
-                      {item.label}
-                    </span>
-                  </Link>
-                </Button>
-              );
-            })}
-          </div>
-        </CardContent>
-      </Card>
+                    <Link
+                      href={item.href}
+                      {...(isWhatsapp && { target: '_blank', rel: 'noopener noreferrer' })}
+                    >
+                      <Icon 
+                        className="w-5 h-5 mb-0.5 mx-auto"
+                        color={isWhatsapp ? 'currentColor' : undefined}
+                      />
+                      <span className="text-[10px] font-medium mt-0.5">
+                        {item.label}
+                      </span>
+                    </Link>
+                  </Button>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+      )}
       
       <AddTobag />
     </nav>
