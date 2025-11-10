@@ -18,7 +18,7 @@ const Addtobag = () => {
     toggleSidebar: (open?: boolean) => void;
     closeSidebar: () => void;
   };
-  const { order, removeOrder ,clearOrder } = useaddtobagStore();
+  const { order, removeOrder  } = useaddtobagStore();
 
   // console.log(order);
 

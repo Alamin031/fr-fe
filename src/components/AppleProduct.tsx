@@ -5,20 +5,39 @@ import Image from 'next/image';
 import Link from 'next/link';
 import axios from 'axios';
 
+// Define interfaces for your product data
+interface Product {
+  _id: string;
+  id?: string;
+  name: string;
+  price: number;
+  image: string;
+  productlink?: string;
+}
+
+interface ApiResponse {
+  data: Product[];
+  // Add other response properties if needed
+  success?: boolean;
+  message?: string;
+}
+
 // Fallback local image (if needed)
-const ipad = '/fallback-image.jpg';
+const IPAD_FALLBACK = '/fallback-image.jpg';
 
 const AppleProduct = () => {
-  const [products, setProducts] = useState([]);
+  const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const res = await axios.get(`${process.env.NEXT_PUBLIC_BASE_URI}/landingetproduct/get`);
+        const res = await axios.get<ApiResponse>(
+          `${process.env.NEXT_PUBLIC_BASE_URI}/landingetproduct/get`
+        );
         console.log('Landing Product Data:', res.data);
 
-        if (res.data && Array.isArray(res.data.data) && res.data.data.length > 0) {
+        if (res.data?.data && Array.isArray(res.data.data) && res.data.data.length > 0) {
           setProducts(res.data.data);
         }
       } catch (err) {
@@ -58,7 +77,7 @@ const AppleProduct = () => {
                   {/* Product Image */}
                   <div className="relative w-48 h-48 mb-4">
                     <Image
-                      src={product.image || ipad}
+                      src={product.image || IPAD_FALLBACK}
                       alt={product.name}
                       fill
                       className="object-contain"
@@ -74,11 +93,14 @@ const AppleProduct = () => {
 
                   {/* Product Price */}
                   <p className="text-lg font-medium text-gray-700 text-center mb-4">
-                    ৳{product.price}
+                    ৳{product.price.toLocaleString()}
                   </p>
 
                   {/* View Button */}
-                  <Link href={`/category/product/${product.productlink || '#'}`} className="w-full">
+                  <Link 
+                    href={`/category/product/${product.productlink || '#'}`} 
+                    className="w-full"
+                  >
                     <button className="w-full px-4 py-2 rounded-2xl bg-white text-black border border-gray-400 font-medium hover:bg-orange-700 hover:text-white transition-colors duration-200">
                       View Product
                     </button>
