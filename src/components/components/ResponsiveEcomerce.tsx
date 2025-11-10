@@ -409,7 +409,7 @@ const AppleNavbar = () => {
                   <Menu size={20} />
                 </Button>
               </SheetTrigger>
-              <SheetContent side="left" className="w-[80vw] sm:w-[340px]">
+              <SheetContent side="left" className="w-[80vw] sm:w-[340px] bg-white">
                 <SheetHeader>
                   <SheetTitle className="text-xl font-bold">friends telecom</SheetTitle>
                 </SheetHeader>
@@ -419,21 +419,21 @@ const AppleNavbar = () => {
                       <Link
                         key={item.name}
                         href={item.href}
-                        className="flex items-center w-full text-base font-medium py-3 px-2 rounded-md hover:bg-accent transition-colors"
+                        className="flex items-center w-full text-base font-medium py-3 px-2 rounded-md hover:bg-accent transition-colors ml-4"
                         onClick={() => setIsMobileMenuOpen(false)}
                       >
                         {item.name}
                       </Link>
                     ))}
                     <div className="pt-4">
-                      <h3 className="text-sm font-semibold text-muted-foreground px-2">Account</h3>
+                      {/* <h3 className="text-sm font-semibold text-muted-foreground px-2">Account</h3> */}
                       <Link
                         href="/deshboard"
                         className="flex items-center w-full text-base font-medium py-3 px-2 rounded-md hover:bg-accent transition-colors"
                         onClick={() => setIsMobileMenuOpen(false)}
                       >
-                        <User size={20} className="mr-3" />
-                        My Account
+                        {/* <User size={20} className="mr-3" />
+                        My Account */}
                       </Link>
                     </div>
                   </div>

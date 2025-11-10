@@ -13,11 +13,11 @@ export async function generateMetadata(
 ): Promise<Metadata> {
   const params = await props.params; // 👈 await before using
   const { productName } = params;
-  console.log('productName:', productName);
+  // console.log('productName:', productName);
 
   // Fetch product/post data
   const res = await fetch(
-    `${process.env.NEXT_PUBLIC_BASE_URI}/iphonek/getBySlug/${productName}`,
+    `${process.env.NEXT_PUBLIC_BASE_URI}/iphone/getBySlug/${productName}`,
     { cache: 'no-store' } // optional: avoids stale cache
   );
 
@@ -30,7 +30,7 @@ export async function generateMetadata(
   }
 
   const post = await res.json();
-  // console.log('data', post.name);
+  console.log('data', post.name);
 
   return {
     title: post.name || 'Accessories',
