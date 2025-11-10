@@ -670,9 +670,9 @@ const AppleNavbar = () => {
                   </div>
                 </div>
 
-                <div className="space-y-3">
-                  <h4 className="text-sm font-medium text-muted-foreground">Quick Categories</h4>
-                  <div className="grid grid-cols-2 gap-2">
+                <div className="space-y-3 ">
+                  <h4 className="text-sm font-medium text-muted-foreground ">Quick Categories</h4>
+                  <div className="grid grid-cols-2 gap-2 bg-white">
                     {[
                       { name: 'iPhone', icon: Smartphone, type: 'iphone' as const },
                       { name: 'MacBook', icon: Laptop, type: 'macbook' as const },
@@ -706,8 +706,8 @@ const AppleNavbar = () => {
       </Dialog>
 
       {/* --- Mobile Bottom Nav --- */}
-      <Card className="lg:hidden fixed bottom-0 left-0 right-0 z-40 shadow-2xl rounded-t-xl border-none">
-        <CardContent className="p-2">
+      <Card className="lg:hidden fixed bottom-0 left-0 right-0 z-40 shadow-2xl rounded-t-xl border-none bg-white ">
+        <CardContent className="p-2 ">
           <div className="flex justify-around items-center">
             {navItems.map((item) => {
               const Icon = item.icon;
