@@ -411,7 +411,7 @@ const AppleNavbar = () => {
               </SheetTrigger>
               <SheetContent side="left" className="w-[80vw] sm:w-[340px]">
                 <SheetHeader>
-                  <SheetTitle className="text-xl font-bold">Quick Links</SheetTitle>
+                  <SheetTitle className="text-xl font-bold">friends telecom</SheetTitle>
                 </SheetHeader>
                 <ScrollArea className="h-full py-6">
                   <div className="space-y-1">
