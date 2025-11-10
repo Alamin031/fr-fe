@@ -21,7 +21,7 @@ import logo from './../../../public/WhatsApp_Image_2025-08-23_at_19.59.58__1_-re
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
-
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -135,7 +135,7 @@ const AppleNavbar = () => {
   const [isSearchDialogOpen, setIsSearchDialogOpen] = useState(false);
   
   // --- Refs ---
-const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const searchTimeoutRef = useRef<NodeJS.Timeout>();
   const sessionId = useMemo(() => generateSessionId(), []);
 
   // --- Static Data ---
@@ -574,7 +574,7 @@ const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
                 aria-label="Search input"
               />
               {/* Clear button */}
-              {/* {searchQuery && (
+              {searchQuery && (
                 <Button 
                   variant="ghost" 
                   size="icon" 
@@ -584,7 +584,7 @@ const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
                 >
                   <X size={16} />
                 </Button>
-              )} */}
+              )}
             </div>
           </div>
 
@@ -631,19 +631,19 @@ const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
             )}
 
             {/* No Results */}
-          {!loading && searchQuery && searchResults.length === 0 && (
-  <div className="text-center py-8">
-    <Search size={48} className="mx-auto text-muted-foreground mb-4" />
-    <p className="text-muted-foreground mb-4">
-      No product suggestions found for &quot;<span className="font-semibold text-foreground">{searchQuery}</span>&quot;
-    </p>
-    <Button 
-      onClick={() => handleSearch(searchQuery, 'enter')}
-    >
-      Search Anyway
-    </Button>
-  </div>
-)}
+            {!loading && searchQuery && searchResults.length === 0 && (
+              <div className="text-center py-8">
+                <Search size={48} className="mx-auto text-muted-foreground mb-4" />
+                <p className="text-muted-foreground mb-4">
+                  No product suggestions found for "<span className="font-semibold text-foreground">{searchQuery}</span>"
+                </p>
+                <Button 
+                  onClick={() => handleSearch(searchQuery, 'enter')}
+                >
+                  Search Anyway
+                </Button>
+              </div>
+            )}
 
             {/* Default View (No Query) */}
             {!searchQuery && (
@@ -668,7 +668,7 @@ const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
                         <div
                           key={search.id}
                           className="flex items-center space-x-3 p-2 rounded-lg hover:bg-accent cursor-pointer transition-colors"
-                          onClick={() => handleSuggestionClick(search)}
+                          onClick={() => handleSuggestionClick(search, 'recent-click')}
                         >
                           <Clock size={16} className="text-muted-foreground" />
                           <span className="text-sm flex-1">{search.name}</span>
@@ -695,7 +695,7 @@ const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
                           key={trend.id}
                           variant="secondary"
                           className="px-3 py-1.5 cursor-pointer hover:bg-primary hover:text-primary-foreground transition-colors flex items-center gap-1"
-                          onClick={() => handleSuggestionClick(trend)}
+                          onClick={() => handleSuggestionClick(trend, 'trending-click')}
                         >
                           <TrendIcon size={12} aria-hidden="true" />
                           {trend.name}
