@@ -11,28 +11,22 @@ import Image from 'next/image';
 import axios from 'axios';
 
 // --- Local Imports ---
-// Assuming these paths are correct. Use @ alias for cleaner imports.
-// import  useaddtobagStore, useSidebarStore
-import { useaddtobagStore,useSidebarStore } from '../../../store/store';
+import { useaddtobagStore, useSidebarStore } from '../../../store/store';
 import AddTobag from '@/components/utils/Addtobag';
 import logo from './../../../public/WhatsApp_Image_2025-08-23_at_19.59.58__1_-removebg-preview (1).png'; 
 
-// --- Shadcn UI Components (Keep the same) ---
+// --- Shadcn UI Components ---
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ScrollArea } from '@/components/ui/scroll-area';
-// Removed Separator as it's not strictly necessary in the final structure
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
-
-// --- Custom WhatsApp Icon Component (Moved to a separate file, or kept simple) ---
-// Simplified and moved to be a proper React component for better reusability and tree-shaking
+// --- Custom WhatsApp Icon Component ---
 const WhatsAppIcon = ({ className = "w-4 h-4", color = "currentColor" }) => (
   <svg 
     xmlns="http://www.w3.org/2000/svg" 
@@ -40,24 +34,13 @@ const WhatsAppIcon = ({ className = "w-4 h-4", color = "currentColor" }) => (
     className={className}
     fill={color}
   >
-    {/* Simplified paths - this is just an example, the original complex paths should be kept if needed */}
     <path fill="#40c351" d="M35.2,12.8c-3-3-6.9-4.6-11.2-4.6C15.3,8.2,8.2,15.3,8.2,24c0,3,0.8,5.9,2.4,8.4L11,33l-1.6,5.8 l6-1.6l0.6,0.3c2.4,1.4,5.2,2.2,8,2.2h0c8.7,0,15.8-7.1,15.8-15.8C39.8,19.8,38.2,15.8,35.2,12.8z"/>
     <path fill="#fff" fillRule="evenodd" d="M19.3,16c-0.4-0.8-0.7-0.8-1.1-0.8c-0.3,0-0.6,0-0.9,0 s-0.8,0.1-1.3,0.6c-0.4,0.5-1.7,1.6-1.7,4s1.7,4.6,1.9,4.9s3.3,5.3,8.1,7.2c4,1.6,4.8,1.3,5.7,1.2c0.9-0.1,2.8-1.1,3.2-2.3 c0.4-1.1,0.4-2.1,0.3-2.3c-0.1-0.2-0.4-0.3-0.9-0.6s-2.8-1.4-3.2-1.5c-0.4-0.2-0.8-0.2-1.1,0.2c-0.3,0.5-1.2,1.5-1.5,1.9 c-0.3,0.3-0.6,0.4-1,0.1c-0.5-0.2-2-0.7-3.8-2.4c-1.4-1.3-2.4-2.8-2.6-3.3c-0.3-0.5,0-0.7,0.2-1c0.2-0.2,0.5-0.6,0.7-0.8 c0.2-0.3,0.3-0.5,0.5-0.8c0.2-0.3,0.1-0.6,0-0.8C20.6,19.3,19.7,17,19.3,16z" clipRule="evenodd"/>
   </svg>
 );
 
-
-// --- Type Definitions (Refined) ---
-
-// Simplify and merge interfaces where possible, use utility types (Partial) if needed.
-// Using a type alias for the core product types for consistency
+// --- Type Definitions ---
 type ProductType = 'iphone' | 'macbook' | 'ipad' | 'accessory';
-
-interface ProductConfig { // Renamed from ImageConfig/StorageConfig to a more general term
-  id: number | string; // Use string for better ID handling
-  inStock?: boolean;
-  // Other specific fields (colorHex, basicPrice, etc.) can be left on the main interface
-}
 
 interface Product {
   _id: string;
@@ -65,8 +48,8 @@ interface Product {
   productlinkname?: string;
   type: ProductType;
   basePrice?: number;
-  imageConfigs: { image?: string; inStock?: boolean }[]; // Simplified for the navbar's needs
-  storageConfigs: { basicPrice?: string; inStock?: boolean }[]; // Simplified
+  imageConfigs: { image?: string; inStock?: boolean }[];
+  storageConfigs: { basicPrice?: string; inStock?: boolean }[];
 }
 
 type SearchSource = 'enter' | 'click' | 'suggestion' | 'category-quicklink';
@@ -77,8 +60,8 @@ interface SearchClickData {
   resultsCount?: number;
   userAgent: string;
   screenResolution: string;
-  sessionId: string; // Made required
-  source: SearchSource; // Added source
+  sessionId: string;
+  source: SearchSource;
 }
 
 interface SearchSuggestion {
@@ -86,7 +69,6 @@ interface SearchSuggestion {
   name: string;
   type: 'product' | 'category' | 'recent' | 'trending';
   productType?: ProductType;
-  // productLinkName?: string; // We use product.productlinkname for actual products
 }
 
 interface NavLink {
@@ -95,20 +77,7 @@ interface NavLink {
   children?: { name: string; href: string }[];
 }
 
-
-// --- Utility Functions (Refactored and simplified) ---
-
-// Generate session ID for tracking (moved out of component for purity)
-const generateSessionId = (): string => {
-  let sessionId = sessionStorage.getItem('sessionId');
-  if (!sessionId) {
-    sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    sessionStorage.setItem('sessionId', sessionId);
-  }
-  return sessionId;
-};
-
-// Formats price
+// --- Utility Functions ---
 const formatPrice = (price?: number) => {
   if (price === undefined || isNaN(price)) return 'Price not available';
   return new Intl.NumberFormat('en-US', {
@@ -117,9 +86,7 @@ const formatPrice = (price?: number) => {
   }).format(price);
 };
 
-
 // --- Component Definition ---
-
 const AppleNavbar = () => {
   const { order } = useaddtobagStore();
   const { toggleSidebar } = useSidebarStore();
@@ -133,10 +100,24 @@ const AppleNavbar = () => {
   const [recentSearches, setRecentSearches] = useState<SearchSuggestion[]>([]);
   const [loading, setLoading] = useState(false);
   const [isSearchDialogOpen, setIsSearchDialogOpen] = useState(false);
+  const [sessionId, setSessionId] = useState<string>('');
   
   // --- Refs ---
   const searchTimeoutRef = useRef<NodeJS.Timeout>();
-  const sessionId = useMemo(() => generateSessionId(), []);
+
+  // Initialize session ID on client side only
+  useEffect(() => {
+    const generateSessionId = (): string => {
+      let sessionId = sessionStorage.getItem('sessionId');
+      if (!sessionId) {
+        sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        sessionStorage.setItem('sessionId', sessionId);
+      }
+      return sessionId;
+    };
+
+    setSessionId(generateSessionId());
+  }, []);
 
   // --- Static Data ---
   const navigationLinks: NavLink[] = useMemo(() => ([
@@ -151,7 +132,7 @@ const AppleNavbar = () => {
     { id: 'category', label: 'Category', icon: Grid, href: '/category' },
     { id: 'whatsapp', label: 'WhatsApp', icon: WhatsAppIcon, href: 'https://wa.me/8801343159931' },
     { id: 'offer', label: 'Offer', icon: Percent, href: '/offers' },
-    { id: 'signin', label: 'Account', icon: User, href: '/deshboard' } // Renamed label
+    { id: 'signin', label: 'Account', icon: User, href: '/deshboard' }
   ]), []);
   
   const trendingSearches: SearchSuggestion[] = useMemo(() => ([
@@ -161,9 +142,7 @@ const AppleNavbar = () => {
     { id: 't4', name: 'iPad Air', type: 'trending', productType: 'ipad' },
   ]), []);
 
-
   // --- Helper Functions (Memoized) ---
-  
   const getProductImage = useCallback((product: Product): string | undefined => {
     return product.imageConfigs?.[0]?.image;
   }, []);
@@ -199,11 +178,13 @@ const AppleNavbar = () => {
     return pathname.startsWith(href);
   }, [pathname]);
 
-
   // --- Effects & Handlers ---
 
   // Load recent searches from localStorage
   useEffect(() => {
+    // Only run on client side
+    if (typeof window === 'undefined') return;
+
     try {
       const saved = localStorage.getItem('recent-searches');
       if (saved) {
@@ -211,7 +192,7 @@ const AppleNavbar = () => {
       }
     } catch (e) {
       console.error('Error loading recent searches:', e);
-      localStorage.removeItem('recent-searches'); // Clear corrupted data
+      localStorage.removeItem('recent-searches');
     }
   }, []);
 
@@ -230,11 +211,12 @@ const AppleNavbar = () => {
     }
   }, []);
 
-
   // API Call: Track search click data
   const trackSearchClick = useCallback(async (data: Omit<SearchClickData, 'sessionId'> & { sessionId?: string }) => {
-    // Ensure sessionId is always present
-    const payload: SearchClickData = { ...data, sessionId: data.sessionId || sessionId };
+    // Only track if we have a sessionId (client-side)
+    if (!sessionId) return;
+    
+    const payload: SearchClickData = { ...data, sessionId };
     
     try {
       await fetch('/api/analytics/search-clicks', {
@@ -243,14 +225,15 @@ const AppleNavbar = () => {
         body: JSON.stringify(payload),
       });
     } catch (error) {
-      // Non-critical failure, log it but don't disrupt the user
       console.error('Failed to track search click:', error);
     }
   }, [sessionId]);
 
-
   // Update recent searches in state and localStorage
   const saveToRecentSearches = useCallback((query: string) => {
+    // Only run on client side
+    if (typeof window === 'undefined') return;
+
     const newSearch: SearchSuggestion = {
       id: `recent-${Date.now()}`,
       name: query,
@@ -267,10 +250,12 @@ const AppleNavbar = () => {
   }, [recentSearches]);
 
   const clearRecentSearches = () => {
+    // Only run on client side
+    if (typeof window === 'undefined') return;
+    
     setRecentSearches([]);
     localStorage.removeItem('recent-searches');
   };
-
 
   // Main Search Logic: Navigate and Track
   const handleSearch = useCallback(async (query: string, source: SearchSource = 'enter', results?: Product[]): Promise<void> => {
@@ -301,12 +286,10 @@ const AppleNavbar = () => {
       setSearchQuery('');
     } catch (error) {
       console.error('Error during search navigation/tracking:', error);
-      // Ensure navigation happens even if tracking fails
       router.push(`/search?q=${encodeURIComponent(trimmedQuery)}`);
       setIsSearchDialogOpen(false);
     }
   }, [router, saveToRecentSearches, trackSearchClick]);
-
 
   // Debounced input handler for suggestions
   const handleInputChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -320,15 +303,14 @@ const AppleNavbar = () => {
 
     if (value.trim().length > 1) {
       searchTimeoutRef.current = setTimeout(async () => {
-        const results = await searchProducts(value); // searchProducts handles its own loading state
+        const results = await searchProducts(value);
         setSearchResults(results);
-      }, 300); // 300ms debounce
+      }, 300);
     } else {
       setSearchResults([]);
-      setLoading(false); // Ensure loading is off if query is too short
+      setLoading(false);
     }
   };
-
 
   // Handle suggestion/result click
   const handleSuggestionClick = (item: Product | SearchSuggestion, source: SearchSource = 'suggestion') => {
@@ -339,13 +321,13 @@ const AppleNavbar = () => {
         trackSearchClick({
           query: item.name,
           timestamp: new Date().toISOString(),
-          resultsCount: 1, // Treat as one result that was clicked
+          resultsCount: 1,
           userAgent: navigator.userAgent,
           screenResolution: `${window.screen.width}x${window.screen.height}`,
           source: source,
         });
 
-        router.push(`/category/product/${item.productlinkname}`); // Changed /category/product/ to /product/ for flatter URL
+        router.push(`/category/product/${item.productlinkname}`);
         setIsSearchDialogOpen(false);
       } else {
         // Fallback to search if no product link name
@@ -371,7 +353,6 @@ const AppleNavbar = () => {
       }
     };
   }, []);
-
 
   // --- Render Logic ---
 
@@ -414,7 +395,6 @@ const AppleNavbar = () => {
     );
   };
 
-
   return (
     <nav className="bg-white border-b sticky top-0 z-50">
       <div className="px-4 sm:px-6 lg:px-8">
@@ -435,7 +415,6 @@ const AppleNavbar = () => {
                 </SheetHeader>
                 <ScrollArea className="h-full py-6">
                   <div className="space-y-1">
-                    {/* Simplified Mobile Navigation */}
                     {navigationLinks.map((item) => (
                       <Link
                         key={item.name}
@@ -465,8 +444,7 @@ const AppleNavbar = () => {
             {/* Logo */}
             <div className="flex-shrink-0 ml-2 lg:ml-0">
               <Link href="/" className="flex items-center" aria-label="Go to homepage">
-                {/* Optimized Image Component: added width/height */}
-                <Image  src={logo} alt="Store Logo" priority width={100} height={40} className="w-40 h-40" />
+                <Image src={logo} alt="Store Logo" priority width={100} height={40} className="w-40 h-40" />
               </Link>
             </div>
           </div>
@@ -474,8 +452,6 @@ const AppleNavbar = () => {
           {/* Desktop navigation */}
           <div className="hidden lg:flex items-center space-x-1 flex-1 justify-center">
             {navigationLinks.map((link) => (
-              // Note: Removed the DropdownMenu logic since your links didn't have children in the provided array.
-              // If you need it, re-implement it using the original code's structure.
               <Button 
                 key={link.name} 
                 variant="ghost" 
@@ -490,7 +466,7 @@ const AppleNavbar = () => {
           </div>
 
           {/* Search bar (Desktop) */}
-          <div className="hidden md:flex max-w-sm ml-auto mr-4"> {/* Adjusted positioning */}
+          <div className="hidden md:flex max-w-sm ml-auto mr-4">
             <div className="relative w-full">
               <Search 
                 className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" 
@@ -533,8 +509,7 @@ const AppleNavbar = () => {
                   variant="destructive" 
                   className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs"
                 >
-                  {/* Capped at 99 for cleaner UI */}
-                  {order.length > 99 ? '99+' : order.length} 
+                  {order.length > 99 ? '99+' : order.length}
                 </Badge>
               )}
             </Button>
@@ -548,9 +523,8 @@ const AppleNavbar = () => {
         </div>
       </div>
 
-      {/* --- Search Dialog (Improved UX) --- */}
+      {/* --- Search Dialog --- */}
       <Dialog open={isSearchDialogOpen} onOpenChange={setIsSearchDialogOpen}>
-        {/* Added dynamic size for better mobile/desktop feel */}
         <DialogContent className="sm:max-w-xl md:max-w-2xl p-0 gap-0 bg-white">
           <DialogHeader className="px-6 pt-6 pb-4 border-b hidden sm:block">
             <DialogTitle className="flex items-center gap-2 text-xl">
@@ -564,7 +538,7 @@ const AppleNavbar = () => {
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
               <Input
-                type="search" // Use type="search" for better semantics
+                type="search"
                 value={searchQuery}
                 onChange={handleInputChange}
                 onKeyDown={(e) => e.key === 'Enter' && handleSearch(searchQuery, 'enter')}
@@ -573,7 +547,6 @@ const AppleNavbar = () => {
                 autoFocus
                 aria-label="Search input"
               />
-              {/* Clear button */}
               {searchQuery && (
                 <Button 
                   variant="ghost" 
@@ -589,7 +562,6 @@ const AppleNavbar = () => {
           </div>
 
           <ScrollArea className="max-h-[70vh] sm:max-h-[400px] px-4 sm:px-6 pb-6">
-            {/* Loading State */}
             {loading && (
               <div className="space-y-3 pt-2">
                 {[...Array(3)].map((_, i) => (
@@ -604,7 +576,6 @@ const AppleNavbar = () => {
               </div>
             )}
 
-            {/* Search Results */}
             {!loading && searchQuery && searchResults.length > 0 && (
               <div className="space-y-2 pt-2">
                 <h4 className="text-sm font-medium text-muted-foreground px-1">
@@ -617,7 +588,6 @@ const AppleNavbar = () => {
                       source="suggestion"
                     />
                 ))}
-                 {/* Link to all results */}
                 {searchResults.length > 5 && (
                     <Button 
                         variant="ghost" 
@@ -630,7 +600,6 @@ const AppleNavbar = () => {
               </div>
             )}
 
-            {/* No Results */}
             {!loading && searchQuery && searchResults.length === 0 && (
               <div className="text-center py-8">
                 <Search size={48} className="mx-auto text-muted-foreground mb-4" />
@@ -645,11 +614,8 @@ const AppleNavbar = () => {
               </div>
             )}
 
-            {/* Default View (No Query) */}
             {!searchQuery && (
               <div className="space-y-6 pt-2">
-
-                {/* Recent Searches */}
                 {recentSearches.length > 0 && (
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
@@ -681,7 +647,6 @@ const AppleNavbar = () => {
                   </div>
                 )}
                 
-                {/* Trending Searches */}
                 <div className="space-y-3">
                   <h4 className="text-sm font-medium text-muted-foreground flex items-center gap-2">
                     <TrendingUp size={16} />
@@ -705,7 +670,6 @@ const AppleNavbar = () => {
                   </div>
                 </div>
 
-                {/* Quick Categories */}
                 <div className="space-y-3">
                   <h4 className="text-sm font-medium text-muted-foreground">Quick Categories</h4>
                   <div className="grid grid-cols-2 gap-2">
@@ -741,7 +705,7 @@ const AppleNavbar = () => {
         </DialogContent>
       </Dialog>
 
-      {/* --- Mobile Bottom Nav (Enhanced Styling) --- */}
+      {/* --- Mobile Bottom Nav --- */}
       <Card className="lg:hidden fixed bottom-0 left-0 right-0 z-40 shadow-2xl rounded-t-xl border-none">
         <CardContent className="p-2">
           <div className="flex justify-around items-center">
@@ -772,7 +736,7 @@ const AppleNavbar = () => {
                   >
                     <Icon 
                       className="w-5 h-5 mb-0.5 mx-auto"
-                      color={isWhatsapp ? 'currentColor' : undefined} // Let currentColor handle primary/inactive
+                      color={isWhatsapp ? 'currentColor' : undefined}
                     />
                     <span className="text-[10px] font-medium mt-0.5">
                       {item.label}
