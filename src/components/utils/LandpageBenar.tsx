@@ -143,7 +143,14 @@ export default function LandingpageBenar() {
     }
   };
 
+  // POST DATA UPLOAD BUTTON FUNCTION
   const saveToMongoDB = async () => {
+    // Validation
+    if (section1Images.length === 0 && section2Images.length === 0) {
+      setError('কমপক্ষে একটি সেকশনে ইমেজ যোগ করুন');
+      return;
+    }
+
     setSaving(true);
     setError(null);
     
@@ -401,28 +408,52 @@ export default function LandingpageBenar() {
 
         {/* Action Buttons */}
         <Card className="shadow-lg">
-          <CardContent className="p-6 ">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 justify-center ">
-              
-              <Button
-                onClick={updateInMongoDB}
-                disabled={updating || !existingData || !hasChanges()}
-                className="w-full"
-                size="lg"
-                variant="secondary"
-              >
-                {updating ? (
-                  <>
-                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                    আপডেট হচ্ছে...
-                  </>
-                ) : (
-                  <>
-                    <Edit className="mr-2 h-5 w-5" />
-                    আপডেট করুন
-                  </>
-                )}
-              </Button>
+          <CardContent className="p-6">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 justify-center">
+              {/* POST DATA UPLOAD BUTTON - Show when no existing data */}
+              {!existingData && (
+                <Button
+                  onClick={saveToMongoDB}
+                  disabled={saving || (section1Images.length === 0 && section2Images.length === 0)}
+                  className="w-full"
+                  size="lg"
+                >
+                  {saving ? (
+                    <>
+                      <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                      সেভ হচ্ছে...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="mr-2 h-5 w-5" />
+                      ডাটা সেভ করুন
+                    </>
+                  )}
+                </Button>
+              )}
+
+              {/* UPDATE BUTTON - Show when existing data exists */}
+              {existingData && (
+                <Button
+                  onClick={updateInMongoDB}
+                  disabled={updating || !hasChanges()}
+                  className="w-full"
+                  size="lg"
+                  variant="secondary"
+                >
+                  {updating ? (
+                    <>
+                      <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                      আপডেট হচ্ছে...
+                    </>
+                  ) : (
+                    <>
+                      <Edit className="mr-2 h-5 w-5" />
+                      আপডেট করুন
+                    </>
+                  )}
+                </Button>
+              )}
 
               <Button
                 onClick={fetchDataFromMongoDB}
@@ -446,7 +477,15 @@ export default function LandingpageBenar() {
               </Button>
             </div>
 
-            {/* Changes Indicator */}
+            {/* Status Messages */}
+            {!existingData && section1Images.length === 0 && section2Images.length === 0 && (
+              <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <p className="text-sm text-blue-700 text-center">
+                  ℹ️ ইমেজ আপলোড করুন এবং ডাটা সেভ বাটন ক্লিক করুন
+                </p>
+              </div>
+            )}
+
             {existingData && !hasChanges() && (
               <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
                 <p className="text-sm text-green-700 text-center">
