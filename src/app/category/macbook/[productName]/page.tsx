@@ -17,7 +17,7 @@ export async function generateMetadata(
 
   // Fetch product/post data
   const res = await fetch(
-    `${process.env.NEXT_PUBLIC_BASE_URI}/accessories/getBySlug/${productName}`,
+    `${process.env.NEXT_PUBLIC_BASE_URI}/macbooklist/getBySlug/${productName}`,
     { cache: 'no-store' } // optional: avoids stale cache
   );
 

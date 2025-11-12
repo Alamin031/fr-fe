@@ -10,7 +10,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { CheckCircle2, ShoppingBag, CreditCard, Bell, Calendar, Minus, Plus, MessageCircle, X } from 'lucide-react';
+import { CheckCircle2, ShoppingBag, CreditCard, Bell, Calendar, Minus, Plus, MessageCircle, X, Percent } from 'lucide-react';
 import useOrderStore, { useSidebarStore } from '../../../../store/store';
 import toast, { Toaster } from 'react-hot-toast';
 
@@ -265,6 +265,192 @@ const PriceBreakdown = ({
   );
 };
 
+// EMI Calculator Component
+const EMICalculator = ({ totalPrice }: { totalPrice: number }) => {
+  const [selectedBank, setSelectedBank] = useState<string>('');
+  const [selectedTenure, setSelectedTenure] = useState<number>(3);
+  const [processingFee, setProcessingFee] = useState<number>(0);
+
+  // Bangladesh Bank EMI Options
+  const bankOptions = [
+    { 
+      name: 'DBBL', 
+      tenures: [3, 6, 9, 12, 18, 24], 
+      interestRates: [0, 0, 7.5, 8.5, 10.5, 12.5],
+      processingFee: 1.5
+    },
+    { 
+      name: 'BRAC Bank', 
+      tenures: [3, 6, 9, 12, 18, 24], 
+      interestRates: [0, 0, 7.8, 8.8, 10.8, 12.8],
+      processingFee: 1.75
+    },
+    { 
+      name: 'City Bank', 
+      tenures: [3, 6, 9, 12, 18, 24], 
+      interestRates: [0, 0, 7.2, 8.2, 10.2, 12.2],
+      processingFee: 1.6
+    },
+    { 
+      name: 'Eastern Bank', 
+      tenures: [3, 6, 9, 12, 18, 24], 
+      interestRates: [0, 0, 7.0, 8.0, 10.0, 12.0],
+      processingFee: 1.8
+    },
+    { 
+      name: 'HSBC', 
+      tenures: [3, 6, 9, 12, 18, 24], 
+      interestRates: [0, 0, 6.8, 7.8, 9.8, 11.8],
+      processingFee: 2.0
+    }
+  ];
+
+  const selectedBankData = bankOptions.find(bank => bank.name === selectedBank);
+
+  // Calculate EMI
+  const calculateEMI = () => {
+    if (!selectedBankData || !selectedTenure) return { monthlyEMI: 0, totalPayable: 0, totalInterest: 0 };
+
+    const tenureIndex = selectedBankData.tenures.indexOf(selectedTenure);
+    const interestRate = selectedBankData.interestRates[tenureIndex];
+    
+    if (interestRate === 0) {
+      // 0% interest for 3 and 6 months
+      const monthlyEMI = totalPrice / selectedTenure;
+      const processingAmount = totalPrice * (selectedBankData.processingFee / 100);
+      return {
+        monthlyEMI: monthlyEMI,
+        totalPayable: totalPrice + processingAmount,
+        totalInterest: 0,
+        processingFee: processingAmount
+      };
+    } else {
+      // Calculate EMI with interest
+      const monthlyInterestRate = interestRate / 12 / 100;
+      const emi = totalPrice * monthlyInterestRate * Math.pow(1 + monthlyInterestRate, selectedTenure) / 
+                 (Math.pow(1 + monthlyInterestRate, selectedTenure) - 1);
+      const processingAmount = totalPrice * (selectedBankData.processingFee / 100);
+      const totalPayable = emi * selectedTenure + processingAmount;
+      
+      return {
+        monthlyEMI: emi,
+        totalPayable: totalPayable,
+        totalInterest: (emi * selectedTenure) - totalPrice,
+        processingFee: processingAmount
+      };
+    }
+  };
+
+  const emiDetails = calculateEMI();
+
+  return (
+    <div className="space-y-4">
+      <div className="grid grid-cols-1 gap-4">
+        {/* Bank Selection */}
+        <div>
+          <Label htmlFor="bank" className="text-sm font-medium mb-2 block">
+            Select Bank
+          </Label>
+          <select
+            id="bank"
+            value={selectedBank}
+            onChange={(e) => setSelectedBank(e.target.value)}
+            className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-black focus:border-black"
+          >
+            <option value="">Choose a bank</option>
+            {bankOptions.map((bank) => (
+              <option key={bank.name} value={bank.name}>
+                {bank.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Tenure Selection */}
+        {selectedBank && (
+          <div>
+            <Label htmlFor="tenure" className="text-sm font-medium mb-2 block">
+              Select Tenure
+            </Label>
+            <div className="grid grid-cols-3 gap-2">
+              {selectedBankData?.tenures.map((tenure) => (
+                <Button
+                  key={tenure}
+                  type="button"
+                  variant={selectedTenure === tenure ? "default" : "outline"}
+                  onClick={() => setSelectedTenure(tenure)}
+                  className="text-sm"
+                >
+                  {tenure} months
+                </Button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* EMI Details */}
+        {selectedBank && selectedTenure && (
+          <div className="bg-gray-50 p-4 rounded-lg space-y-3">
+            <h4 className="font-semibold text-lg border-b pb-2">EMI Breakdown</h4>
+            
+            <div className="space-y-2">
+              <div className="flex justify-between">
+                <span className="text-sm text-gray-600">Product Price:</span>
+                <span className="font-medium">৳{totalPrice.toFixed(2)}</span>
+              </div>
+              
+              {emiDetails.totalInterest > 0 && (
+                <div className="flex justify-between">
+                  <span className="text-sm text-gray-600">Interest ({selectedBankData?.interestRates[selectedBankData.tenures.indexOf(selectedTenure)]}%):</span>
+                  <span className="font-medium">৳{emiDetails.totalInterest.toFixed(2)}</span>
+                </div>
+              )}
+              
+              <div className="flex justify-between">
+                <span className="text-sm text-gray-600">Processing Fee ({selectedBankData?.processingFee}%):</span>
+                <span className="font-medium">৳{emiDetails.processingFee?.toFixed(2)}</span>
+              </div>
+              
+              <div className="flex justify-between border-t pt-2">
+                <span className="text-sm font-semibold">Total Payable:</span>
+                <span className="font-bold text-green-600">৳{emiDetails.totalPayable.toFixed(2)}</span>
+              </div>
+              
+              <div className="flex justify-between">
+                <span className="text-sm font-semibold">Monthly Installment:</span>
+                <span className="font-bold text-blue-600">৳{emiDetails.monthlyEMI.toFixed(2)}</span>
+              </div>
+            </div>
+
+            {/* Bank Specific Notes */}
+            <div className="text-xs text-gray-500 mt-3">
+              <p>✓ 0% interest for 3-6 months</p>
+              <p>✓ Instant approval for qualified customers</p>
+              <p>✓ Credit card required</p>
+            </div>
+          </div>
+        )}
+
+        {/* Bank Logos */}
+        {!selectedBank && (
+          <div className="grid grid-cols-3 gap-4 mt-4">
+            {bankOptions.map((bank) => (
+              <div
+                key={bank.name}
+                className="border-2 border-gray-200 rounded-lg p-3 text-center cursor-pointer hover:border-blue-500 transition-colors"
+                onClick={() => setSelectedBank(bank.name)}
+              >
+                <div className="font-semibold text-sm mb-1">{bank.name}</div>
+                <div className="text-xs text-gray-500">EMI Available</div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
 export default function Page() {
   const { addOrder , clearOrder} = useOrderStore();
     const { toggleSidebar } = useSidebarStore();
@@ -292,6 +478,9 @@ export default function Page() {
   const [notifyName, setNotifyName] = useState<string>('');
   const [notifyEmail, setNotifyEmail] = useState<string>('');
   const [notifyNumber, setNotifyNumber] = useState<string>('');
+
+  // EMI Dialog state
+  const [isEMIDialogOpen, setIsEMIDialogOpen] = useState<boolean>(false);
 
   // CONFIGURE YOUR CONTACT DETAILS HERE
   const WHATSAPP_NUMBER = '8801234567890';
@@ -724,7 +913,7 @@ Thank you! 🎉
       const encodedMessage = encodeURIComponent(orderDetails);
       
       // Create WhatsApp URL
-      const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodedMessage}`;
+      const whatsappUrl = `https://wa.me/${process.env.NEXT_PUBLIC_WHATSAPP_NUMBER}?text=${encodedMessage}`;
       
       // Open WhatsApp in new tab
       window.open(whatsappUrl, '_blank');
@@ -749,7 +938,7 @@ Thank you! 🎉
   // Floating chat handlers
   const handleFloatingWhatsAppClick = () => {
     const message = encodeURIComponent('Hi! I need help with a product.');
-    window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${message}`, '_blank');
+    window.open(`https://wa.me/${process.env.NEXT_PUBLIC_WHATSAPP_NUMBER}?text=${message}`, '_blank');
   };
 
   // Loading state
@@ -931,6 +1120,9 @@ Thank you! 🎉
             )}
           </div>
 
+          {/* EMI Button */}
+          
+
           {/* Action Buttons */}
           {isAnyItemOutOfStock ? (
             <Dialog open={isNotifyDialogOpen} onOpenChange={setIsNotifyDialogOpen}>
@@ -1068,6 +1260,7 @@ Thank you! 🎉
               </Button>
             </div>
           )}
+          
 
           <div className='grid grid-cols-2 gap-2'>
             {/* Storage Configuration */}
@@ -1124,6 +1317,47 @@ Thank you! 🎉
               </Card>
             ))}
           </div>
+
+          <Dialog open={isEMIDialogOpen} onOpenChange={setIsEMIDialogOpen}>
+            <DialogTrigger asChild>
+              <Button 
+                size="lg" 
+                variant="outline" 
+                className="w-full border-gray-500 text-gray-600 hover:bg-gray-50 hover:text-gray-700"
+              >
+                <Percent className="mr-2 h-5 w-5" />
+                Bangladesh EMI Available
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[500px] max-h-[80vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  <Percent className="h-5 w-5 text-black" />
+                  Bangladesh EMI Calculator
+                </DialogTitle>
+              </DialogHeader>
+              <div className="mt-4">
+                <EMICalculator totalPrice={totalPrice} />
+              </div>
+              <div className="flex gap-3 justify-end mt-6 pt-4 border-t">
+                <Button 
+                  variant="outline" 
+                  onClick={() => setIsEMIDialogOpen(false)}
+                >
+                  Close
+                </Button>
+                {/* <Button 
+                  className="bg-blue-600 hover:bg-blue-700 text-white"
+                  onClick={() => {
+                    setIsEMIDialogOpen(false);
+                    handleOrderNow();
+                  }}
+                >
+                  Proceed with EMI
+                </Button> */}
+              </div>
+            </DialogContent>
+          </Dialog>
 
           {/* Specifications */}
           <Card>
