@@ -17,7 +17,7 @@ const LoginForm: React.FC = () => {
   const [error, setError] = useState<string>("");
   
   // Default callback URL
-  const [callbackUrl] = useState<string>("/");
+  const [callbackUrl] = useState<string>("/deshboard");
 
   useEffect(() => {
     // Handle authentication errors from URL parameters on client side
@@ -92,7 +92,7 @@ const LoginForm: React.FC = () => {
     try {
       await signIn("google", {
         callbackUrl: callbackUrl,
-        redirect: true,
+        redirect: false,
       });
     } catch (error) {
       setError("Failed to sign in with Google");

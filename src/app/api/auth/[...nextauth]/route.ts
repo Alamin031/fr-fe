@@ -46,7 +46,7 @@ export const authOptions: NextAuthOptions = {
           username: user.name,
           email: user.email,
           image: user.image,
-          role: user.role || "user",
+          role: user.role  || "user",
           provider: "google",
         });
         await newUser.save();

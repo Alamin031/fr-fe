@@ -190,7 +190,7 @@ export default function SignupForm() {
     try {
       await signIn("google", { 
         callbackUrl: "/",
-        redirect: false,
+        redirect: true,
       });
       // The redirect will be handled by NextAuth
     } catch (error) {

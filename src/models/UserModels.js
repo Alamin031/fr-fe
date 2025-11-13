@@ -8,7 +8,6 @@ const userSchema = new mongoose.Schema({
   },
   username: {
     type: String, // ✅ Capital S
-    required: [true, "Please provide a username"],
 
 },
   email: {
