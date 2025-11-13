@@ -1,20 +1,13 @@
-import { Toaster } from 'react-hot-toast';
-import Signup from '../../../../../authcation/Signup';
+// app/authcation/signup/page.tsx
+import { Suspense } from 'react';
+import SignupForm from '../../../../../authcation/Signup';
 
-const sigup = () => {
-  return(
-    <>
-          <Toaster position="top-right" reverseOrder={false} />
+export default function SignupPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <SignupForm />
+    </Suspense>
+  );
+}
 
-
-
- <Signup/>
-    </>
-
-  
-  )
-  
-
-};
-
-export default sigup;
+export const dynamic = 'force-dynamic';

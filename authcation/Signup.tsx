@@ -1,3 +1,4 @@
+// app/authcation/signup/SignupForm.tsx
 "use client";
 
 import * as React from "react";
@@ -10,6 +11,20 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardHeader, CardContent, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+
+// Safe URL utility
+function getBaseUrl(): string {
+  if (typeof window !== 'undefined') {
+    return window.location.origin;
+  }
+  if (process.env.NEXTAUTH_URL) {
+    return process.env.NEXTAUTH_URL;
+  }
+  if (process.env.VERCEL_URL) {
+    return `https://${process.env.VERCEL_URL}`;
+  }
+  return 'http://localhost:3000';
+}
 
 export default function SignupForm() {
   const router = useRouter();
@@ -112,7 +127,9 @@ export default function SignupForm() {
     }
 
     try {
-      const res = await fetch("/api/user/signup", {
+      // Use safe URL construction
+      const baseUrl = getBaseUrl();
+      const res = await fetch(`${baseUrl}/api/user/signup`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),
@@ -212,7 +229,7 @@ export default function SignupForm() {
     <div className="min-h-screen flex items-center justify-center bg-background px-4 py-8">
       <Card className="w-full max-w-md shadow-xl border-border/40">
         <CardHeader className="space-y-3 text-center pb-4">
-          <CardTitle className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text ">
+          <CardTitle className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
             Create Account
           </CardTitle>
           <CardDescription className="text-base">
@@ -355,8 +372,8 @@ export default function SignupForm() {
             {/* Submit Button */}
             <Button 
               type="submit" 
-              className="w-full h-11 text-sm font-medium  hover:bg-primary/90   bg-black text-white" 
-              disabled={loading || googleLoading }
+              className="w-full h-11 text-sm font-medium hover:bg-primary/90 bg-black text-white" 
+              disabled={loading || googleLoading || !isFormValid}
             >
               {loading ? (
                 <>
