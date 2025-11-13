@@ -141,35 +141,41 @@ export const authOptions: NextAuthOptions = {
     },
 
     async redirect({ url, baseUrl }) {
+      // Handle empty or invalid URLs
+      if (!url || url === '') {
+        return baseUrl;
+      }
+
       // Allows relative callback URLs
-      if (url.startsWith("/")) return `${baseUrl}${url}`
+      if (url.startsWith("/")) {
+        return `${baseUrl}${url}`;
+      }
+
       // Allows callback URLs on the same origin
-      else if (new URL(url).origin === baseUrl) return url
-      return baseUrl
+      try {
+        const urlObj = new URL(url);
+        if (urlObj.origin === baseUrl) {
+          return url;
+        }
+      } catch (error) {
+        // If URL is invalid, return baseUrl
+        console.warn('Invalid URL in redirect callback:', url);
+        return baseUrl;
+      }
+
+      return baseUrl;
     },
   },
 
   pages: {
     signIn: "/login",
-    signOut: "/logout",
+    signOut: "/logout", 
     error: "/login", // Error code passed in query string as ?error=
   },
 
   session: {
     strategy: "jwt",
     maxAge: 30 * 24 * 60 * 60, // 30 days
-  },
-
-  cookies: {
-    sessionToken: {
-      name: `next-auth.session-token`,
-      options: {
-        httpOnly: true,
-        sameSite: "lax",
-        path: "/",
-        secure: process.env.NODE_ENV === "production",
-      },
-    },
   },
 
   // Production security settings
