@@ -284,7 +284,7 @@ const HeroBannerSlider: React.FC = () => {
 
 // Separated Skeleton for cleaner main component
 const BannerSkeleton = () => (
-  <div className="w-full max-w-7xl mx-auto p-4 animate-pulse" aria-busy="true">
+  <div className="w-full  mx-auto p-4 animate-pulse" aria-busy="true">
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
       <div className="lg:col-span-8 bg-gray-200 rounded-2xl h-[200px] sm:h-[300px] lg:h-[400px]" />
       <div className="lg:col-span-4 grid grid-cols-2 lg:grid-cols-1 gap-4">
