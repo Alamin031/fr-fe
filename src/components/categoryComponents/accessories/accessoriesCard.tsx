@@ -262,7 +262,7 @@ export default function AccessoriesCard() {
       )}
 
       <div className="w-full px-3 sm:px-4 lg:px-6 mt-4">
-        <div className="max-w-7xl mx-auto">
+        <div className=" mx-auto">
           {/* Header with Refresh Button and Info */}
           <div className="flex justify-between items-center mb-4">
             <div className="text-sm text-gray-600">

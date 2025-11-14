@@ -218,7 +218,7 @@ export default function AccessoriesCard() {
 
   if (isError) {
     return (
-      <div className="flex items-center justify-center min-h-[400px] p-4">
+      <div className="flex items-center justify-center min-h-[400px] ">
         <div className="text-center">
           <p className="text-red-600 text-base sm:text-lg font-medium mb-3">
             Error loading accessories: {error}
@@ -237,7 +237,7 @@ export default function AccessoriesCard() {
 
   if (accessories.length === 0 && !isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px] p-4">
+      <div className="flex items-center justify-center min-h-[400px] ">
         <div className="text-center">
           <p className="text-gray-500 mb-3 text-sm sm:text-base">No accessories found.</p>
           <button
@@ -262,7 +262,7 @@ export default function AccessoriesCard() {
       )}
 
       <div className="w-full px-3 sm:px-4 lg:px-6 mt-4">
-        <div className="max-w-7xl mx-auto">
+        <div className=" mx-auto">
           {/* Header with Refresh Button and Info */}
           <div className="flex justify-between items-center mb-4">
             <div className="text-sm text-gray-600">
