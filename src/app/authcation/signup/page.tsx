@@ -1,6 +1,6 @@
 // app/authcation/signup/page.tsx
 import { Suspense } from 'react';
-import SignupForm from '../../../../../authcation/Signup';
+import SignupForm from '../../../../authcation/Signup';
 
 export default function SignupPage() {
   return (
