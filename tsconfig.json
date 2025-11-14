@@ -22,6 +22,6 @@
       "@/*": ["./src/*"]
     }
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", "**/*.d.ts", ".next/types/**/*.ts", "src/app/(Home)/authcation/register", "src/models/productmacbookModels.js", "utils/checkoutComponts", "src/models/checkoutmodels.js", "src/models/notifymodel.js"],
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", "**/*.d.ts", ".next/types/**/*.ts", "src/app/(Home)/auth/register", "src/models/productmacbookModels.js", "utils/checkoutComponts", "src/models/checkoutmodels.js", "src/models/notifymodel.js"],
   "exclude": ["node_modules"]
 }
