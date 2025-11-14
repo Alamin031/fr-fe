@@ -218,7 +218,7 @@ export default function AccessoriesCard() {
 
   if (isError) {
     return (
-      <div className="flex items-center justify-center min-h-[400px] p-4">
+      <div className="flex items-center justify-center min-h-[400px] ">
         <div className="text-center">
           <p className="text-red-600 text-base sm:text-lg font-medium mb-3">
             Error loading accessories: {error}
@@ -255,13 +255,13 @@ export default function AccessoriesCard() {
   return (
     <ImageKitProvider urlEndpoint={urlEndpoint}>
       {isFetching && (
-        <div className="fixed top-3 right-3 sm:top-4 sm:right-4 bg-blue-500 text-white px-3 py-1.5 rounded-full text-xs sm:text-sm z-50 flex items-center gap-2 shadow-lg">
+        <div className="fixed top-3 right-3 sm:top-4 sm:right-4 bg-blue-500 text-white  py-1.5 rounded-full text-xs sm:text-sm z-50 flex items-center gap-2 shadow-lg">
           <RefreshCw size={14} className="animate-spin" />
           <span>Updating...</span>
         </div>
       )}
 
-      <div className="w-full px-3 sm:px-4 lg:px-6 mt-4">
+      <div className="w-full  lg:px-6 mt-4">
         <div className=" mx-auto">
           {/* Header with Refresh Button and Info */}
           <div className="flex justify-between items-center mb-4">
