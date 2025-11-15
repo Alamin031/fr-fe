@@ -294,16 +294,16 @@ export default function AccessoriesCard() {
               return (
                 <div
                   key={accessory._id}
-                  className="bg-white rounded-lg sm:rounded-xl shadow-sm hover:shadow-md transition-all duration-300 p-3 sm:p-4 flex flex-col items-center text-center border border-gray-100 hover:border-gray-200"
+                  className="bg-white rounded-lg sm:rounded-xl shadow-sm hover:shadow-md transition-all duration-300 p-3 sm:p-4  flex flex-col items-center text-center border border-gray-100 hover:border-gray-200"
                 >
                   {currentImage && (
                     <Link href={`/category/iphone/${productSlug}`} className="block w-full">
-                      <div className="relative w-full aspect-square max-w-[140px] sm:max-w-[160px] md:max-w-[180px] lg:max-w-[200px] mx-auto">
+                      <div className="relative w-full aspect-square  mx-auto ">
                         <Image
                           src={currentImage}
                           alt={accessory.name}
                           fill
-                          className="object-contain rounded-lg transition-transform duration-300 ease-in-out hover:scale-105"
+                          className="object-contain lg:pb-4 rounded-lg transition-transform duration-300 ease-in-out hover:scale-105"
                           sizes="(max-width: 640px) 140px, (max-width: 768px) 160px, (max-width: 1024px) 180px, 200px"
                           onError={(e) => {
                             e.currentTarget.style.display = 'none';
