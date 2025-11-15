@@ -197,6 +197,33 @@ const HeroBannerSlider: React.FC = () => {
   );
 };
 
-const BannerSkeleton = () => <div className="w-full h-[200px] bg-gray-200 animate-pulse rounded-xl"></div>;
 
+const BannerSkeleton = () => (
+  <div className="w-full px-2 sm:px-4 md:px-6 mx-auto pt-2 md:pt-4 pb-4 md:pb-8">
+    <div className="relative overflow-hidden rounded-xl md:rounded-2xl shadow-lg bg-gray-200">
+      {/* Main banner skeleton */}
+      <div className="w-full h-[180px] sm:h-[260px] md:h-[360px] lg:h-[450px] bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 animate-pulse">
+        {/* Shimmer effect */}
+        <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
+      </div>
+      
+      {/* Navigation arrows skeleton */}
+      <div className="absolute top-1/2 left-2 md:left-4 transform -translate-y-1/2 hidden md:block">
+        <div className="w-10 h-10 bg-white/30 rounded-full animate-pulse"></div>
+      </div>
+      <div className="absolute top-1/2 right-2 md:right-4 transform -translate-y-1/2 hidden md:block">
+        <div className="w-10 h-10 bg-white/30 rounded-full animate-pulse"></div>
+      </div>
+      
+      {/* Dots indicator skeleton */}
+      <div className="absolute bottom-2 left-0 w-full px-4">
+        <div className="flex items-center space-x-1 w-full max-w-xs mx-auto rounded-full bg-white/40 backdrop-blur-sm p-2">
+          <div className="h-1 flex-grow rounded-full bg-white/50 animate-pulse"></div>
+          <div className="h-1 flex-grow rounded-full bg-white/50 animate-pulse"></div>
+          <div className="h-1 flex-grow rounded-full bg-white/50 animate-pulse"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+);
 export default HeroBannerSlider;
