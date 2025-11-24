@@ -1,42 +1,48 @@
-import mongoose from "mongoose";
 
-const userSchema = new mongoose.Schema({
-  image : {
-    type : String,
-    
+// User structure as plain JS object
+export const defaultUser = {
+  image: "",
+  username: "",
+  email: "",
+  password: "",
+  id: "",
+  role: "user",
+  isVerified: false,
+  isAdmin: false,
+  forgotPasswordToken: "",
+  forgetPasswordTokenExpire: null,
+  verifyToken: "",
+};
 
-  },
-  username: {
-    type: String, // ✅ Capital S
-
-},
-  email: {
-    type: String, // ✅ Capital S
-    required: [true, "Please provide an email"],
-    unique: true,
-  },
-  password: {
-    type: String, // ✅ Capital S
-  },
-  id :{
-      type : String,
-  },
-  role : {
-        type : String,
-        default : 'user',
-    },
-  isVerified: {
-    type: Boolean,
-    default: false,
-  },
-  isAdmin: {
-    type: Boolean,
-    default: false,
-  },
-  forgotPasswordToken: String, // ✅ Capital S
-  forgetPasswordTokenExpire: Date,
-  verifyToken: String,         // ✅ Capital S
+// Example CRUD functions using axios (adjust endpoints as needed)
+import axios from "axios";
+const api = axios.create({
+  baseURL: process.env.BACKEND_API_URL || "http://localhost:5000/api",
+  timeout: 10000,
+  headers: { "Content-Type": "application/json" },
 });
 
-const User = mongoose.models.UserAuth || mongoose.model("UserAuth", userSchema);
-export default User;
+export async function fetchUsers() {
+  const res = await api.get("/users");
+  return res.data;
+}
+
+export async function fetchUserById(id) {
+  const res = await api.get(`/users/${id}`);
+  return res.data;
+}
+
+export async function createUser(user) {
+  const res = await api.post("/users", user);
+  return res.data;
+}
+
+export async function updateUser(id, user) {
+  const res = await api.put(`/users/${id}`, user);
+  return res.data;
+}
+
+export async function deleteUser(id) {
+  const res = await api.delete(`/users/${id}`);
+  return res.data;
+}

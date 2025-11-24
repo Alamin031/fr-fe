@@ -1,110 +1,64 @@
-import mongoose, { Schema } from "mongoose";
 
-// ---------- Sub Schemas ----------
-
-// Storage configuration
-const StorageConfigSchema = new Schema({
-  id: { type: Number, required: true },
-  label: { type: String, required: true },
-  price: { type: String, required: true },
-  shortDetails: { type: String, default: "" },
-  inStock: { type: Boolean, default: true },
-});
-
-// Color + Image configuration
-const ColorImageConfigSchema = new Schema({
-  id: { type: Number, required: true },
-  color: { type: String, required: true },
-  image: { type: String, required: true },
-  price: { type: String, required: true },
-  inStock: { type: Boolean, default: true },
-});
-
-// Sim configuration
-const SimConfigSchema = new Schema({
-  id: { type: Number, required: true },
-  type: { 
-    type: String, 
-    required: true, 
-    enum: ['Wi-Fi', 'Wi-Fi + Cell'],
-    default: 'Wi-Fi'
+// Product structure as plain JS object (for TypeScript, use interfaces/types)
+export const defaultIpadProduct = {
+  name: "",
+  basePrice: "",
+  sku: "",
+  accessories: "iphone",
+  storageConfigs: [],
+  colorImageConfigs: [],
+  simConfigs: [],
+  dynamicRegions: [],
+  details: [],
+  productlinkname: "",
+  preOrderConfig: {
+    isPreOrder: false,
+    availabilityDate: "",
+    estimatedShipping: "",
+    preOrderDiscount: 0,
+    maxPreOrderQuantity: 0,
   },
-  price: { type: String, required: true },
-  inStock: { type: Boolean, default: true },
-});
+};
 
-// Region-based configuration
-const RegionConfigSchema = new Schema({
-  name: { type: String, required: true },
-  price: { type: String, required: true },
-  inStock: { type: Boolean, default: true },
-});
-
-// Product details (key/value pairs)
-const DetailConfigSchema = new Schema({
-  id: { type: Number, required: true },
-  label: { type: String, required: true },
-  value: { type: String, required: true },
-});
-
-// Pre-order configuration
-const PreOrderConfigSchema = new Schema({
-  isPreOrder: { type: Boolean, default: false },
-  availabilityDate: { type: String },
-  estimatedShipping: { type: String },
-  preOrderDiscount: { type: Number, default: 0 },
-  maxPreOrderQuantity: { type: Number, default: 0 },
-});
-
-// ---------- Main Product Schema ----------
-const ProductSchema = new Schema(
-  {
-    name: { type: String, required: true },
-    basePrice: { type: String, required: true },
-    sku: { type: String }, // optional
-    accessories: { type: String, default: "iphone" },
-
-    storageConfigs: [StorageConfigSchema],
-    colorImageConfigs: [ColorImageConfigSchema],
-    simConfigs: [SimConfigSchema], // Added sim configurations
-    dynamicRegions: [RegionConfigSchema],
-    details: [DetailConfigSchema],
-
-    productlinkname: {
-      type: String,
-      unique: true,
-      sparse: true,
-    },
-
-    preOrderConfig: { type: PreOrderConfigSchema, default: () => ({}) },
-  },
-  { timestamps: true }
-);
-
-// ---------- Slug generator ----------
-function generateSlug(name) {
+// Slug generator utility
+export function generateSlug(name) {
   return name
     .toLowerCase()
-    .replace(/\s+/g, "-") // Replace spaces with hyphens
-    .replace(/[^a-z0-9-]/g, "") // Remove special characters
-    .replace(/-+/g, "-") // Replace multiple hyphens with single
-    .replace(/^-+|-+$/g, ""); // Trim hyphens from start and end
+    .replace(/\s+/g, "-")
+    .replace(/[^a-z0-9-]/g, "")
+    .replace(/-+/g, "-")
+    .replace(/^-+|-+$/g, "");
 }
 
-// ---------- Pre-save hook ----------
-ProductSchema.pre("save", function (next) {
-  this.updatedAt = Date.now();
-
-  // Only generate productlinkname if it doesn't exist and name exists
-  if (this.name && !this.productlinkname) {
-    this.productlinkname = generateSlug(this.name);
-  }
-
-  next();
+// Example CRUD functions using axios (adjust endpoints as needed)
+import axios from "axios";
+const api = axios.create({
+  baseURL: process.env.BACKEND_API_URL || "http://localhost:5000/api",
+  timeout: 10000,
+  headers: { "Content-Type": "application/json" },
 });
 
-// ---------- Model ----------
-const Product =
-  mongoose.models.ipadproduct || mongoose.model("ipadproduct", ProductSchema);
+export async function fetchIpadProducts() {
+  const res = await api.get("/ipadproducts");
+  return res.data;
+}
 
-export default Product;
+export async function fetchIpadProductById(id) {
+  const res = await api.get(`/ipadproducts/${id}`);
+  return res.data;
+}
+
+export async function createIpadProduct(product) {
+  const res = await api.post("/ipadproducts", product);
+  return res.data;
+}
+
+export async function updateIpadProduct(id, product) {
+  const res = await api.put(`/ipadproducts/${id}`, product);
+  return res.data;
+}
+
+export async function deleteIpadProduct(id) {
+  const res = await api.delete(`/ipadproducts/${id}`);
+  return res.data;
+}

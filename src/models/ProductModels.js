@@ -1,97 +1,52 @@
-// models/Product.js
-import mongoose from "mongoose";
 
-// Reusable sub-schema for basic configs
-const ConfigSchema = new mongoose.Schema(
-  {
-    id: { type: Number, required: true },
-    label: { type: String, required: true },
-    price: { type: String, required: true },
+// Product structure as plain JS object (for TypeScript, use interfaces/types)
+export const defaultProduct = {
+  name: "",
+  sku: Date.now().toString(),
+  basePrice: "",
+  storageConfigs: [],
+  colorImageConfigs: [],
+  dynamicRegions: [],
+  details: [],
+  preOrderConfig: {
+    isPreOrder: false,
+    availabilityDate: "",
+    estimatedShipping: "",
+    preOrderDiscount: 0,
+    maxPreOrderQuantity: 0,
   },
-  { _id: false }
-);
+  accessories: "iphone",
+};
 
-// Color + image configs
-const ColorImageConfigSchema = new mongoose.Schema(
-  {
-    id: { type: Number, required: true },
-    color: { type: String, required: true },
-    image: { type: String, required: true },
-    price: { type: String, required: true },
-  },
-  { _id: false }
-);
+// Example CRUD functions using axios (adjust endpoints as needed)
+import axios from "axios";
+const api = axios.create({
+  baseURL: process.env.BACKEND_API_URL || "http://localhost:5000/api",
+  timeout: 10000,
+  headers: { "Content-Type": "application/json" },
+});
 
-// Region pricing
-const RegionConfigSchema = new mongoose.Schema(
-  {
-    name: { type: String, required: true },
-    price: { type: String, required: true },
-  },
-  { _id: false }
-);
+export async function fetchProducts() {
+  const res = await api.get("/products");
+  return res.data;
+}
 
-// Details
-const DetailConfigSchema = new mongoose.Schema(
-  {
-    id: { type: Number, required: true },
-    label: { type: String, required: true },
-    value: { type: String, required: true },
-  },
-  { _id: false }
-);
+export async function fetchProductById(id) {
+  const res = await api.get(`/products/${id}`);
+  return res.data;
+}
 
+export async function createProduct(product) {
+  const res = await api.post("/products", product);
+  return res.data;
+}
 
+export async function updateProduct(id, product) {
+  const res = await api.put(`/products/${id}`, product);
+  return res.data;
+}
 
-// Pre-order config
-const PreOrderConfigSchema = new mongoose.Schema(
-  {
-    isPreOrder: { type: Boolean, required: true, default: false },
-    availabilityDate: { type: String }, // could also be Date if you prefer
-    estimatedShipping: { type: String },
-    preOrderDiscount: { type: Number, default: 0 },
-    maxPreOrderQuantity: { type: Number, default: 0 },
-  },
-  { _id: false }
-);
-
-// Main Product schema
-const ProductSchema = new mongoose.Schema(
-  {
-    name: { type: String, required: true },
-    sku: {
-      type: String,
-      required: true,
-      unique: true,
-      default: () => Date.now().toString(),
-    },
-    basePrice: { type: String, required: true },
-
-    // Config groups
-    storageConfigs: [ConfigSchema],
-
-    // Colors + images
-    colorImageConfigs: [ColorImageConfigSchema],
-
-    // Regions
-    dynamicRegions: [RegionConfigSchema],
-
-    // Details
-    details: [DetailConfigSchema],
-
-    // Pre-order
-    preOrderConfig: PreOrderConfigSchema,
-accessories: {
-  type: String,
-  default: "iphone", // auto defaults to "iphone"
-},
-
-},
-  { timestamps: true }
-);
-
-// Prevent overwrite in dev / hot reload
-const Product =
-  mongoose.models.Product || mongoose.model("Product", ProductSchema);
-
-export default Product;
+export async function deleteProduct(id) {
+  const res = await api.delete(`/products/${id}`);
+  return res.data;
+}
