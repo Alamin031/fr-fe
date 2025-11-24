@@ -3,10 +3,11 @@
 import React, { useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useSession } from 'next-auth/react'; // ✅ Get session in nav
-import { 
+import {
   Home, Smartphone, Tablet, LaptopMinimal, Headphones,
   SquarePlus, Clipboard, Bell, Package, ChevronLeft, ChevronRight,
-  Globe, Users, Shuffle
+  Globe, Users, Shuffle, Layers, Award, Gift, FileText,
+  HelpCircle, Star, Zap, Search, TrendingUp
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -53,24 +54,78 @@ const allowedRoles = ['admin', 'management'];
             <NavItem name="Dashboard" icon={Home} href="/deshboard" active={isActive('/deshboard')} onClick={handleNavigation} sidebarOpen={sidebarOpen} />
             <NavItem name="Transition" icon={Shuffle} href="/deshboard/transition" active={isActive('/deshboard/transition')} onClick={handleNavigation} sidebarOpen={sidebarOpen} />
 
-            {/* AdminManagement items — show if user is admin or manager, etc. */}
+            {/* Products Section */}
             {hasAccess && (
               <>
+                <div className={cn("px-3 py-2 text-xs font-semibold text-muted-foreground", !sidebarOpen && "hidden")}>
+                  Products
+                </div>
                 <NavItem name="Landing Page" icon={Globe} href="/deshboard/landingpage" active={isActive('/deshboard/landingpage')} onClick={handleNavigation} sidebarOpen={sidebarOpen} />
                 <NavItem name="iPhone" icon={Smartphone} href="/deshboard/addproduct" active={isActive('/deshboard/addproduct')} onClick={handleNavigation} sidebarOpen={sidebarOpen} />
                 <NavItem name="iPad" icon={Tablet} href="/deshboard/ipadaddproduct" active={isActive('/deshboard/ipadaddproduct')} onClick={handleNavigation} sidebarOpen={sidebarOpen} />
                 <NavItem name="MacBook" icon={LaptopMinimal} href="/deshboard/macbookadd" active={isActive('/deshboard/macbookadd')} onClick={handleNavigation} sidebarOpen={sidebarOpen} />
                 <NavItem name="Accessories" icon={Headphones} href="/deshboard/accessories" active={isActive('/deshboard/accessories')} onClick={handleNavigation} sidebarOpen={sidebarOpen} />
                 <NavItem name="Update Data" icon={SquarePlus} href="/deshboard/updata" active={isActive('/deshboard/updata')} onClick={handleNavigation} sidebarOpen={sidebarOpen} />
-                <NavItem name="Order" icon={Clipboard} href="/deshboard/orderdata" active={isActive('/deshboard/orderdata')} onClick={handleNavigation} sidebarOpen={sidebarOpen} />
-                <NavItem name="Notify" icon={Bell} href="/deshboard/notify" active={isActive('/deshboard/notify')} onClick={handleNavigation} sidebarOpen={sidebarOpen} />
+              </>
+            )}
+
+            {/* Management Section */}
+            {hasAccess && (
+              <>
+                <div className={cn("px-3 py-2 text-xs font-semibold text-muted-foreground mt-4", !sidebarOpen && "hidden")}>
+                  Management
+                </div>
+                <NavItem name="Categories" icon={Layers} href="/deshboard/categories" active={isActive('/deshboard/categories')} onClick={handleNavigation} sidebarOpen={sidebarOpen} />
+                <NavItem name="Brands" icon={Award} href="/deshboard/brands" active={isActive('/deshboard/brands')} onClick={handleNavigation} sidebarOpen={sidebarOpen} />
+                <NavItem name="Orders" icon={Clipboard} href="/deshboard/orderdata" active={isActive('/deshboard/orderdata')} onClick={handleNavigation} sidebarOpen={sidebarOpen} />
+                <NavItem name="Warranty" icon={Package} href="/deshboard/warranty" active={isActive('/deshboard/warranty')} onClick={handleNavigation} sidebarOpen={sidebarOpen} />
+                <NavItem name="Reviews" icon={Star} href="/deshboard/reviews" active={isActive('/deshboard/reviews')} onClick={handleNavigation} sidebarOpen={sidebarOpen} />
+              </>
+            )}
+
+            {/* Content Section */}
+            {hasAccess && (
+              <>
+                <div className={cn("px-3 py-2 text-xs font-semibold text-muted-foreground mt-4", !sidebarOpen && "hidden")}>
+                  Content
+                </div>
+                <NavItem name="Policies" icon={FileText} href="/deshboard/policies" active={isActive('/deshboard/policies')} onClick={handleNavigation} sidebarOpen={sidebarOpen} />
+                <NavItem name="FAQs" icon={HelpCircle} href="/deshboard/faqs" active={isActive('/deshboard/faqs')} onClick={handleNavigation} sidebarOpen={sidebarOpen} />
+                <NavItem name="Giveaways" icon={Gift} href="/deshboard/giveaways" active={isActive('/deshboard/giveaways')} onClick={handleNavigation} sidebarOpen={sidebarOpen} />
+              </>
+            )}
+
+            {/* Marketing Section */}
+            {hasAccess && (
+              <>
+                <div className={cn("px-3 py-2 text-xs font-semibold text-muted-foreground mt-4", !sidebarOpen && "hidden")}>
+                  Marketing
+                </div>
+                <NavItem name="Loyalty" icon={Zap} href="/deshboard/loyalty" active={isActive('/deshboard/loyalty')} onClick={handleNavigation} sidebarOpen={sidebarOpen} />
+                <NavItem name="SEO" icon={Search} href="/deshboard/seo" active={isActive('/deshboard/seo')} onClick={handleNavigation} sidebarOpen={sidebarOpen} />
+                <NavItem name="Marketing" icon={TrendingUp} href="/deshboard/marketing" active={isActive('/deshboard/marketing')} onClick={handleNavigation} sidebarOpen={sidebarOpen} />
+              </>
+            )}
+
+            {/* Notifications */}
+            {hasAccess && (
+              <>
+                <div className={cn("px-3 py-2 text-xs font-semibold text-muted-foreground mt-4", !sidebarOpen && "hidden")}>
+                  Other
+                </div>
+                <NavItem name="Notifications" icon={Bell} href="/deshboard/notify" active={isActive('/deshboard/notify')} onClick={handleNavigation} sidebarOpen={sidebarOpen} />
                 <NavItem name="PreOrder" icon={Package} href="/deshboard/preorder" active={isActive('/deshboard/preorder')} onClick={handleNavigation} sidebarOpen={sidebarOpen} />
               </>
             )}
 
             {/* Admin-only item */}
             {isAdmin && (
-              <NavItem name="Role" icon={Users} href="/deshboard/role" active={isActive('/deshboard/role')} onClick={handleNavigation} sidebarOpen={sidebarOpen} />
+              <>
+                <div className={cn("px-3 py-2 text-xs font-semibold text-muted-foreground mt-4", !sidebarOpen && "hidden")}>
+                  Admin
+                </div>
+                <NavItem name="User Roles" icon={Users} href="/deshboard/role" active={isActive('/deshboard/role')} onClick={handleNavigation} sidebarOpen={sidebarOpen} />
+              </>
             )}
           </div>
         </nav>
