@@ -32,9 +32,17 @@ const AppleProduct = () => {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const res = await axios.get<ApiResponse>(
-          `${process.env.NEXT_PUBLIC_BASE_URI}/landingetproduct/get`
-        );
+        const baseUri = process.env.NEXT_PUBLIC_BASE_URI || '';
+        const url = `${baseUri}/landingetproduct/get`;
+
+        if (!baseUri) {
+          console.warn('NEXT_PUBLIC_BASE_URI is not configured');
+          setProducts([]);
+          setLoading(false);
+          return;
+        }
+
+        const res = await axios.get<ApiResponse>(url);
         console.log('Landing Product Data:', res.data);
 
         if (res.data?.data && Array.isArray(res.data.data) && res.data.data.length > 0) {
@@ -42,6 +50,7 @@ const AppleProduct = () => {
         }
       } catch (err) {
         console.error('Error fetching products:', err);
+        setProducts([]);
       } finally {
         setLoading(false);
       }

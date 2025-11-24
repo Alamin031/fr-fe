@@ -4,6 +4,7 @@ import GoogleProvider from "next-auth/providers/google";
 import bcrypt from "bcryptjs";
 import { connect } from "@/dbconfig/dbconfig";
 import User from "@/models/UserModels";
+import { ROLES } from "@/lib/auth";
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -24,7 +25,7 @@ export const authOptions: NextAuthOptions = {
         }
 
         await connect();
-        const user = await User.findOne({ email: credentials.email });
+        const user = await User.findOne({ email: credentials.email }).select("+password");
 
         if (!user) {
           throw new Error("No user found with this email");
@@ -35,7 +36,12 @@ export const authOptions: NextAuthOptions = {
           throw new Error("Please sign in with Google");
         }
 
-        const isValid = await bcrypt.compare(credentials.password, user.password);
+        // Check if email is verified (optional - uncomment to require verification)
+        // if (!user.emailVerified) {
+        //   throw new Error("Please verify your email first. Check your inbox for verification link.");
+        // }
+
+        const isValid = await bcrypt.compare(credentials.password, user.password || "");
         if (!isValid) {
           throw new Error("Invalid password");
         }
@@ -44,7 +50,7 @@ export const authOptions: NextAuthOptions = {
           id: user._id.toString(),
           name: user.username,
           email: user.email,
-          role: user.role,
+          role: user.role || ROLES.USER,
           image: user.image,
         };
       },

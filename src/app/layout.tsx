@@ -27,19 +27,15 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <meta name="google-site-verification" content="google746b68f5bd72ee8e" ></meta>
-      
-      <meta name="facebook-domain-verification" content="agpej8ithgyhkzuoqrzjmlgt9ksype" />
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        <meta name="google-site-verification" content="google746b68f5bd72ee8e" />
+        <meta name="facebook-domain-verification" content="agpej8ithgyhkzuoqrzjmlgt9ksype" />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-
-
-            {children}
-
-
-       
+        {children}
       </body>
     </html>
   );

@@ -10,12 +10,25 @@ export default function FeaturesBanner() {
   useEffect(() => {
     const fetchItems = async () => {
       try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URI}/text/textget`);
-        if (!response.ok) throw new Error('Failed to fetch data');
+        const baseUri = process.env.NEXT_PUBLIC_BASE_URI || '';
+        const url = `${baseUri}/text/textget`;
+
+        if (!baseUri) {
+          console.warn('NEXT_PUBLIC_BASE_URI is not configured');
+          setItems([]);
+          setLoading(false);
+          return;
+        }
+
+        const response = await fetch(url);
+        if (!response.ok) {
+          throw new Error(`Failed to fetch data: ${response.status}`);
+        }
         const data = await response.json();
-        setItems(data);
+        setItems(Array.isArray(data) ? data : []);
       } catch (err) {
         console.error('Error fetching data:', err);
+        setItems([]);
       } finally {
         setLoading(false);
       }
