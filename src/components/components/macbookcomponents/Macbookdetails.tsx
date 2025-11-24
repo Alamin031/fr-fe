@@ -451,7 +451,7 @@ const EMICalculator = ({ totalPrice }: { totalPrice: number }) => {
   );
 };
 
-export default function Page() {
+export default function Macbookdetails() {
   const { addOrder , clearOrder} = useOrderStore();
     const { toggleSidebar } = useSidebarStore();
   
@@ -647,9 +647,9 @@ export default function Page() {
         const data = await response.json();
         console.log('Fetched product data:', data);
         
-        if (!isProduct(data)) {
-          throw new Error('Invalid product data format');
-        }
+        // if (!isProduct(data)) {
+        //   throw new Error('Invalid product data format');
+        // }
         
         setProduct(data);
         setError(null);

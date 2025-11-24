@@ -22,7 +22,7 @@ export async function generateMetadata(
   );
 
   if (!res.ok) {
-    console.error('Failed to fetch accessory:', res.statusText);
+    console.log('Failed to fetch accessory:', res.statusText);
     return {
       title: 'Accessories',
       description: 'View accessory details.',
@@ -33,7 +33,7 @@ export async function generateMetadata(
   // console.log('data', post.name);
 
   return {
-    title: post.name || 'Accessories',
+    title: post || 'Accessories',
     description: post.description || 'View accessory details.',
   };
 }
