@@ -126,9 +126,9 @@ const AppleNavbar = () => {
 
   // --- Static Data ---
   const navigationLinks: NavLink[] = useMemo(() => ([
-    { name: 'iPhone', href: '/category/iphone' },
-    { name: 'Mac', href: '/category/macbook' },
-    { name: 'iPad', href: '/category/ipad' },
+    { name: 'Phone', href: '/category/iphone' },
+    { name: 'Laptop', href: '/category/macbook' },
+    { name: 'Tablet', href: '/category/ipad' },
     { name: 'Accessories', href: '/category/accessories' }
   ]), []);
 

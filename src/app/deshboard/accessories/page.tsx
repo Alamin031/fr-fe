@@ -120,12 +120,12 @@ const TiptapToolbar = ({ editor }: { editor: Editor | null }) => {
     }
 
     const videoId = extractYoutubeId(videoUrl);
-    console.log('🎬 Video URL:', videoUrl);
-    console.log('🎬 Extracted Video ID:', videoId);
+    // console.log('🎬 Video URL:', videoUrl);
+    // console.log('🎬 Extracted Video ID:', videoId);
     
     if (videoId && editor) {
       try {
-        console.log('🎬 Inserting YouTube video with ID:', videoId);
+        // console.log('🎬 Inserting YouTube video with ID:', videoId);
         
         // METHOD 1: Direct HTML insertion (MOST RELIABLE)
         const youtubeEmbed = `
@@ -142,7 +142,7 @@ const TiptapToolbar = ({ editor }: { editor: Editor | null }) => {
         // Insert the YouTube embed HTML directly
         editor.chain().focus().insertContent(youtubeEmbed).run();
         
-        console.log('🎬 YouTube video inserted successfully!');
+        // console.log('🎬 YouTube video inserted successfully!');
         setVideoUrl('');
         setShowVideoInput(false);
         
@@ -280,7 +280,7 @@ const TiptapEditor = ({ onContentChange }: { onContentChange: (content: string) 
     content: '',
     onUpdate: ({ editor }) => { 
       const html = editor.getHTML();
-      console.log('📝 Editor content:', html);
+      // console.log('📝 Editor content:', html);
       onContentChange(html); 
     },
     immediatelyRender: false,
